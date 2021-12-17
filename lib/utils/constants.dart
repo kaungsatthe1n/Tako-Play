@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 const String version = 'v1.0.0';
 bool isSameVersion = true;
-const license = 'GNU General Public License v3.0';
+const license = 'MIT License';
 const String latestRelease =
     'https://api.github.com/repos/kaungsatthe1n/Tako-Play/releases/latest';
 const String baseUrl = 'https://gogoplay1.com/';
