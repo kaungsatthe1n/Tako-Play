@@ -3,7 +3,7 @@
 
 <p align="center"><a href="https://github.com/kaungsatthe1n/Tako-Play"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/logo.jpg?raw=true" width="150" height="auto" style="border-radius:60%"></a></p>
 
-<h3 align="center" ><img src=""/><span style="font-size:100%"> A Mobile App to Watch Anime With No ADS !! .  </span><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/rem_show.png?raw=true"  width="70"/><h3/>
+<h3 align="center" ><img src="https://pngimage.net/wp-content/uploads/2018/06/funny-anime-png-2.png" width="80"/><span style="font-size:100%"> A Mobile App to Watch Anime With No ADS !! .  </span><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/rem_show.png?raw=true"  width="70"/><h3/>
 
 #### :bangbang:  Please Do not put Tako-Play to Google PlayStore or Any other Store !! :bangbang:
 
