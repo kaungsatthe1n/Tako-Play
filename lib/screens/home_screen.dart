@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:sizer/sizer.dart';
 import '../models/anime.dart';
 import '../models/github.dart';
 import '../services/anime_service.dart';
@@ -43,14 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
         isSameVersion = true;
         // ignore: avoid_print
         print('same version');
-        
       } else {
         isSameVersion = false;
         Get.dialog(AlertDialog(
             elevation: 10,
             backgroundColor: tkDarkBlue,
             content: SizedBox(
-              height: 18.h,
+              height: screenHeight * .18,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,8 +92,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final requestService = Provider.of<RequestService>(context, listen: false);
-    final itemHeight = 28.h;
-    final itemWidth = 100.w / 2;
+    final itemHeight = screenHeight * .28;
+    final itemWidth = screenWidth / 2;
     return Scaffold(
         key: _formKey,
         drawer: Drawer(
@@ -104,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView(
               children: [
                 SizedBox(
-                  height: 40.h,
+                  height: screenHeight * .4,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -131,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Container(
                           alignment: Alignment.centerLeft,
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          height: 7.h,
+                          height: screenHeight * .07,
                           decoration: BoxDecoration(
                               color: tkLightGreen.withOpacity(.7),
                               borderRadius: const BorderRadius.only(
@@ -147,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 SizedBox(
-                  height: 2.h,
+                  height: screenHeight * .02,
                 ),
                 ListTile(
                   hoverColor: Colors.white,
@@ -193,7 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset('assets/images/deku.gif'),
-                    SizedBox(height: 5.h),
+                    SizedBox(height: screenHeight * .05),
                     Container(
                       margin: const EdgeInsets.symmetric(
                           vertical: 20, horizontal: 20),
@@ -227,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(
-                        height: 40.h,
+                        height: screenHeight * .4,
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           scrollDirection: Axis.horizontal,
@@ -262,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ),
                                       ),
                                       SizedBox(
-                                        height: 2.h,
+                                        height: screenHeight * .02,
                                       ),
                                       Flexible(
                                         child: Text(
@@ -295,7 +293,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(
-                        height: 40.h,
+                        height: screenHeight * .4,
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           scrollDirection: Axis.horizontal,
@@ -331,7 +329,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                     SizedBox(
-                                      height: 2.h,
+                                      height: screenHeight * .02,
                                     ),
                                     Flexible(
                                       child: Text(
@@ -376,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 borderRadius: BorderRadius.circular(10),
                                 color: Colors.black12,
                               ),
-                              height: 20.h,
+                              height: screenHeight * .2,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [

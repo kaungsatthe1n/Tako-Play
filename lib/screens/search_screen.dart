@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:sizer/sizer.dart';
+import 'package:tako_play/utils/constants.dart';
 import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
 import '../models/anime.dart';
@@ -21,8 +21,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
-    final itemHeight = 42.h;
-    final itemWidth = 100.w / 2;
+    final itemHeight = screenHeight * .42;
+    final itemWidth = screenWidth / 2;
     return Scaffold(
       appBar: AppBar(
         title: TextField(
@@ -94,7 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                 borderRadius: BorderRadius.circular(15),
                                 child: CachedNetworkImage(
                                   width: itemWidth.toDouble(),
-                                  height: 24.h,
+                                  height: screenHeight * .24,
                                   fit: BoxFit.cover,
                                   imageUrl: list[index].imageUrl.toString(),
                                 ),

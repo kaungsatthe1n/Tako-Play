@@ -3,7 +3,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:sizer/sizer.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
@@ -104,8 +103,8 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                       borderRadius: BorderRadius.circular(15),
                                       child: CachedNetworkImage(
                                           fit: BoxFit.cover,
-                                          height: 28.h,
-                                          width: 40.w,
+                                          height: screenHeight * .28,
+                                          width: screenWidth * .4,
                                           imageUrl: Get
                                               .arguments['anime'].imageUrl
                                               .toString()),
@@ -186,7 +185,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                 ),
                               ),
                               SizedBox(
-                                height: 5.h,
+                                height: screenHeight * .05,
                               ),
                             ],
                           )),
