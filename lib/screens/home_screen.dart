@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,8 @@ class _HomeScreenState extends State<HomeScreen> {
       DeviceOrientation.portraitUp,
     ]);
     checkForUpdate();
+    print(screenHeight);
+    print(screenWidth);
   }
 
   Future<void> checkForUpdate() async {
@@ -48,14 +51,14 @@ class _HomeScreenState extends State<HomeScreen> {
             elevation: 10,
             backgroundColor: tkDarkBlue,
             content: SizedBox(
-              height: screenHeight * .18,
+              height: (screenHeight * .18).h,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
                     margin:
-                        const EdgeInsets.symmetric(vertical: 5, horizontal: 5),
+                        EdgeInsets.symmetric(vertical: 5.h, horizontal: 5.w),
                     child: Text('Tako-Play',
                         style: TakoTheme.darkTextTheme.headline3),
                   ),
@@ -65,8 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text('New Update is available',
                         style: TakoTheme.darkTextTheme.bodyText1),
                   ),
-                  const SizedBox(
-                    height: 10,
+                  SizedBox(
+                    height: 10.h,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -92,8 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final requestService = Provider.of<RequestService>(context, listen: false);
-    final itemHeight = screenHeight * .28;
-    final itemWidth = screenWidth / 2;
+    final itemHeight = (screenHeight * .26).h;
+    final itemWidth = (screenWidth / 2).w;
     return Scaffold(
         key: _formKey,
         drawer: Drawer(
@@ -102,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView(
               children: [
                 SizedBox(
-                  height: screenHeight * .4,
+                  height: (screenHeight * .39).h,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -112,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         left: 0,
                         right: 0,
                         child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
+                          margin: EdgeInsets.symmetric(horizontal: 5.h),
                           child: Image.asset(
                             'assets/images/rem.jpg',
                             fit: BoxFit.cover,
@@ -128,8 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         bottom: 0,
                         child: Container(
                           alignment: Alignment.centerLeft,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          height: screenHeight * .07,
+                          padding: EdgeInsets.symmetric(horizontal: 20.w),
+                          height: (screenHeight * .07).h,
                           decoration: BoxDecoration(
                               color: tkLightGreen.withOpacity(.7),
                               borderRadius: const BorderRadius.only(
@@ -145,7 +148,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 SizedBox(
-                  height: screenHeight * .02,
+                  height: (screenHeight * .02).h,
                 ),
                 ListTile(
                   hoverColor: Colors.white,
@@ -193,8 +196,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     Image.asset('assets/images/deku.gif'),
                     SizedBox(height: screenHeight * .05),
                     Container(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 20),
+                      margin: EdgeInsets.symmetric(
+                          vertical: 20.h, horizontal: 20.w),
                       alignment: Alignment.center,
                       child: Text(
                         'Temporarily Down For Maintainance Or No Internet Connection',
@@ -215,8 +218,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        margin: EdgeInsets.symmetric(
+                            horizontal: 20.w, vertical: 20.h),
                         child: Text(
                           'Popular',
                           style: TakoTheme.darkTextTheme.headline4!.copyWith(
@@ -225,9 +228,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(
-                        height: screenHeight * .4,
+                        height: (screenHeight * .39).h,
                         child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          padding: EdgeInsets.symmetric(horizontal: 10.w),
                           scrollDirection: Axis.horizontal,
                           itemCount: popularList!.length,
                           itemBuilder: (BuildContext context, int index) {
@@ -238,43 +241,47 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Get.toNamed(Routes.videoListScreen,
                                       arguments: {'anime': popularList[index]});
                                 },
-                                child: Container(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 10),
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  width: itemWidth * .75,
-                                  child: Flex(
-                                    direction: Axis.vertical,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(15),
-                                        child: CachedNetworkImage(
-                                          height: itemHeight.toDouble(),
-                                          width: itemWidth,
-                                          fit: BoxFit.cover,
-                                          imageUrl: popularList[index]
-                                              .imageUrl
-                                              .toString(),
+                                child: AspectRatio(
+                                  aspectRatio: 3 / 6,
+                                  child: Container(
+                                    padding:
+                                        EdgeInsets.symmetric(vertical: 10.h),
+                                    margin:
+                                        EdgeInsets.symmetric(horizontal: 10.w),
+                                    child: Flex(
+                                      direction: Axis.vertical,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          child: CachedNetworkImage(
+                                            height: itemHeight.toDouble().h,
+                                            width: itemWidth.w,
+                                            fit: BoxFit.cover,
+                                            imageUrl: popularList[index]
+                                                .imageUrl
+                                                .toString(),
+                                          ),
                                         ),
-                                      ),
-                                      SizedBox(
-                                        height: screenHeight * .02,
-                                      ),
-                                      Flexible(
-                                        child: Text(
-                                          popularList[index].name.toString(),
-                                          maxLines: 3,
-                                          textAlign: TextAlign.center,
-                                          style: TakoTheme
-                                              .darkTextTheme.bodyText1!
-                                              .copyWith(
-                                                  decoration:
-                                                      TextDecoration.none),
+                                        SizedBox(
+                                          height: (screenHeight * .02).h,
                                         ),
-                                      ),
-                                    ],
+                                        Flexible(
+                                          child: Text(
+                                            popularList[index].name.toString(),
+                                            maxLines: 3,
+                                            textAlign: TextAlign.center,
+                                            style: TakoTheme
+                                                .darkTextTheme.bodyText1!
+                                                .copyWith(
+                                                    decoration:
+                                                        TextDecoration.none),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -283,8 +290,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Container(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        margin: EdgeInsets.only(
+                          top: 10.h,
+                          left: 20.w,
+                          right: 20.w,
+                          bottom: 20.h,
+                        ),
                         child: Text(
                           'Recently Added ',
                           style: TakoTheme.darkTextTheme.headline4!.copyWith(
@@ -293,9 +304,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       SizedBox(
-                        height: screenHeight * .4,
+                        height: (screenHeight * .4).h,
                         child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          padding: EdgeInsets.symmetric(horizontal: 10.w),
                           scrollDirection: Axis.horizontal,
                           itemCount: recentlyAdded!.length,
                           itemBuilder: (BuildContext context, int index) {
@@ -308,41 +319,42 @@ class _HomeScreenState extends State<HomeScreen> {
                                           .toString()
                                     });
                               },
-                              child: Container(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                width: itemWidth * .75,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(15),
-                                      child: CachedNetworkImage(
-                                        height: itemHeight.toDouble(),
-                                        width: itemWidth,
-                                        fit: BoxFit.cover,
-                                        imageUrl: recentlyAdded[index]
-                                            .imageUrl
-                                            .toString(),
+                              child: AspectRatio(
+                                aspectRatio: 3 / 6,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(vertical: 10.h),
+                                  margin:
+                                      EdgeInsets.symmetric(horizontal: 10.w),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(15),
+                                        child: CachedNetworkImage(
+                                          height: itemHeight.toDouble().h,
+                                          width: itemWidth.w,
+                                          fit: BoxFit.cover,
+                                          imageUrl: recentlyAdded[index]
+                                              .imageUrl
+                                              .toString(),
+                                        ),
                                       ),
-                                    ),
-                                    SizedBox(
-                                      height: screenHeight * .02,
-                                    ),
-                                    Flexible(
-                                      child: Text(
-                                        recentlyAdded[index]
-                                            .currentEp
-                                            .toString(),
-                                        maxLines: 3,
-                                        textAlign: TextAlign.center,
-                                        style:
-                                            TakoTheme.darkTextTheme.bodyText1,
+                                      SizedBox(
+                                        height: (screenHeight * .02).h,
                                       ),
-                                    ),
-                                  ],
+                                      Flexible(
+                                        child: Text(
+                                          recentlyAdded[index]
+                                              .currentEp
+                                              .toString(),
+                                          maxLines: 3,
+                                          textAlign: TextAlign.center,
+                                          style:
+                                              TakoTheme.darkTextTheme.bodyText1,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             );
@@ -350,8 +362,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       Container(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 20),
+                        margin: EdgeInsets.symmetric(
+                            horizontal: 20.w, vertical: 20.h),
                         child: Text(
                           'Ongoing',
                           style: TakoTheme.darkTextTheme.headline4!.copyWith(
@@ -368,25 +380,25 @@ class _HomeScreenState extends State<HomeScreen> {
                               });
                             },
                             child: Container(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 10),
+                              margin: EdgeInsets.symmetric(
+                                  horizontal: 20.w, vertical: 10.h),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(10),
                                 color: Colors.black12,
                               ),
-                              height: screenHeight * .2,
+                              height: (screenHeight * .2).h,
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: [
                                   ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
                                       child: CachedNetworkImage(
-                                          width: 110,
+                                          width: 110.w,
                                           imageUrl: anime.imageUrl.toString())),
                                   Flexible(
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 20, horizontal: 10),
+                                      padding: EdgeInsets.symmetric(
+                                          vertical: 20.h, horizontal: 10.w),
                                       child: Text(
                                         anime.currentEp.toString(),
                                         style:

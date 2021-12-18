@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
@@ -88,9 +89,9 @@ class _VideoListScreenState extends State<VideoListScreen> {
                         ),
                       ),
                       Positioned(
-                          top: 20,
-                          left: 20,
-                          right: 20,
+                          top: 20.h,
+                          left: 20.w,
+                          right: 20.w,
                           bottom: 0,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -103,19 +104,19 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                       borderRadius: BorderRadius.circular(15),
                                       child: CachedNetworkImage(
                                           fit: BoxFit.cover,
-                                          height: screenHeight * .28,
-                                          width: screenWidth * .4,
+                                          height: (screenHeight * .28).h,
+                                          width: (screenWidth * .4).w,
                                           imageUrl: Get
                                               .arguments['anime'].imageUrl
                                               .toString()),
                                     ),
-                                    const SizedBox(
-                                      width: 20,
+                                     SizedBox(
+                                      width: 20.w,
                                     ),
                                     Flexible(
                                       child: Container(
-                                        margin: const EdgeInsets.symmetric(
-                                            vertical: 15),
+                                        margin: EdgeInsets.symmetric(
+                                            vertical: 15.h),
                                         child: Text(
                                             Get.arguments['anime'].name
                                                 .toString(),
@@ -128,8 +129,8 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                 ),
                               ),
                               Container(
-                                margin: const EdgeInsets.symmetric(
-                                    vertical: 40, horizontal: 10),
+                                margin: EdgeInsets.symmetric(
+                                    vertical: 40.h, horizontal: 10.w),
                                 child: Text(
                                   'Episodes',
                                   style: TakoTheme.darkTextTheme.headline5,
@@ -185,7 +186,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                 ),
                               ),
                               SizedBox(
-                                height: screenHeight * .05,
+                                height: (screenHeight * .05).h,
                               ),
                             ],
                           )),

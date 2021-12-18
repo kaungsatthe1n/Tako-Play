@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:tako_play/utils/constants.dart';
 import '../theme/tako_theme.dart';
@@ -21,8 +22,8 @@ class _SearchScreenState extends State<SearchScreen> {
   final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
-    final itemHeight = screenHeight * .42;
-    final itemWidth = screenWidth / 2;
+    final itemHeight = (screenHeight * .26).h;
+    final itemWidth = (screenWidth / 2).w;
     return Scaffold(
       appBar: AppBar(
         title: TextField(
@@ -68,10 +69,11 @@ class _SearchScreenState extends State<SearchScreen> {
                   final list = snapshot.data!.animeList;
 
                   return GridView.builder(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 20),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      childAspectRatio: (itemWidth / itemHeight),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      childAspectRatio: 3 / 5.5,
                       crossAxisCount: 2,
                       crossAxisSpacing: 20,
                       mainAxisSpacing: 20,
@@ -86,22 +88,22 @@ class _SearchScreenState extends State<SearchScreen> {
                           );
                         },
                         child: Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          margin: EdgeInsets.symmetric(horizontal: 10.w),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: CachedNetworkImage(
-                                  width: itemWidth.toDouble(),
-                                  height: screenHeight * .24,
-                                  fit: BoxFit.cover,
-                                  imageUrl: list[index].imageUrl.toString(),
+                              AspectRatio(
+                                aspectRatio: 0.7,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: CachedNetworkImage(
+                                    fit: BoxFit.cover,
+                                    imageUrl: list[index].imageUrl.toString(),
+                                  ),
                                 ),
                               ),
                               Container(
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 20),
+                                margin: EdgeInsets.symmetric(vertical: 20.h),
                                 child: Text(
                                   list[index].name.toString(),
                                   maxLines: 2,
