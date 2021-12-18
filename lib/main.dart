@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:sizer/sizer.dart';
 import 'package:tako_play/screens/about_app_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/search_screen.dart';
@@ -13,6 +13,7 @@ import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   _setUpLogging();
   runApp(const MyApp());
 }
@@ -36,8 +37,9 @@ class MyApp extends StatelessWidget {
           dispose: (_, RequestService service) => service.client.dispose(),
         ),
       ],
-      child: Sizer(
-        builder: (context, _, __) => GetMaterialApp(
+      child: ScreenUtilInit(
+        designSize: const Size(360, 764),
+        builder: () => GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'TakoPlay',
           theme: TakoTheme.dark(),
