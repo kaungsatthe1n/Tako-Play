@@ -1,6 +1,7 @@
 // Network Request
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 const String version = 'v1.0.0';
 bool isSameVersion = true;
@@ -34,3 +35,8 @@ const Color tkDarkerBlue = Color(0xFF060B16);
 const Color tkDarkGreen = Color(0xFF1D4C4F);
 const Color tkLightGreen = Color(0xFF28B67E);
 const Color tkGrey = Color(0xFFD3DCDE);
+
+// ScreenUtil
+
+double screenWidth = ScreenUtil().screenWidth;
+double screenHeight = ScreenUtil().screenHeight;
