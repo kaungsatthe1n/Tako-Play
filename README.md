@@ -8,7 +8,7 @@
 
 ## Download App
 
-- #### Android : [Tako-Play.apk](https://github.com/kaungsatthe1n/Tako-Play/releases/download/v1.0.0/app.apk)
+- #### Android : [Tako-Play.apk](https://github.com/kaungsatthe1n/Tako-Play/releases/download/v1.0.1/app.apk)
 
 - #### IOS : _Coming soon ..._
 
