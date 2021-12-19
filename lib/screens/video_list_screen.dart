@@ -100,17 +100,20 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(15),
-                                      child: CachedNetworkImage(
-                                          fit: BoxFit.cover,
-                                          height: (screenHeight * .28).h,
-                                          width: (screenWidth * .4).w,
-                                          imageUrl: Get
-                                              .arguments['anime'].imageUrl
-                                              .toString()),
+                                    AspectRatio(
+                                      aspectRatio: 0.6,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(15),
+                                        child: CachedNetworkImage(
+                                            fit: BoxFit.cover,
+                                            height: (screenHeight * .28).h,
+                                            width: (screenWidth * .43).w,
+                                            imageUrl: Get
+                                                .arguments['anime'].imageUrl
+                                                .toString()),
+                                      ),
                                     ),
-                                     SizedBox(
+                                    SizedBox(
                                       width: 20.w,
                                     ),
                                     Flexible(

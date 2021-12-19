@@ -48,6 +48,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         aspectRatio: 16 / 10,
         handleLifecycle: false,
         autoDetectFullscreenDeviceOrientation: true,
+        fit: BoxFit.fitHeight,
         autoPlay: true,
         allowedScreenSleep: false,
         autoDispose: true,
