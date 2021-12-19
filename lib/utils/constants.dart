@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-const String version = 'v1.0.0';
+const String version = 'v1.0.1';
 bool isSameVersion = true;
 const license = 'MIT License';
 const String latestRelease =
