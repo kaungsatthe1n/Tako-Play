@@ -32,6 +32,15 @@ class AboutAppScreen extends StatelessWidget {
             subtitle: Text(license),
           ),
           ListTile(
+            title: const Text('What\'s update ?'),
+            onTap: () {
+              Get.dialog(const AlertDialog(
+                backgroundColor: tkDarkBlue,
+                content: Text('Video Player Full Screen Mode and Image Url Ratio Fixed'),
+              ));
+            },
+          ),
+          ListTile(
             onTap: () {
               if (isSameVersion) {
                 Get.dialog(const AlertDialog(
