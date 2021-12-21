@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:tako_play/utils/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,9 +50,22 @@ class AboutAppScreen extends StatelessWidget {
                   content: Text('No Update Available'),
                 ));
               } else {
-                Get.dialog(const AlertDialog(
+                Get.dialog(AlertDialog(
                   backgroundColor: tkDarkBlue,
-                  content: Text('New Update is  Available'),
+                  content: SizedBox(
+                    height: (screenHeight * .15).h,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('New Update is Available\n'),
+                        MaterialButton(
+                            elevation: 5,
+                            color: tkLightGreen.withAlpha(200),
+                            child: const Text('Update'),
+                            onPressed: () => launch(updateLink.toString())),
+                      ],
+                    ),
+                  ),
                 ));
               }
             },
