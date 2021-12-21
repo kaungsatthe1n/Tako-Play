@@ -31,8 +31,6 @@ class _HomeScreenState extends State<HomeScreen> {
       DeviceOrientation.portraitUp,
     ]);
     checkForUpdate();
-    print(screenHeight);
-    print(screenWidth);
   }
 
   Future<void> checkForUpdate() async {
@@ -47,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
         print('same version');
       } else {
         isSameVersion = false;
+        updateLink = github.downloadLink.toString();
         Get.dialog(AlertDialog(
             elevation: 10,
             backgroundColor: tkDarkBlue,
