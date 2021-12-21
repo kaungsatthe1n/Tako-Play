@@ -37,7 +37,7 @@ class AboutAppScreen extends StatelessWidget {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) Video Player is paused when the app is in the inactive mode.\n (-) Video Controls Layer is Visible when the app is back to the active mode. \n (-) Recently clicked episode number will be mark.'),
+                    '(-) Video Player is paused when the app is in the inactive mode.\n\n(-) Video Controls Layer is Visible when the app is back to the active mode.\n\n(-) Recently clicked episode number will be mark.'),
               ));
             },
           ),
