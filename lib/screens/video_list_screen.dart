@@ -19,6 +19,8 @@ class VideoListScreen extends StatefulWidget {
 
 class _VideoListScreenState extends State<VideoListScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  var selectedIndex = 9999999.obs;
+
   @override
   void initState() {
     super.initState();
@@ -150,37 +152,44 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                   itemCount: list!.length,
                                   itemBuilder:
                                       (BuildContext context, int index) {
-                                    return Material(
-                                      borderRadius: BorderRadius.circular(10),
-                                      color: tkLightGreen.withAlpha(200),
-                                      child: InkWell(
+                                    return Obx(
+                                      () => Material(
                                         borderRadius: BorderRadius.circular(10),
-                                        onTap: () async {
-                                          Get.toNamed(Routes.videoPlayerScreen,
-                                              arguments: {
-                                                'episodeUrl': list[index]
-                                                    .episodeUrl
-                                                    .toString()
-                                              });
-                                        },
-                                        splashColor: Colors.white,
-                                        child: Container(
-                                          alignment: Alignment.center,
-                                          decoration: BoxDecoration(
-                                              boxShadow: const [
-                                                BoxShadow(
-                                                  color: Colors.black12,
-                                                  spreadRadius: 2,
-                                                  blurRadius: 7,
-                                                  offset: Offset(0, 5),
-                                                ),
-                                              ],
-                                              borderRadius:
-                                                  BorderRadius.circular(10)),
-                                          child: Text(
-                                            (index + 1).toString(),
-                                            style: TakoTheme
-                                                .darkTextTheme.headline6,
+                                        color: selectedIndex.value == index
+                                            ? tkDarkGreen
+                                            : tkLightGreen.withAlpha(200),
+                                        child: InkWell(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          onTap: () async {
+                                            selectedIndex.value = index;
+                                            Get.toNamed(
+                                                Routes.videoPlayerScreen,
+                                                arguments: {
+                                                  'episodeUrl': list[index]
+                                                      .episodeUrl
+                                                      .toString()
+                                                });
+                                          },
+                                          splashColor: Colors.white,
+                                          child: Container(
+                                            alignment: Alignment.center,
+                                            decoration: BoxDecoration(
+                                                boxShadow: const [
+                                                  BoxShadow(
+                                                    color: Colors.black12,
+                                                    spreadRadius: 2,
+                                                    blurRadius: 7,
+                                                    offset: Offset(0, 5),
+                                                  ),
+                                                ],
+                                                borderRadius:
+                                                    BorderRadius.circular(10)),
+                                            child: Text(
+                                              (index + 1).toString(),
+                                              style: TakoTheme
+                                                  .darkTextTheme.headline6,
+                                            ),
                                           ),
                                         ),
                                       ),
