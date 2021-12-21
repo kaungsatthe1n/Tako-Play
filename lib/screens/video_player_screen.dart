@@ -12,7 +12,8 @@ class VideoPlayerScreen extends StatefulWidget {
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
-class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
+class _VideoPlayerScreenState extends State<VideoPlayerScreen>
+    with WidgetsBindingObserver {
   late BetterPlayerController _controller;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   bool isLoading = true;
@@ -20,6 +21,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance!.addObserver(this);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -45,14 +47,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       const BetterPlayerConfiguration(
         fullScreenByDefault: true,
         autoDetectFullscreenAspectRatio: true,
-        aspectRatio: 16 / 10,
+        aspectRatio: 16 / 9,
         handleLifecycle: false,
         autoDetectFullscreenDeviceOrientation: true,
         fit: BoxFit.fitHeight,
         autoPlay: true,
         allowedScreenSleep: false,
         autoDispose: true,
-        fullScreenAspectRatio: 16 / 10,
+        fullScreenAspectRatio: 16 / 9,
         controlsConfiguration: BetterPlayerControlsConfiguration(),
       ),
       betterPlayerDataSource: BetterPlayerDataSource(
@@ -62,8 +64,27 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _controller.setControlsAlwaysVisible(true);
+        break;
+      case AppLifecycleState.inactive:
+        _controller.pause();
+        break;
+      case AppLifecycleState.paused:
+        break;
+      case AppLifecycleState.detached:
+        break;
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
+    WidgetsBinding.instance!.removeObserver(this);
     _controller.dispose();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
