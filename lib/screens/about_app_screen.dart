@@ -32,11 +32,12 @@ class AboutAppScreen extends StatelessWidget {
             subtitle: Text(license),
           ),
           ListTile(
-            title: const Text('What\'s update ?'),
+            title: const Text('What\'s the update ?'),
             onTap: () {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
-                content: Text('Video Player Full Screen Mode and Image Url Ratio Fixed'),
+                content: Text(
+                    '(-) Video Player is paused when the app is in the inactive mode.\n (-) Video Controls Layer is Visible when the app is back to the active mode. \n (-) Recently clicked episode number will be mark.'),
               ));
             },
           ),
