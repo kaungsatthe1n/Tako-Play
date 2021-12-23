@@ -2,7 +2,6 @@ import 'package:better_player/better_player.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import '../services/anime_service.dart';
 import '../utils/constants.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -16,41 +15,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     with WidgetsBindingObserver {
   late BetterPlayerController _controller;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    fetchVideoFile();
+    mediaPlayerControllerSetUp();
   }
 
-  fetchVideoFile() async {
-    var videoFile = await AnimeService()
-        .getVideoUrl(Get.arguments['episodeUrl'])
-        .catchError((_) {
-      Get.dialog(const AlertDialog(
-        backgroundColor: tkDarkBlue,
-        content: Text('No Internet Connection'),
-      ));
-      Get.back();
-    });
-
-    setState(() {
-      isLoading = false;
-    });
+  mediaPlayerControllerSetUp() {
     _controller = BetterPlayerController(
       const BetterPlayerConfiguration(
-        fullScreenByDefault: true,
         autoDetectFullscreenAspectRatio: true,
         aspectRatio: 16 / 9,
         handleLifecycle: false,
         autoDetectFullscreenDeviceOrientation: true,
-        fit: BoxFit.fitHeight,
+        fit: BoxFit.contain,
         autoPlay: true,
         allowedScreenSleep: false,
         autoDispose: true,
@@ -58,8 +38,17 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
         controlsConfiguration: BetterPlayerControlsConfiguration(),
       ),
       betterPlayerDataSource: BetterPlayerDataSource(
-          BetterPlayerDataSourceType.network, videoFile.toString(),
-          headers: header),
+        BetterPlayerDataSourceType.network,
+        Get.arguments['mediaUrl'].toString(),
+        bufferingConfiguration: const BetterPlayerBufferingConfiguration(
+            minBufferMs: 2000,
+            maxBufferMs: 10000,
+            bufferForPlaybackMs: 1000,
+            bufferForPlaybackAfterRebufferMs: 2000),
+        cacheConfiguration:
+            const BetterPlayerCacheConfiguration(useCache: true),
+        headers: header,
+      ),
     );
   }
 
@@ -94,23 +83,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        SystemChrome.setPreferredOrientations([
-          DeviceOrientation.portraitUp,
-        ]);
-        return !isLoading;
-      },
-      child: Scaffold(
-          key: _formKey,
-          backgroundColor: Colors.black,
-          body: isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(),
-                )
-              : BetterPlayer(
-                  controller: _controller,
-                )),
-    );
+    return Scaffold(
+        key: _formKey,
+        backgroundColor: Colors.black,
+        body: BetterPlayer(
+          controller: _controller,
+        ));
   }
 }
