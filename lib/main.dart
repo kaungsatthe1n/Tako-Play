@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:tako_play/screens/about_app_screen.dart';
+import 'package:tako_play/screens/media_fetch_screen.dart';
+import 'package:tako_play/screens/webview_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/video_list_screen.dart';
@@ -15,6 +17,10 @@ import '../utils/routes.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
       overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
   _setUpLogging();
@@ -65,9 +71,17 @@ class MyApp extends StatelessWidget {
               page: () => const VideoListScreen(),
             ),
             GetPage(
+              name: Routes.mediaFetchScreen,
+              page: () => const MediaFetchScreen(),
+            ),
+            GetPage(
               name: Routes.videoPlayerScreen,
               page: () => const VideoPlayerScreen(),
             ),
+            GetPage(
+              name: Routes.webViewScreen,
+              page: () => const WebViewScreen(),
+            )
           ],
         ),
       ),
