@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tako_play/screens/webview_screen.dart';
 import 'package:tako_play/services/anime_service.dart';
 import 'package:tako_play/theme/tako_theme.dart';
 import 'package:tako_play/utils/constants.dart';
@@ -21,7 +20,6 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
     super.initState();
     fetchVideoFile();
   }
-
   fetchVideoFile() async {
     String type = Get.arguments['type'];
     final episodeUrl = Get.arguments['episodeUrl'];
@@ -39,7 +37,6 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
         'mediaUrl': videoFile.toString(),
       });
     }
-
     var videoFile =
         await AnimeService().fetchIframeEmbedded(episodeUrl).catchError((_) {
       Get.dialog(const AlertDialog(
@@ -49,7 +46,6 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       Get.back();
     });
     if (!mounted) return;
-
     Navigator.of(context)
         .pushReplacementNamed(Routes.webViewScreen, arguments: {
       'mediaUrl': 'https:' + videoFile.toString(),
