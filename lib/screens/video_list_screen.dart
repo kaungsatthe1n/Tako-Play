@@ -226,7 +226,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                                               'No Ads Popup',
                                                               style: TakoTheme
                                                                   .darkTextTheme
-                                                                  .subtitle1,
+                                                                  .subtitle1!
+                                                                  .copyWith(
+                                                                      color: Colors
+                                                                          .green),
                                                             )
                                                           ],
                                                         ),
@@ -283,7 +286,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                                               'Ads Popup',
                                                               style: TakoTheme
                                                                   .darkTextTheme
-                                                                  .subtitle1,
+                                                                  .subtitle1!
+                                                                  .copyWith(
+                                                                      color: Colors
+                                                                          .red),
                                                             )
                                                           ],
                                                         ),
