@@ -97,9 +97,11 @@ class AnimeService {
     var response =
         await RequestService.create().requestActualVideoResponse(url);
     dom.Document docu = parse(response.body);
+    // var hostInfo = hostRegExp.firstMatch(response.body)!.group(0).toString();
     var info = docu.getElementsByClassName('videocontent').first.text;
     var videoFile = mediaFileRegExp.firstMatch(info)!.group(0).toString();
-    // print("videoFile : $videoFile ");
+    // var hostName = hostInfo.substring(7, hostInfo.length - 2);
+    // host = hostName;
     return videoFile;
   }
 
