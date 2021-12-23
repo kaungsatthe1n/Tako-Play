@@ -3,7 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-const String version = 'v1.0.2';
+const String version = 'v1.1.0';
 String updateLink = '';
 bool isSameVersion = true;
 const license = 'MIT License';
@@ -13,6 +13,7 @@ const String baseUrl = 'https://gogoplay1.com/';
 const String search = '/search.html?keyword=';
 final mediaFileRegExp =
     RegExp(r"(https)://[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+[.m3u8]");
+final hostRegExp = RegExp(r"(Server )[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+[,]");
 
 const String takoPlay = 'https://github.com/kaungsatthe1n/Tako-Play';
 const String takoTracker = 'https://github.com/kaungsatthe1n/Tako-AnimeTracker';
@@ -20,7 +21,7 @@ const String mailing =
     'mailto:parrotksh@gmail.com?subject=[TakoPlay: (Ver: $version)]';
 
 const userAgent =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36";
+    "Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36";
 const origin = "https://goload.one";
 const referer = "https://goload.one";
 Map<String, String> header = {
