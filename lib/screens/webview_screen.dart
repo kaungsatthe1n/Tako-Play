@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get_rx/src/rx_types/rx_types.dart';
+import 'package:uuid/uuid.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewScreen extends StatefulWidget {
@@ -11,8 +13,9 @@ class WebViewScreen extends StatefulWidget {
 }
 
 class _WebViewScreenState extends State<WebViewScreen> {
-  final Completer<WebViewController> _controller =
-      Completer<WebViewController>();
+
+
+  var isLandScape = true.obs;
 
   @override
   void initState() {
@@ -37,10 +40,9 @@ class _WebViewScreenState extends State<WebViewScreen> {
   Widget build(BuildContext context) {
     final routes =
         ModalRoute.of(context)!.settings.arguments as Map<String, String>;
-
     return WillPopScope(
       onWillPop: () async {
-        if (MediaQuery.of(context).orientation == Orientation.portrait) {
+        if (!isLandScape.value) {
           return true;
         } else {
           SystemChrome.setPreferredOrientations([
@@ -48,7 +50,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
           ]);
           SystemChrome.setPreferredOrientations([
             DeviceOrientation.portraitUp,
-            DeviceOrientation.portraitDown,
             DeviceOrientation.landscapeLeft,
             DeviceOrientation.landscapeRight,
           ]);
@@ -60,10 +61,12 @@ class _WebViewScreenState extends State<WebViewScreen> {
         backgroundColor: Colors.black,
         body: Center(child: OrientationBuilder(builder: (context, orientation) {
           if (orientation == Orientation.landscape) {
+            isLandScape.value = true;
             SystemChrome.setEnabledSystemUIMode(
               SystemUiMode.immersiveSticky,
             );
           } else {
+            isLandScape.value = false;
             SystemChrome.setEnabledSystemUIMode(
               SystemUiMode.manual,
               overlays: [
@@ -73,26 +76,56 @@ class _WebViewScreenState extends State<WebViewScreen> {
             );
           }
           return AspectRatio(
-            aspectRatio: orientation == Orientation.landscape ? 16 / 9 : 1,
-            child: WebView(
-              initialUrl: routes['mediaUrl'],
-              javascriptMode: JavascriptMode.unrestricted,
-              initialMediaPlaybackPolicy: AutoMediaPlaybackPolicy.always_allow,
-              onWebViewCreated: (WebViewController webViewController) {
-                _controller.complete(webViewController);
-              },
-              onProgress: (int progress) {
-                print('WebView is loading (progress : $progress%)');
-              },
-              onPageFinished: (_) {
-                SystemChrome.setEnabledSystemUIMode(
-                  SystemUiMode.immersiveSticky,
-                );
-              },
-              navigationDelegate: (NavigationRequest request) {
-                return NavigationDecision.prevent;
-              },
-              backgroundColor: const Color(0x00000000),
+            aspectRatio:
+                orientation == Orientation.landscape ? 16 / 9 : 4 / 2.86,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  color: const Color(0x00000000),
+                ),
+                WebView(
+                  initialUrl: routes['mediaUrl'],
+                  javascriptMode: JavascriptMode.unrestricted,
+                  navigationDelegate: (NavigationRequest request) {
+                    return NavigationDecision.prevent;
+                  },
+                  backgroundColor: const Color(0x00000000),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 10,
+                  child: SizedBox(
+                    height: 50,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          onPressed: () {
+                            if (isLandScape.value) {
+                              SystemChrome.setPreferredOrientations([
+                                DeviceOrientation.portraitUp,
+                              ]);
+                            } else {
+                              SystemChrome.setPreferredOrientations([
+                                DeviceOrientation.landscapeRight,
+                                DeviceOrientation.landscapeLeft,
+                              ]);
+                            }
+                          },
+                          icon: const Icon(
+                            Icons.zoom_out_map_outlined,
+                            color: Colors.transparent,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              ],
             ),
           );
         })),
