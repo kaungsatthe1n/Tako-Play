@@ -163,13 +163,136 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                               BorderRadius.circular(10),
                                           onTap: () async {
                                             selectedIndex.value = index;
-                                            Get.toNamed(
-                                                Routes.videoPlayerScreen,
-                                                arguments: {
-                                                  'episodeUrl': list[index]
-                                                      .episodeUrl
-                                                      .toString()
-                                                });
+                                            Get.dialog(
+                                              AlertDialog(
+                                                backgroundColor: tkDarkBlue,
+                                                content: Container(
+                                                  alignment: Alignment.center,
+                                                  height: screenHeight * .2,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                Text(
+                                                                  'Slow',
+                                                                  style: TakoTheme
+                                                                      .darkTextTheme
+                                                                      .bodyText1,
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                                const Icon(
+                                                                  Icons
+                                                                      .arrow_circle_down_outlined,
+                                                                  color: Colors
+                                                                      .red,
+                                                                )
+                                                              ],
+                                                            ),
+                                                            MaterialButton(
+                                                                elevation: 5,
+                                                                color: tkLightGreen
+                                                                    .withAlpha(
+                                                                        200),
+                                                                child: const Text(
+                                                                    'CDN Server'),
+                                                                onPressed: () {
+                                                                  Get.back();
+                                                                  Get.toNamed(
+                                                                      Routes
+                                                                          .mediaFetchScreen,
+                                                                      arguments: {
+                                                                        'episodeUrl': list[index]
+                                                                            .episodeUrl
+                                                                            .toString(),
+                                                                        'type':
+                                                                            'cdn'
+                                                                      });
+                                                                }),
+                                                            Text(
+                                                              'No Ads Popup',
+                                                              style: TakoTheme
+                                                                  .darkTextTheme
+                                                                  .subtitle1,
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ),
+                                                      Flexible(
+                                                        child: Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          children: [
+                                                            Row(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .center,
+                                                              children: [
+                                                                Text(
+                                                                  'Fast',
+                                                                  style: TakoTheme
+                                                                      .darkTextTheme
+                                                                      .bodyText1,
+                                                                ),
+                                                                const SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                                const Icon(
+                                                                  Icons
+                                                                      .arrow_circle_up_outlined,
+                                                                  color: Colors
+                                                                      .green,
+                                                                )
+                                                              ],
+                                                            ),
+                                                            MaterialButton(
+                                                                elevation: 5,
+                                                                color: tkLightGreen
+                                                                    .withAlpha(
+                                                                        200),
+                                                                child: const Text(
+                                                                    'WebView'),
+                                                                onPressed: () {
+                                                                  Get.back();
+                                                                  Get.toNamed(
+                                                                      Routes
+                                                                          .mediaFetchScreen,
+                                                                      arguments: {
+                                                                        'episodeUrl': list[index]
+                                                                            .episodeUrl
+                                                                            .toString(),
+                                                                        'type':
+                                                                            'webview'
+                                                                      });
+                                                                }),
+                                                            Text(
+                                                              'Ads Popup',
+                                                              style: TakoTheme
+                                                                  .darkTextTheme
+                                                                  .subtitle1,
+                                                            )
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            );
                                           },
                                           splashColor: Colors.white,
                                           child: Container(
