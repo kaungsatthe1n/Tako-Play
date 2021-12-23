@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (BuildContext context, int index) {
                             return GestureDetector(
                               onTap: () {
-                                Get.toNamed(Routes.videoPlayerScreen,
+                                Get.toNamed(Routes.mediaFetchScreen,
                                     arguments: {
                                       'episodeUrl': recentlyAdded[index]
                                           .episodeUrl
@@ -374,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: ongoingList!.map((anime) {
                           return GestureDetector(
                             onTap: () {
-                              Get.toNamed(Routes.videoPlayerScreen, arguments: {
+                              Get.toNamed(Routes.mediaFetchScreen, arguments: {
                                 'episodeUrl': anime.episodeUrl.toString()
                               });
                             },
