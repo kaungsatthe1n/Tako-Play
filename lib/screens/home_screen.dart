@@ -311,12 +311,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (BuildContext context, int index) {
                             return GestureDetector(
                               onTap: () {
-                                Get.toNamed(Routes.mediaFetchScreen,
-                                    arguments: {
-                                      'episodeUrl': recentlyAdded[index]
-                                          .episodeUrl
-                                          .toString()
-                                    });
+                                Get.toNamed(Routes.mediaFetchScreen, arguments: {
+                                  'episodeUrl':
+                                      recentlyAdded[index].episodeUrl.toString()
+                                });
                               },
                               child: AspectRatio(
                                 aspectRatio: 3 / 6,
