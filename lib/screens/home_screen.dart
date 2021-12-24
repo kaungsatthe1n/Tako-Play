@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +32,46 @@ class _HomeScreenState extends State<HomeScreen> {
       DeviceOrientation.portraitUp,
     ]);
     checkForUpdate();
+    checkNoticeRead();
+  }
+
+  Future<void> checkNoticeRead() async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    bool? isRead = _prefs.getBool('isTakoNoticeRead');
+    if (isRead == null) {
+      _prefs.setBool('isTakoNoticeRead', true);
+      Get.dialog(AlertDialog(
+        backgroundColor: tkDarkBlue,
+        content: SizedBox(
+          height: (screenHeight * .45).h,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Notice',
+                style: TakoTheme.darkTextTheme.headline1!
+                    .copyWith(color: tkLightGreen),
+              ),
+              Text(
+                'Dear TakoPlay Users, \n\n* Sadly, CDN Server(No Ads Popup) is no longer available as the Website used by this app has updated their source code !\n\n* WebView is still Working Fine.',
+                style: TakoTheme.darkTextTheme.headline3,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  MaterialButton(
+                      color: tkLightGreen.withAlpha(200),
+                      child: const Text('Close'),
+                      onPressed: () {
+                        Get.back();
+                      }),
+                ],
+              )
+            ],
+          ),
+        ),
+      ));
+    }
   }
 
   Future<void> checkForUpdate() async {
@@ -219,11 +260,60 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         margin: EdgeInsets.symmetric(
                             horizontal: 20.w, vertical: 20.h),
-                        child: Text(
-                          'Popular',
-                          style: TakoTheme.darkTextTheme.headline4!.copyWith(
-                            color: tkLightGreen,
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Popular',
+                              style:
+                                  TakoTheme.darkTextTheme.headline4!.copyWith(
+                                color: tkLightGreen,
+                              ),
+                            ),
+                            IconButton(
+                                onPressed: () {
+                                  Get.dialog(AlertDialog(
+                                    backgroundColor: tkDarkBlue,
+                                    content: SizedBox(
+                                      height: (screenHeight * .25).h,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Tip',
+                                            style: TakoTheme
+                                                .darkTextTheme.headline1!
+                                                .copyWith(color: Colors.yellow),
+                                          ),
+                                          Text(
+                                            'Double Tap the screen to Show and Hide Server Icon in WebView Player.',
+                                            style: TakoTheme
+                                                .darkTextTheme.headline3,
+                                          ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
+                                            children: [
+                                              MaterialButton(
+                                                  color: tkLightGreen
+                                                      .withAlpha(200),
+                                                  child: const Text('Close'),
+                                                  onPressed: () {
+                                                    Get.back();
+                                                  }),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ));
+                                },
+                                icon: const Icon(
+                                  Icons.lightbulb,
+                                  color: Colors.yellow,
+                                )),
+                          ],
                         ),
                       ),
                       SizedBox(
@@ -311,10 +401,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           itemBuilder: (BuildContext context, int index) {
                             return GestureDetector(
                               onTap: () {
-                                Get.toNamed(Routes.mediaFetchScreen, arguments: {
-                                  'episodeUrl':
-                                      recentlyAdded[index].episodeUrl.toString()
-                                });
+                                Get.toNamed(Routes.mediaFetchScreen,
+                                    arguments: {
+                                      'episodeUrl': recentlyAdded[index]
+                                          .episodeUrl
+                                          .toString()
+                                    });
                               },
                               child: AspectRatio(
                                 aspectRatio: 3 / 6,
