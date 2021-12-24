@@ -52,20 +52,6 @@ class _$RequestService extends RequestService {
   }
 
   @override
-  Future<Response> requestActualVideoResponse(String url) {
-    final $url = url;
-    final $request = Request('GET', $url, '');
-    return client.send<dynamic, dynamic>($request);
-  }
-
-  @override
-  Future<Response> requestEmbededResponse(String url) {
-    final $url = 'https:$url';
-    final $request = Request('GET', $url, '');
-    return client.send<dynamic, dynamic>($request);
-  }
-
-  @override
   Future<Response> requestGitHubUpdate(String url) {
     final $url = url;
     final $request = Request('GET', $url, '');
