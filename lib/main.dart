@@ -10,7 +10,6 @@ import 'package:tako_play/screens/webview_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/video_list_screen.dart';
-import '../screens/video_player_screen.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
@@ -73,10 +72,6 @@ class MyApp extends StatelessWidget {
             GetPage(
               name: Routes.mediaFetchScreen,
               page: () => const MediaFetchScreen(),
-            ),
-            GetPage(
-              name: Routes.videoPlayerScreen,
-              page: () => const VideoPlayerScreen(),
             ),
             GetPage(
               name: Routes.webViewScreen,
