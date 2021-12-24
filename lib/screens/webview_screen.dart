@@ -71,7 +71,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
           }
           return AspectRatio(
             aspectRatio:
-                orientation == Orientation.landscape ? 16 / 9 : 4 / 2.86,
+                orientation == Orientation.landscape ? 16 / 9 : 4 / 2.885,
             child: Stack(
               fit: StackFit.expand,
               children: [
