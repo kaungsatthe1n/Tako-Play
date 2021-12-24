@@ -1,8 +1,6 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:get/get_rx/src/rx_types/rx_types.dart';
-import 'package:uuid/uuid.dart';
+import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewScreen extends StatefulWidget {
@@ -13,8 +11,6 @@ class WebViewScreen extends StatefulWidget {
 }
 
 class _WebViewScreenState extends State<WebViewScreen> {
-
-
   var isLandScape = true.obs;
 
   @override
@@ -38,8 +34,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final routes =
-        ModalRoute.of(context)!.settings.arguments as Map<String, String>;
     return WillPopScope(
       onWillPop: () async {
         if (!isLandScape.value) {
@@ -87,7 +81,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   color: const Color(0x00000000),
                 ),
                 WebView(
-                  initialUrl: routes['mediaUrl'],
+                  initialUrl: Get.arguments['mediaUrl'],
                   javascriptMode: JavascriptMode.unrestricted,
                   navigationDelegate: (NavigationRequest request) {
                     return NavigationDecision.prevent;
