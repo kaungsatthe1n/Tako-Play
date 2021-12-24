@@ -20,23 +20,9 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
     super.initState();
     fetchVideoFile();
   }
+
   fetchVideoFile() async {
-    String type = Get.arguments['type'];
     final episodeUrl = Get.arguments['episodeUrl'];
-    if (type == 'cdn') {
-      var videoFile =
-          await AnimeService().getVideoUrl(episodeUrl).catchError((_) {
-        Get.dialog(const AlertDialog(
-          backgroundColor: tkDarkBlue,
-          content: Text('An Error Occurred'),
-        ));
-        Get.back();
-      });
-      if (!mounted) return;
-      Get.offNamed(Routes.videoPlayerScreen, arguments: {
-        'mediaUrl': videoFile.toString(),
-      });
-    }
     var videoFile =
         await AnimeService().fetchIframeEmbedded(episodeUrl).catchError((_) {
       Get.dialog(const AlertDialog(
@@ -46,8 +32,8 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       Get.back();
     });
     if (!mounted) return;
-    Navigator.of(context)
-        .pushReplacementNamed(Routes.webViewScreen, arguments: {
+
+    Get.offNamed(Routes.webViewScreen, arguments: {
       'mediaUrl': 'https:' + videoFile.toString(),
     });
   }
