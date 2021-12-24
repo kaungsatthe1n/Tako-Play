@@ -3,7 +3,6 @@ import 'package:html/parser.dart';
 import 'package:uuid/uuid.dart';
 import '../models/anime.dart';
 import '../services/request_service.dart';
-import '../utils/constants.dart';
 
 class AnimeService {
   Future<AnimeResults> getSearchResult(String title) async {
@@ -48,13 +47,6 @@ class AnimeService {
 
     for (var element in list) {
       var url = element.getElementsByTagName('a').first.attributes.values.first;
-      var ep = element
-          .getElementsByTagName('a')
-          .first
-          .getElementsByClassName('name')
-          .first
-          .text
-          .trim();
 
       Anime animeInfo = Anime(
         episodeUrl: url,
@@ -75,44 +67,8 @@ class AnimeService {
         .attributes
         .values
         .first;
-    // print("IFrame : $embededIframeUrl ");
     return embededIframeUrl;
   }
-
-  Future<String> fetchTokenEmbedded(url) async {
-    final response = await RequestService.create().requestEmbededResponse(url);
-    dom.Document document = parse(response.body);
-    var tokenEmbeddedUrl = document
-        .getElementById('list-server-more')!
-        .children[1]
-        .children[1]
-        .attributes
-        .values
-        .last;
-    // print("Token : $tokenEmbeddedUrl ");
-    return tokenEmbeddedUrl;
-  }
-
-  Future<String> fetchActualVideo(url) async {
-    var response =
-        await RequestService.create().requestActualVideoResponse(url);
-    dom.Document docu = parse(response.body);
-    // var hostInfo = hostRegExp.firstMatch(response.body)!.group(0).toString();
-    var info = docu.getElementsByClassName('videocontent').first.text;
-    var videoFile = mediaFileRegExp.firstMatch(info)!.group(0).toString();
-    // var hostName = hostInfo.substring(7, hostInfo.length - 2);
-    // host = hostName;
-    return videoFile;
-  }
-
-  Future<String> getVideoUrl(path) async {
-    var iframeEmbedded = await fetchIframeEmbedded(path);
-    var tokenEmbedded = await fetchTokenEmbedded(iframeEmbedded);
-    var actualUrl = await fetchActualVideo(tokenEmbedded);
-    // print("ActualUrl : $actualUrl ");
-    return actualUrl;
-  }
-
   Future<AnimeResults> getAnimes(request) async {
     List<Anime> _animeList = [];
 
