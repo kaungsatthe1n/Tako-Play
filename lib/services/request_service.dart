@@ -19,10 +19,6 @@ abstract class RequestService extends ChopperService {
   @Get(path: 'ongoing-series')
   Future<Response> requestOnGoingResponse();
 
-  Future<Response> requestEmbededResponse(String url);
-
-  Future<Response> requestActualVideoResponse(String url);
-
   Future<Response> requestGitHubUpdate(String url);
 
   static RequestService create() {
