@@ -1,28 +1,31 @@
 name: tako_play
 description: A new Flutter project.
 
+publish_to: "none"
 
-publish_to: "none" 
-
-
-version: 1.1.1+1
+version: 1.2.0+1
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
+  better_player: ^0.0.81
   cached_network_image: ^3.1.0+1
   chopper: ^4.0.3
-  shared_preferences: ^2.0.11
   cupertino_icons: ^1.0.2
   flutter:
     sdk: flutter
+  flutter_cache_manager: ^3.3.0
   flutter_screenutil: ^5.0.1+2
+  flutter_spinkit: ^5.1.0
   get: ^4.6.0
   google_fonts: ^2.1.0
   html: ^0.15.0
+  http: ^0.13.4
   logging: ^1.0.2
   provider: ^6.0.1
+  shared_preferences: ^2.0.11
+  sqflite: ^2.0.1
   url_launcher: ^6.0.17
   uuid: ^3.0.5
   webview_flutter: ^2.3.1
@@ -33,7 +36,6 @@ dev_dependencies:
     sdk: flutter
 
 flutter_native_splash:
-
   color: "#0d1321"
   image: assets/images/splash.png
 
@@ -42,10 +44,8 @@ flutter_native_splash:
   web: false
 
 flutter:
-
   uses-material-design: true
 
   assets:
     - assets/images/
     - assets/gif/
-  
