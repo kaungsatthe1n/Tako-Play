@@ -149,7 +149,6 @@ class AnimeService {
   Future<Map<String, String>> fetchCdnStreamLink(url) async {
     final response = await RequestService.create().requestCdnVideoLink(
         url.toString().replaceFirst('streaming.php', 'download'));
-    // referer = url.toString();
     Map<String, String> streamingDatas = {};
     dom.Document doc = parse(response.body);
     final streamingInfo = doc
