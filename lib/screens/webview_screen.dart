@@ -83,6 +83,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
                 WebView(
                   initialUrl: Get.arguments['mediaUrl'],
                   javascriptMode: JavascriptMode.unrestricted,
+                  allowsInlineMediaPlayback: true,
                   navigationDelegate: (NavigationRequest request) {
                     return NavigationDecision.prevent;
                   },
