@@ -5,7 +5,6 @@
         android:label="TakoPlay"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true" >
-
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
