@@ -24,9 +24,9 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
   fetchVideoFile() async {
     final animeUrl = Get.arguments['animeUrl'];
 
-    final webViewController = Get.find<WebViewController>();
+    // final webViewController = Get.find<WebViewController>();
 
-    if (webViewController.isWebView) {
+    // if (webViewController.isWebView) {
       var mediaUrl =
           await AnimeService().fetchIframeEmbedded(animeUrl).catchError((_) {
         Get.dialog(const AlertDialog(
@@ -39,21 +39,21 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       Get.offNamed(Routes.webViewScreen, arguments: {
         'mediaUrl': 'https:' + mediaUrl,
       });
-    } else {
-      var resolutions =
-          await AnimeService().getVideoWithResolution(animeUrl).catchError((_) {
-        Get.dialog(const AlertDialog(
-          backgroundColor: tkDarkBlue,
-          content: Text('An Error Occurred'),
-        ));
-        Get.back();
-      });
-      if (!mounted) return;
+    // } else {
+    //   var resolutions =
+    //       await AnimeService().getVideoWithResolution(animeUrl).catchError((_) {
+    //     Get.dialog(const AlertDialog(
+    //       backgroundColor: tkDarkBlue,
+    //       content: Text('An Error Occurred'),
+    //     ));
+    //     Get.back();
+    //   });
+    //   if (!mounted) return;
 
-      Get.offNamed(Routes.videoPlayerScreen, arguments: {
-        'resolutions': resolutions,
-      });
-    }
+    //   Get.offNamed(Routes.videoPlayerScreen, arguments: {
+    //     'resolutions': resolutions,
+    //   });
+    // }
   }
 
   final _random = Random();
