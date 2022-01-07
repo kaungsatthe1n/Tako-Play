@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:tako_play/theme/tako_theme.dart';
-import 'package:tako_play/utils/constants.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/constants.dart';
 
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({Key? key}) : super(key: key);
@@ -34,54 +33,12 @@ class AboutAppScreen extends StatelessWidget {
             subtitle: Text(license),
           ),
           ListTile(
-            title: const Text('Where\'s the Player with No Ads'),
-            onTap: () {
-              Get.dialog(AlertDialog(
-                backgroundColor: tkDarkBlue,
-                content: SizedBox(
-                  height: (screenHeight * .50).h,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Notice',
-                        style: TakoTheme.darkTextTheme.headline1!
-                            .copyWith(color: tkLightGreen),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Text(
-                        'Dear TakoPlay Users, \n\n* Sadly, CDN Server(No Ads Popup) is no longer available as the Website used by this app has updated their source code !\n\n* WebView is still Working Fine.',
-                        style: TakoTheme.darkTextTheme.headline3,
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          MaterialButton(
-                              color: tkLightGreen.withAlpha(200),
-                              child: const Text('Close'),
-                              onPressed: () {
-                                Get.back();
-                              }),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              ));
-            },
-          ),
-          ListTile(
             title: const Text('What\'s the update ?'),
             onTap: () {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) Only WebView(Contains Ads popup) is Available.\n\n (-) Fixed Animes from Recently Added and Ongoing are unable to watch.\n\n(-) Fixed WebView Video AspectRatio.'),
+                    '(-) CDN Server(No Ads) is back now.\n\n(-) Anime Details (Release Date , Status , Genres) is Added.\n\n(-) You can now Bookmark your favourite Anime.\n\n(-) Search Feature is enhanced.\n\n(-) Toggle Button is added for choosing video player type.'),
               ));
             },
           ),
