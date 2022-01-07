@@ -4,22 +4,26 @@ part 'request_service.chopper.dart';
 
 @ChopperApi(baseUrl: baseUrl)
 abstract class RequestService extends ChopperService {
-  @Get()
-  Future<Response> fetchHomePage();
+
+  Future<Response> requestRecentlyAddedResponse();
 
   @Get(path: '$search{title}')
   Future<Response> requestSearchResponse(@Path('title') String name);
 
   @Get(path: '{path}')
-  Future<Response> requestEpisodeResponse(@Path('path') String path);
+  Future<Response> requestAnimeDetailResponse(@Path('path') String path);
 
-  @Get(path: 'popular')
+  @Get(path: 'popular.html')
   Future<Response> requestPopularResponse();
 
-  @Get(path: 'ongoing-series')
-  Future<Response> requestOnGoingResponse();
+  @Get(path: 'anime-movies.html')
+  Future<Response> requestMoviesResponse();
+
+  Future<Response> requestEpisodesResponse(String id);
 
   Future<Response> requestGitHubUpdate(String url);
+
+  Future<Response> requestCdnVideoLink(String url);
 
   static RequestService create() {
     final client = ChopperClient(

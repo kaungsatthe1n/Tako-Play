@@ -17,43 +17,59 @@ class _$RequestService extends RequestService {
   final definitionType = RequestService;
 
   @override
-  Future<Response<dynamic>> fetchHomePage() {
-    final $url = 'https://gogoplay1.com/';
-    final $request = Request('GET', $url, client.baseUrl);
-    return client.send<dynamic, dynamic>($request);
-  }
-
-  @override
   Future<Response<dynamic>> requestSearchResponse(String name) {
-    final $url = 'https://gogoplay1.com//search.html?keyword=${name}';
+    final $url = 'https://gogoanime.wiki//search.html?keyword=$name';
     final $request = Request('GET', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> requestEpisodeResponse(String path) {
-    final $url = 'https://gogoplay1.com/${path}';
+  Future<Response<dynamic>> requestAnimeDetailResponse(String path) {
+    final $url = 'https://gogoanime.wiki/$path';
     final $request = Request('GET', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
   Future<Response<dynamic>> requestPopularResponse() {
-    final $url = 'https://gogoplay1.com/popular';
+    final $url = 'https://gogoanime.wiki/popular.html';
     final $request = Request('GET', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> requestOnGoingResponse() {
-    final $url = 'https://gogoplay1.com/ongoing-series';
+  Future<Response<dynamic>> requestMoviesResponse() {
+    final $url = 'https://gogoanime.wiki/anime-movies.html';
     final $request = Request('GET', $url, client.baseUrl);
+    return client.send<dynamic, dynamic>($request);
+  }
+
+  /// Not Concern with BaseUrl //
+  @override
+  Future<Response> requestCdnVideoLink(String url) {
+    final $url = 'https:' + url;
+    final $request = Request('GET', $url, '');
+    return client.send<dynamic, dynamic>($request);
+  }
+
+  @override
+  Future<Response> requestEpisodesResponse(String id) {
+    final $url =
+        'https://ajax.gogo-load.com/ajax/load-list-episode?ep_start=0&ep_end=5000&id=$id';
+    final $request = Request('GET', $url, '');
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
   Future<Response> requestGitHubUpdate(String url) {
     final $url = url;
+    final $request = Request('GET', $url, '');
+    return client.send<dynamic, dynamic>($request);
+  }
+
+  @override
+  Future<Response> requestRecentlyAddedResponse() {
+    final $url = 'https://ajax.gogocdn.net/ajax/page-recent-release.html';
     final $request = Request('GET', $url, '');
     return client.send<dynamic, dynamic>($request);
   }
