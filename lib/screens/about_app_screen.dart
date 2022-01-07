@@ -38,7 +38,7 @@ class AboutAppScreen extends StatelessWidget {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) CDN Server(No Ads) is back now.\n\n(-) Anime Details (Release Date , Status , Genres) is Added.\n\n(-) You can now Bookmark your favourite Anime.\n\n(-) Search Feature is enhanced.\n\n(-) Toggle Button is added for choosing video player type.'),
+                    '(-) Anime Details (Release Date , Status , Genres) is Added.\n\n(-) You can now Bookmark your favourite Anime.\n\n(-) Search Feature is enhanced.\n\n(-) Toggle Button is added for choosing video player type.'),
               ));
             },
           ),

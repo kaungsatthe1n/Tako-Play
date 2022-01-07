@@ -131,12 +131,15 @@ class _SearchScreenState extends State<SearchScreen> {
                                     Container(
                                       margin:
                                           EdgeInsets.symmetric(vertical: 20.h),
-                                      child: Text(
-                                        list[index].name.toString(),
-                                        maxLines: 2,
-                                        textAlign: TextAlign.center,
-                                        style:
-                                            TakoTheme.darkTextTheme.bodyText1,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: Text(
+                                          list[index].name.toString(),
+                                          maxLines: 2,
+                                          textAlign: TextAlign.center,
+                                          style:
+                                              TakoTheme.darkTextTheme.bodyText1,
+                                        ),
                                       ),
                                     ),
                                     Container(
@@ -147,13 +150,16 @@ class _SearchScreenState extends State<SearchScreen> {
                                         color: const Color(0xFF133F6E),
                                         borderRadius: BorderRadius.circular(30),
                                       ),
-                                      child: Text(
-                                        list[index].releasedDate.toString(),
-                                        maxLines: 2,
-                                        textAlign: TextAlign.center,
-                                        style: TakoTheme
-                                            .darkTextTheme.bodyText1!
-                                            .copyWith(color: tkLightGreen),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: Text(
+                                          list[index].releasedDate.toString(),
+                                          maxLines: 2,
+                                          textAlign: TextAlign.center,
+                                          style: TakoTheme
+                                              .darkTextTheme.bodyText1!
+                                              .copyWith(color: tkLightGreen),
+                                        ),
                                       ),
                                     ),
                                   ],

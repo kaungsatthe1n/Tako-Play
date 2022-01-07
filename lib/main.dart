@@ -30,7 +30,7 @@ void main() {
 }
 
 void _setUpLogging() {
-  Logger.root.level = Level.INFO;
+  Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((rec) {
     // ignore: avoid_print
     print('${rec.level.name}: ${rec.time}: ${rec.message}');

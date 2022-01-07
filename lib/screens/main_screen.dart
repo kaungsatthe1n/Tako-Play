@@ -19,7 +19,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   var currentIndex = 0.obs;
   var title = 'Home'.obs;
-  final webViewController = Get.put(WebViewController());
+  // final webViewController = Get.put(WebViewController());
   final List<Widget> _pages = [
     const HomeScreen(),
     const BookMarksScreen(),
@@ -91,19 +91,19 @@ class _MainScreenState extends State<MainScreen> {
                 leading: const Icon(Icons.info),
                 title: const Text('About TakoPlay'),
               ),
-              GetBuilder(
-                init: webViewController,
-                initState: (_) {
-                  webViewController.getVideoPlayerType();
-                },
-                builder: (_) => SwitchListTile(
-                  activeColor: tkLightGreen,
-                  value: webViewController.isWebView,
-                  onChanged: webViewController.changeWebViewType,
-                  title: const Text('Video Player Type'),
-                  subtitle: const Text('Enable Webview ?'),
-                ),
-              )
+              // GetBuilder(
+              //   init: webViewController,
+              //   initState: (_) {
+              //     webViewController.getVideoPlayerType();
+              //   },
+              //   builder: (_) => SwitchListTile(
+              //     activeColor: tkLightGreen,
+              //     value: webViewController.isWebView,
+              //     onChanged: webViewController.changeWebViewType,
+              //     title: const Text('Video Player Type'),
+              //     subtitle: const Text('Enable Webview ?'),
+              //   ),
+              // )
             ],
           ),
         ),
