@@ -1,11 +1,11 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tako_play/services/anime_service.dart';
-import 'package:tako_play/theme/tako_theme.dart';
-import 'package:tako_play/utils/constants.dart';
-import 'package:tako_play/utils/routes.dart';
+import '../helpers/webview_provider.dart';
+import '../services/anime_service.dart';
+import '../theme/tako_theme.dart';
+import '../utils/constants.dart';
+import '../utils/routes.dart';
 
 class MediaFetchScreen extends StatefulWidget {
   const MediaFetchScreen({Key? key}) : super(key: key);
@@ -22,20 +22,38 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
   }
 
   fetchVideoFile() async {
-    final episodeUrl = Get.arguments['episodeUrl'];
-    var videoFile =
-        await AnimeService().fetchIframeEmbedded(episodeUrl).catchError((_) {
-      Get.dialog(const AlertDialog(
-        backgroundColor: tkDarkBlue,
-        content: Text('An Error Occurred'),
-      ));
-      Get.back();
-    });
-    if (!mounted) return;
+    final animeUrl = Get.arguments['animeUrl'];
 
-    Get.offNamed(Routes.webViewScreen, arguments: {
-      'mediaUrl': 'https:' + videoFile.toString(),
-    });
+    final webViewController = Get.find<WebViewController>();
+
+    if (webViewController.isWebView) {
+      var mediaUrl =
+          await AnimeService().fetchIframeEmbedded(animeUrl).catchError((_) {
+        Get.dialog(const AlertDialog(
+          backgroundColor: tkDarkBlue,
+          content: Text('An Error Occurred'),
+        ));
+        Get.back();
+      });
+      if (!mounted) return;
+      Get.offNamed(Routes.webViewScreen, arguments: {
+        'mediaUrl': 'https:' + mediaUrl,
+      });
+    } else {
+      var resolutions =
+          await AnimeService().getVideoWithResolution(animeUrl).catchError((_) {
+        Get.dialog(const AlertDialog(
+          backgroundColor: tkDarkBlue,
+          content: Text('An Error Occurred'),
+        ));
+        Get.back();
+      });
+      if (!mounted) return;
+
+      Get.offNamed(Routes.videoPlayerScreen, arguments: {
+        'resolutions': resolutions,
+      });
+    }
   }
 
   final _random = Random();
