@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 class Github {
   String? version;
   String? newFeatures;
