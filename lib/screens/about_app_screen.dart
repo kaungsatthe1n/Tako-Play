@@ -38,7 +38,7 @@ class AboutAppScreen extends StatelessWidget {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) Vidstreaming CDN Server is Back Again ^^.\n\n(-) WebView Player update with with Ads Hide'),
+                    '(-) Vidstreaming CDN Server is Back Again ^^.\n\n(-) WebView Player update with Ads Hide'),
               ));
             },
           ),
