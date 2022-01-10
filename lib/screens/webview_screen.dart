@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
+import 'package:tako_play/utils/constants.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebViewScreen extends StatefulWidget {
@@ -14,14 +19,14 @@ class WebViewScreen extends StatefulWidget {
 
 class _WebViewScreenState extends State<WebViewScreen> {
   var isLandScape = true.obs;
-
+  final GlobalKey webViewKey = GlobalKey();
+  WebViewController? _webViewController;
   @override
   void initState() {
     super.initState();
     if (Platform.isAndroid) WebView.platform = AndroidWebView();
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
     ]);
   }
 
@@ -78,19 +83,44 @@ class _WebViewScreenState extends State<WebViewScreen> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  color: const Color(0x00000000),
-                ),
-                WebView(
-                  initialUrl: Get.arguments['mediaUrl'],
-                  javascriptMode: JavascriptMode.unrestricted,
-                  allowsInlineMediaPlayback: true,
-                  navigationDelegate: (NavigationRequest request) {
-                    return NavigationDecision.prevent;
-                  },
-                  backgroundColor: const Color(0x00000000),
+                SizedBox.fromSize(
+                  size: Size(screenWidth, screenHeight),
+                  child: WebView(
+                    initialUrl: Get.arguments['mediaUrl'].toString(),
+                    javascriptMode: JavascriptMode.unrestricted,
+                    allowsInlineMediaPlayback: true,
+                    onWebViewCreated: (controller) async {
+                      _webViewController = controller;
+                    },
+                    onPageFinished: (_) async {
+                      await Future.delayed(const Duration(seconds: 1));
+                      //
+                      for (var i = 0; i < 8; i++) {
+                        await _webViewController!.runJavascriptReturningResult(
+                            "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                        await _webViewController!.runJavascriptReturningResult(
+                            "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
+                      }
+                      //
+                      for (var i = 0; i < 8; i++) {
+                        await _webViewController!.runJavascriptReturningResult(
+                            "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                      }
+                      await _webViewController!.runJavascriptReturningResult(
+                          "document.getElementsByClassName('jw-icon jw-icon-inline jw-button-color jw-reset jw-icon-fullscreen')[1].click();");
+                      await _webViewController!.runJavascriptReturningResult(
+                          "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
+                      //
+                      for (var i = 0; i < 8; i++) {
+                        await _webViewController!.runJavascriptReturningResult(
+                            "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                      }
+                    },
+                    navigationDelegate: (NavigationRequest request) {
+                      return NavigationDecision.prevent;
+                    },
+                    backgroundColor: const Color(0x00000000),
+                  ),
                 ),
                 Positioned(
                   bottom: 0,

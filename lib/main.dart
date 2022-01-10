@@ -17,7 +17,7 @@ import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -25,7 +25,7 @@ void main() {
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
       overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-  // _setUpLogging();
+  _setUpLogging();
   runApp(const MyApp());
 }
 

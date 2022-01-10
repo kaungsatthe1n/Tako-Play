@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
-const String version = 'v1.2.1';
+const String version = 'v1.3.0';
 String updateLink = '';
 bool isSameVersion = true;
 const license = 'MIT License';

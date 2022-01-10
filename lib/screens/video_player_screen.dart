@@ -16,20 +16,20 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     with WidgetsBindingObserver {
   late BetterPlayerController _controller;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  Map<String, String> resolutions =
-      Get.arguments['resolutions'] as Map<String, String>;
-  var currentResolution = '';
+  // Map<String, String> resolutions =
+  //     Get.arguments['resolutions'] as Map<String, String>;
+  // var currentResolution = '';
 
   @override
   void initState() {
     super.initState();
-    if (resolutions.containsKey('720P')) {
-      currentResolution = resolutions['720P'].toString();
-    } else if (resolutions.containsKey('480P')) {
-      currentResolution = resolutions['480P'].toString();
-    } else {
-      currentResolution = resolutions['360P'].toString();
-    }
+    // if (resolutions.containsKey('720P')) {
+    //   currentResolution = resolutions['720P'].toString();
+    // } else if (resolutions.containsKey('480P')) {
+    //   currentResolution = resolutions['480P'].toString();
+    // } else {
+    //   currentResolution = resolutions['360P'].toString();
+    // }
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       // DeviceOrientation.landscapeLeft,
@@ -56,7 +56,6 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
         autoPlay: true,
         allowedScreenSleep: false,
         autoDispose: true,
-        fullScreenByDefault: true,
         fullScreenAspectRatio: 16 / 9,
         controlsConfiguration: BetterPlayerControlsConfiguration(
           overflowModalColor: Colors.black87,
@@ -71,7 +70,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
       ),
       betterPlayerDataSource: BetterPlayerDataSource(
         BetterPlayerDataSourceType.network,
-        currentResolution,
+        Get.arguments['url'].toString(),
         bufferingConfiguration: const BetterPlayerBufferingConfiguration(
             minBufferMs: 2000,
             maxBufferMs: 10000,
