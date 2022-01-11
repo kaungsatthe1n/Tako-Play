@@ -24,8 +24,10 @@ Parsing require data from website and serve anime with Ads FREE :bangbang:
 
 - Popular Animes
 - Recently Added Animes
-- Ongoing Animes
+- Movies
 - Search Anime
+- Bookmark Animes
+- Webview Player Support
 - No Annoying Ads
 - Auto Video Quality Detect
 - Update Support
