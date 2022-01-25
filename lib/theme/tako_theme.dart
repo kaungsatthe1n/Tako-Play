@@ -66,6 +66,7 @@ class TakoTheme {
       appBarTheme: const AppBarTheme(
         foregroundColor: Colors.white,
         backgroundColor: tkDarkBlue,
+        centerTitle: true,
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
         color: Colors.white,
@@ -76,10 +77,9 @@ class TakoTheme {
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         selectedItemColor: tkLightGreen,
-        unselectedItemColor: tkGrey,
+        unselectedItemColor: Colors.white60,
         backgroundColor: tkDarkBlue,
       ),
-      
       checkboxTheme: CheckboxThemeData(
         checkColor: MaterialStateProperty.all(Colors.black),
         fillColor: MaterialStateProperty.all(tkLightGreen.withAlpha(205)),

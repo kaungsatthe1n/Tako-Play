@@ -12,6 +12,11 @@ class AboutAppScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('About'),
+        leading: IconButton(
+            onPressed: () {
+              Get.back();
+            },
+            icon: const Icon(Icons.arrow_back_ios_new)),
       ),
       body: ListView(
         children: [
@@ -38,7 +43,7 @@ class AboutAppScreen extends StatelessWidget {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) Vidstreaming CDN Server is Back Again ^^.\n\n(-) WebView Player Updated with Ads Hide'),
+                    '(-) Ui Improved.\n\n(-) Video Buffer Speed is Enhanced.\n\n(-) You can now track and play your recently watched Anime.'),
               ));
             },
           ),

@@ -5,7 +5,9 @@ class Routes {
   static const String videoListScreen = '/video-list';
   static const String aboutAppScreen = '/about-app';
   static const String mediaFetchScreen = '/media-fetch';
+  static const String recentListScreen = '/recent-watch-list';
   static const String bookMarkScreen = '/bookmarks';
+  static const String noInternetScreen = '/no-internet-screen';
   static const String webViewScreen = '/web-view';
   static const String videoPlayerScreen = '/video-player';
 }

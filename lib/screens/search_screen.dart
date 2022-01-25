@@ -1,11 +1,12 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tako_play/services/request_service.dart';
-import '../helpers/cache_manager.dart';
+import 'package:tako_play/widgets/searched_result_anime_card.dart';
+import '../services/request_service.dart';
+import '../widgets/cache_image_with_cachemanager.dart';
 import '../utils/constants.dart';
 import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
@@ -44,6 +45,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
     return Scaffold(
         appBar: AppBar(
+          leading: IconButton(
+            onPressed: () {
+              Get.back();
+            },
+            icon: const Icon(Icons.arrow_back_ios_new),
+          ),
           title: TextField(
             key: _formKey,
             controller: _controller,
@@ -88,86 +95,35 @@ class _SearchScreenState extends State<SearchScreen> {
                     if (snapshot.connectionState == ConnectionState.done) {
                       final list = snapshot.data!.animeList;
 
-                      return GridView.builder(
-                        padding: EdgeInsets.symmetric(
-                            horizontal: 20.w, vertical: 20.h),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          childAspectRatio: itemWidth / itemHeight,
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 40,
-                        ),
-                        itemCount: list!.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return GestureDetector(
-                            onTap: () {
-                              Get.toNamed(
-                                Routes.videoListScreen,
-                                arguments: {'anime': list[index]},
-                              );
-                            },
-                            child: Hero(
-                              tag: list[index].id.toString(),
-                              child: Container(
-                                margin: EdgeInsets.symmetric(horizontal: 10.w),
-                                child: Column(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    AspectRatio(
-                                      aspectRatio: 0.7,
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(15),
-                                        child: CachedNetworkImage(
-                                          key: UniqueKey(),
-                                          cacheManager:
-                                              CustomCacheManager.instance,
-                                          fit: BoxFit.cover,
-                                          imageUrl:
-                                              list[index].imageUrl.toString(),
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      margin:
-                                          EdgeInsets.symmetric(vertical: 20.h),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: Text(
-                                          list[index].name.toString(),
-                                          maxLines: 2,
-                                          textAlign: TextAlign.center,
-                                          style:
-                                              TakoTheme.darkTextTheme.bodyText1,
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF133F6E),
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: Text(
-                                          list[index].releasedDate.toString(),
-                                          maxLines: 2,
-                                          textAlign: TextAlign.center,
-                                          style: TakoTheme
-                                              .darkTextTheme.bodyText1!
-                                              .copyWith(color: tkLightGreen),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                      return AnimationLimiter(
+                        child: GridView.builder(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 20.w, vertical: 20.h),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            childAspectRatio: itemWidth / itemHeight,
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 40,
+                          ),
+                          itemCount: list!.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return AnimationConfiguration.staggeredGrid(
+                              columnCount: 2,
+                              position: index,
+                              duration: const Duration(milliseconds: 800),
+                              child: SlideAnimation(
+                                verticalOffset: 100,
+                                // horizontalOffset: 50,
+                                child: FadeInAnimation(
+                                  child: SearchedResultAnimeCard(
+                                    anime: list[index],
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        },
+                            );
+                          },
+                        ),
                       );
                     } else {
                       return const Center(
@@ -201,7 +157,10 @@ class _SearchScreenState extends State<SearchScreen> {
                                         _deleteSearch(searches[index]);
                                         setState(() {});
                                       },
-                                      icon: const Icon(Icons.delete_forever)));
+                                      icon: const Icon(
+                                        Icons.delete_rounded,
+                                        color: tkLightGreen,
+                                      )));
                             });
                       }
                     }

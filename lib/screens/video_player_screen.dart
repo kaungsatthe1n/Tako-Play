@@ -16,23 +16,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     with WidgetsBindingObserver {
   late BetterPlayerController _controller;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  // Map<String, String> resolutions =
-  //     Get.arguments['resolutions'] as Map<String, String>;
-  // var currentResolution = '';
 
   @override
   void initState() {
     super.initState();
-    // if (resolutions.containsKey('720P')) {
-    //   currentResolution = resolutions['720P'].toString();
-    // } else if (resolutions.containsKey('480P')) {
-    //   currentResolution = resolutions['480P'].toString();
-    // } else {
-    //   currentResolution = resolutions['360P'].toString();
-    // }
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      // DeviceOrientation.landscapeLeft,
     ]);
     WidgetsBinding.instance!.addObserver(this);
 
@@ -40,8 +30,8 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     _controller.setOverriddenFit(BoxFit.contain);
   }
 
-  final indicator = const SpinKitFadingCube(
-    color: tkLightGreen,
+  final indicator = const SpinKitSquareCircle(
+    color: tkGradientBlue,
     size: 28,
   );
 
@@ -61,9 +51,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
           overflowModalColor: Colors.black87,
           overflowMenuIconsColor: Colors.white,
           overflowModalTextColor: Colors.white,
+          playIcon: Icons.play_arrow,
+          pauseIcon: Icons.pause_outlined,
+          playerTheme: BetterPlayerTheme.cupertino,
+          controlBarColor: tkDarkBlue.withOpacity(.75),
           loadingWidget: indicator,
           progressBarPlayedColor: tkLightGreen,
-          progressBarBufferedColor: Colors.white,
+          progressBarBufferedColor: Colors.grey,
           progressBarBackgroundColor: tkGrey,
           progressBarHandleColor: tkLightGreen,
         ),
@@ -72,16 +66,15 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
         BetterPlayerDataSourceType.network,
         Get.arguments['url'].toString(),
         bufferingConfiguration: const BetterPlayerBufferingConfiguration(
-            minBufferMs: 2000,
-            maxBufferMs: 10000,
-            bufferForPlaybackMs: 1000,
-            bufferForPlaybackAfterRebufferMs: 2000),
+          minBufferMs: 60000,
+          maxBufferMs: 555000,
+        ),
         resolutions: Get.arguments['resolutions'],
         cacheConfiguration: const BetterPlayerCacheConfiguration(
           useCache: true,
-          preCacheSize: 10 * 1024 * 1024,
-          maxCacheSize: 10 * 1024 * 1024,
-          maxCacheFileSize: 10 * 1024 * 1024,
+          preCacheSize: 400000,
+          maxCacheSize: 400000,
+          maxCacheFileSize: 400000,
         ),
         headers: header,
       ),

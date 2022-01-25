@@ -1,30 +1,23 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
-import '../helpers/cache_manager.dart';
-import '../models/bookmark.dart';
+import 'package:tako_play/widgets/cache_image_with_cachemanager.dart';
+import '../helpers/bookmark_manager.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
 
-class BookMarksScreen extends StatefulWidget {
-  const BookMarksScreen({Key? key}) : super(key: key);
+class BookMarksScreen extends StatelessWidget {
+  final bookmarkMaanger = Get.find<BookMarkManager>();
+  BookMarksScreen({Key? key}) : super(key: key);
 
-  @override
-  State<BookMarksScreen> createState() => _BookMarksScreenState();
-}
-
-class _BookMarksScreenState extends State<BookMarksScreen> {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: Provider.of<BookMarkProvider>(context, listen: false)
-          .getAllBookMarkFromDatabase(),
-      builder: (context, snapshot) => Consumer<BookMarkProvider>(
-        builder: (context, provider, _) => ListView.builder(
+      future: bookmarkMaanger.getAllBookMarkFromDatabase(),
+      builder: (context, snapshot) => GetBuilder<BookMarkManager>(
+        builder: (_) => ListView.builder(
             physics: const BouncingScrollPhysics(),
-            itemCount: provider.bookMarks.length,
+            itemCount: bookmarkMaanger.bookMarks.length,
             itemBuilder: (context, index) {
               return Container(
                 margin:
@@ -50,8 +43,9 @@ class _BookMarksScreenState extends State<BookMarksScreen> {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: () {
-                      Get.toNamed(Routes.videoListScreen,
-                          arguments: {'anime': provider.bookMarks[index]});
+                      Get.toNamed(Routes.videoListScreen, arguments: {
+                        'anime': bookmarkMaanger.bookMarks[index]
+                      });
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -63,11 +57,9 @@ class _BookMarksScreenState extends State<BookMarksScreen> {
                             aspectRatio: 0.6,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: CachedNetworkImage(
-                                key: UniqueKey(),
-                                cacheManager: CustomCacheManager.instance,
-                                imageUrl: provider.bookMarks[index].imageUrl,
-                                fit: BoxFit.cover,
+                              child: NetworkImageWithCacheManager(
+                                imageUrl:
+                                    bookmarkMaanger.bookMarks[index].imageUrl,
                               ),
                             ),
                           ),
@@ -78,7 +70,7 @@ class _BookMarksScreenState extends State<BookMarksScreen> {
                                 vertical: 10, horizontal: 10),
                             alignment: Alignment.topLeft,
                             child: Text(
-                              provider.bookMarks[index].name,
+                              bookmarkMaanger.bookMarks[index].name,
                               softWrap: true,
                               style: TakoTheme.darkTextTheme.headline3,
                             ),
@@ -86,8 +78,8 @@ class _BookMarksScreenState extends State<BookMarksScreen> {
                         ),
                         IconButton(
                             onPressed: () {
-                              var bookmark = provider.bookMarks[index];
-                              provider.removeFromBookMarks(bookmark);
+                              var bookmark = bookmarkMaanger.bookMarks[index];
+                              bookmarkMaanger.removeFromBookMarks(bookmark);
                               Get.snackbar(bookmark.name,
                                   'Removed from bookmark successfully!',
                                   backgroundColor: Colors.black38,

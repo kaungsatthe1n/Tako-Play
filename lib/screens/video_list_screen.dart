@@ -1,11 +1,14 @@
 import 'dart:ui';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
-import '../helpers/cache_manager.dart';
+import '../widgets/cache_image_with_cachemanager.dart';
+import '../helpers/bookmark_manager.dart';
+import '../helpers/recent_watch_manager.dart';
+import '../models/recent_anime.dart';
+import '../widgets/anime_detail_header.dart';
+import '../widgets/plot_summary.dart';
 import '../models/bookmark.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
@@ -22,10 +25,13 @@ class VideoListScreen extends StatefulWidget {
 
 class _VideoListScreenState extends State<VideoListScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final RecentWatchManager recentWatchManager = Get.find();
+  final BookMarkManager bookMarkManager = Get.find();
   var selectedIndex = 9999999.obs;
   var isExpanded = false.obs;
   final name = Get.arguments['anime'].name.toString();
   final imageUrl = Get.arguments['anime'].imageUrl.toString();
+  final animeUrl = Get.arguments['anime'].animeUrl.toString();
 
   @override
   void initState() {
@@ -50,14 +56,16 @@ class _VideoListScreenState extends State<VideoListScreen> {
       child: Scaffold(
         key: _formKey,
         appBar: AppBar(
-          title: const Text(
-            'Player',
-          ),
-          centerTitle: true,
-        ),
+            title: const Text(
+              'Player',
+            ),
+            leading: IconButton(
+                onPressed: () {
+                  Get.back();
+                },
+                icon: const Icon(Icons.arrow_back_ios_new))),
         body: FutureBuilder<Anime>(
-            future: AnimeService()
-                .fetchAnimeDetails(Get.arguments['anime'].animeUrl.toString()),
+            future: AnimeService().fetchAnimeDetails(animeUrl),
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return Center(
@@ -77,11 +85,8 @@ class _VideoListScreenState extends State<VideoListScreen> {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      child: CachedNetworkImage(
-                        key: UniqueKey(),
-                        cacheManager: CustomCacheManager.instance,
+                      child: NetworkImageWithCacheManager(
                         imageUrl: imageUrl,
-                        fit: BoxFit.cover,
                       ),
                     ),
                     BackdropFilter(
@@ -104,123 +109,16 @@ class _VideoListScreenState extends State<VideoListScreen> {
                           padding: const EdgeInsets.all(20.0),
                           child: ListView(
                             children: [
-                              SizedBox(
-                                height: screenHeight * .30,
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    AspectRatio(
-                                      aspectRatio: 0.5,
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(15),
-                                        child: CachedNetworkImage(
-                                            key: UniqueKey(),
-                                            fit: BoxFit.cover,
-                                            cacheManager:
-                                                CustomCacheManager.instance,
-                                            // height: (screenHeight * .15).h,
-                                            // width: (screenWidth * .30).w,
-                                            imageUrl: imageUrl),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 20.w,
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            margin: EdgeInsets.symmetric(
-                                                vertical: 15.h),
-                                            child: Text(name,
-                                                style: TakoTheme
-                                                    .darkTextTheme.headline4!
-                                                    .copyWith()),
-                                          ),
-                                          Container(
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 5),
-                                              child: Text.rich(
-                                                TextSpan(children: [
-                                                  TextSpan(
-                                                      text: 'Released: ',
-                                                      style: TakoTheme
-                                                          .darkTextTheme
-                                                          .bodyText2),
-                                                  TextSpan(
-                                                      text: anime!.releasedDate
-                                                          .toString(),
-                                                      style: TakoTheme
-                                                          .darkTextTheme
-                                                          .bodyText1),
-                                                ]),
-                                              )),
-                                          Container(
-                                              margin:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 5),
-                                              child: Text.rich(
-                                                TextSpan(children: [
-                                                  TextSpan(
-                                                      text: 'Status: ',
-                                                      style: TakoTheme
-                                                          .darkTextTheme
-                                                          .bodyText2),
-                                                  TextSpan(
-                                                      text: anime.status
-                                                          .toString(),
-                                                      style: TakoTheme
-                                                          .darkTextTheme
-                                                          .bodyText1),
-                                                ]),
-                                              )),
-                                          const SizedBox(
-                                            height: 5,
-                                          ),
-                                          Expanded(
-                                            child: Wrap(
-                                              children: anime.genres!
-                                                  .map((genre) => Transform(
-                                                        transform:
-                                                            Matrix4.identity()
-                                                              ..scale(0.8),
-                                                        child: Chip(
-                                                            materialTapTargetSize:
-                                                                MaterialTapTargetSize
-                                                                    .shrinkWrap,
-                                                            label: Text(genre
-                                                                .toString())),
-                                                      ))
-                                                  .toList(),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              AnimeDetailHeader(
+                                anime: anime!,
+                                name: name,
+                                imageUrl: imageUrl,
                               ),
                               SizedBox(
                                 height: 40.h,
                               ),
-                              ExpansionTile(
-                                textColor: tkLightGreen,
-                                iconColor: tkLightGreen,
-                                title: const Text('Plot Summary'),
-                                childrenPadding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10),
-                                    child: Text(
-                                      anime.summary.toString(),
-                                    ),
-                                  ),
-                                ],
+                              PlotSummary(
+                                summary: anime.summary.toString(),
                               ),
                               Container(
                                 margin: EdgeInsets.only(
@@ -236,67 +134,56 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                       'Episodes',
                                       style: TakoTheme.darkTextTheme.headline5,
                                     ),
-                                    Consumer<BookMarkProvider>(
-                                      builder: (context, bookMarkProvider, _) =>
-                                          TextButton.icon(
-                                              onPressed: () {
-                                                final item = BookMark(
-                                                  id: anime.id!,
-                                                  imageUrl: Get
-                                                      .arguments['anime']
-                                                      .imageUrl
-                                                      .toString(),
-                                                  name: Get
-                                                      .arguments['anime'].name
-                                                      .toString(),
-                                                  animeUrl: Get
-                                                      .arguments['anime']
-                                                      .animeUrl
-                                                      .toString(),
-                                                );
-                                                if (bookMarkProvider.ids
-                                                    .contains(
-                                                        anime.id.toString())) {
-                                                  bookMarkProvider
-                                                      .removeFromBookMarks(
-                                                          item);
-                                                  Get.snackbar(name,
-                                                      'Removed from bookmark successfully!',
-                                                      backgroundColor:
-                                                          Colors.black38,
-                                                      duration: const Duration(
-                                                          milliseconds: 1300),
-                                                      snackPosition:
-                                                          SnackPosition.BOTTOM);
-                                                } else {
-                                                  bookMarkProvider
-                                                      .addToBookMarks(item);
-                                                  Get.snackbar(name,
-                                                      'Added to bookmark successfully!',
-                                                      backgroundColor:
-                                                          Colors.black38,
-                                                      duration: const Duration(
-                                                          milliseconds: 1300),
-                                                      snackPosition:
-                                                          SnackPosition.BOTTOM);
-                                                }
-                                              },
-                                              icon: Icon(
-                                                bookMarkProvider.ids
-                                                        .contains(anime.id)
-                                                    ? Icons.bookmark
-                                                    : Icons
-                                                        .bookmark_border_outlined,
-                                                color: Colors.yellowAccent,
-                                              ),
-                                              label: Text(
-                                                'BookMark',
-                                                style: TakoTheme
-                                                    .darkTextTheme.bodyText1!
-                                                    .copyWith(
-                                                        color: Colors
-                                                            .yellowAccent),
-                                              )),
+                                    GetBuilder<BookMarkManager>(
+                                      builder: (_) => TextButton.icon(
+                                          onPressed: () {
+                                            final item = BookMark(
+                                              id: anime.id!,
+                                              imageUrl: imageUrl,
+                                              name: name,
+                                              animeUrl: animeUrl,
+                                            );
+                                            if (bookMarkManager.ids.contains(
+                                                anime.id.toString())) {
+                                              bookMarkManager
+                                                  .removeFromBookMarks(item);
+                                              //Removed
+                                              Get.snackbar(name,
+                                                  'Removed from bookmark successfully!',
+                                                  backgroundColor:
+                                                      Colors.black38,
+                                                  duration: const Duration(
+                                                      milliseconds: 1300),
+                                                  snackPosition:
+                                                      SnackPosition.BOTTOM);
+                                            } else {
+                                              bookMarkManager
+                                                  .addToBookMarks(item);
+                                              //Add
+                                              Get.snackbar(name,
+                                                  'Added to bookmark successfully!',
+                                                  backgroundColor:
+                                                      Colors.black38,
+                                                  duration: const Duration(
+                                                      milliseconds: 1300),
+                                                  snackPosition:
+                                                      SnackPosition.BOTTOM);
+                                            }
+                                          },
+                                          icon: Icon(
+                                            bookMarkManager.ids
+                                                    .contains(anime.id)
+                                                ? Icons.bookmark
+                                                : Icons
+                                                    .bookmark_border_outlined,
+                                            color: tkLightGreen,
+                                          ),
+                                          label: Text(
+                                            'BookMark',
+                                            style: TakoTheme
+                                                .darkTextTheme.bodyText1!
+                                                .copyWith(color: tkLightGreen),
+                                          )),
                                     )
                                   ],
                                 ),
@@ -305,6 +192,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                 padding: EdgeInsets.only(bottom: 20.h),
                                 child: const Divider(),
                               ),
+                              // Episodes Grid View
                               anime.epLinks!.isNotEmpty
                                   ? GridView.builder(
                                       physics:
@@ -331,6 +219,20 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                                   BorderRadius.circular(10),
                                               onTap: () async {
                                                 selectedIndex.value = index;
+                                                final recentAnime = RecentAnime(
+                                                  id: anime.id.toString(),
+                                                  name: name,
+                                                  currentEp:
+                                                      'Episode ${index + 1}',
+                                                  imageUrl: imageUrl,
+                                                  epUrl: anime.epLinks![index]
+                                                      .toString(),
+                                                  // animeUrl: animeUrl,
+                                                );
+                                                // Add to Recent Anime List
+                                                recentWatchManager
+                                                    .addAnimeToRecent(
+                                                        recentAnime);
                                                 Get.toNamed(
                                                     Routes.mediaFetchScreen,
                                                     arguments: {
@@ -388,11 +290,8 @@ class _VideoListScreenState extends State<VideoListScreen> {
                       left: 0,
                       bottom: 0,
                       right: 0,
-                      child: CachedNetworkImage(
-                        key: UniqueKey(),
-                        cacheManager: CustomCacheManager.instance,
-                        imageUrl: Get.arguments['anime'].imageUrl.toString(),
-                        fit: BoxFit.cover,
+                      child: NetworkImageWithCacheManager(
+                        imageUrl: imageUrl,
                       ),
                     ),
                     BackdropFilter(
