@@ -26,7 +26,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
       child: Hero(
         tag: anime.id.toString(),
         child: Container(
-          margin: EdgeInsets.symmetric(horizontal: 10.w),
+          margin: const EdgeInsets.symmetric(horizontal: 10),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -64,7 +64,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                 ],
               ),
               Container(
-                margin: EdgeInsets.symmetric(vertical: 20.h),
+                margin: const EdgeInsets.only(top: 20),
                 child: Material(
                   color: Colors.transparent,
                   child: Text(
@@ -75,6 +75,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const Spacer(),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 4),
