@@ -56,10 +56,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
           playerTheme: BetterPlayerTheme.cupertino,
           controlBarColor: tkDarkBlue.withOpacity(.75),
           loadingWidget: indicator,
-          progressBarPlayedColor: tkLightGreen,
+          progressBarPlayedColor: tkGradientBlue,
           progressBarBufferedColor: Colors.grey,
           progressBarBackgroundColor: tkGrey,
-          progressBarHandleColor: tkLightGreen,
+          progressBarHandleColor: tkGradientBlue,
         ),
       ),
       betterPlayerDataSource: BetterPlayerDataSource(

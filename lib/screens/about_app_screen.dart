@@ -43,7 +43,7 @@ class AboutAppScreen extends StatelessWidget {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) Ui Improved.\n\n(-) Video Buffer Speed is Enhanced.\n\n(-) You can now track and play your recently watched Anime.'),
+                    '(-) Ui Changes in Recently Added Anime List.\n\n(-) Fixed Duplicate Recently Watched Anime.'),
               ));
             },
           ),

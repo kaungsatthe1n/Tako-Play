@@ -24,7 +24,7 @@ class MovieCard extends StatelessWidget {
         margin: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Colors.black12,
+          color: Colors.black26,
         ),
         height: (screenHeight * .2).h,
         child: Row(
@@ -50,9 +50,10 @@ class MovieCard extends StatelessWidget {
                     child: Text(
                       anime.name.toString(),
                       softWrap: true,
-                      maxLines: 3,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TakoTheme.darkTextTheme.subtitle1,
+                      style: TakoTheme.darkTextTheme.subtitle2!
+                          .copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                   Container(

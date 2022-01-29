@@ -45,18 +45,52 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: 10.h),
           margin: EdgeInsets.symmetric(horizontal: 10.w),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(15),
-                child: CachedNetworkImage(
-                  key: UniqueKey(),
-                  height: itemHeight.toDouble().h,
-                  width: itemWidth.w,
-                  cacheManager: CustomCacheManager.instance,
-                  fit: BoxFit.cover,
-                  imageUrl: anime.imageUrl.toString(),
-                ),
+              Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: CachedNetworkImage(
+                      key: UniqueKey(),
+                      height: itemHeight.toDouble().h,
+                      width: itemWidth.w,
+                      cacheManager: CustomCacheManager.instance,
+                      fit: BoxFit.cover,
+                      imageUrl: anime.imageUrl.toString(),
+                    ),
+                  ),
+                  Container(
+                    alignment: Alignment.center,
+                    height: itemHeight.toDouble().h,
+                    width: itemWidth.w,
+                    decoration: const BoxDecoration(
+                      color: Colors.black38,
+                    ),
+                    child: const Icon(
+                      Icons.play_circle,
+                      size: 35,
+                    ),
+                  ),
+                  Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: tkGradientBlue.withOpacity(.85),
+                          borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(15),
+                              bottomRight: Radius.circular(15)),
+                        ),
+                        child: Text(
+                          anime.currentEp.toString(),
+                          style: TakoTheme.darkTextTheme.subtitle1,
+                        ),
+                      ))
+                ],
               ),
               SizedBox(
                 height: (screenHeight * .02).h,
@@ -64,17 +98,11 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   anime.name.toString(),
-                  maxLines: 3,
+                  maxLines: 2,
                   textAlign: TextAlign.center,
-                  style: TakoTheme.darkTextTheme.bodyText2,
+                  style: TakoTheme.darkTextTheme.bodyText1,
                 ),
               ),
-              Text(
-                anime.currentEp.toString(),
-                style: TakoTheme.darkTextTheme.bodyText1!.copyWith(
-                  color: tkLightGreen,
-                ),
-              )
             ],
           ),
         ),

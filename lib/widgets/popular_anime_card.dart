@@ -56,7 +56,7 @@ class PopularAnimeCard extends StatelessWidget {
                 Flexible(
                   child: Text(
                     anime.name.toString(),
-                    maxLines: 3,
+                    maxLines: 2,
                     textAlign: TextAlign.center,
                     style: TakoTheme.darkTextTheme.bodyText1!
                         .copyWith(decoration: TextDecoration.none),

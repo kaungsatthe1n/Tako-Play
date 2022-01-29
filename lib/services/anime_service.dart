@@ -203,7 +203,7 @@ class AnimeService {
       var animeUrl = info.first;
       var currentEp = element.getElementsByClassName('episode').first.text;
       Anime animeInfo = Anime(
-        id: uuid.v4(),
+        id: name,
         name: name,
         animeUrl: animeUrl,
         currentEp: currentEp,

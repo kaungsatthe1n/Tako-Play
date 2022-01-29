@@ -168,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         SizedBox(
-                          height: (screenHeight * .4).h,
+                          height: (screenHeight * .39).h,
                           child: AnimationLimiter(
                             child: ListView.builder(
                               physics: const BouncingScrollPhysics(),
@@ -196,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Container(
                           margin: EdgeInsets.symmetric(
-                              horizontal: 20.w, vertical: 30.h),
+                              horizontal: 20.w, vertical: 20.h),
                           child: Row(
                             children: [
                               Text(
