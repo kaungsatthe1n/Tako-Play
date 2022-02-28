@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
 import '../helpers/webview_manager.dart';
 import '../services/anime_service.dart';
 import '../theme/tako_theme.dart';
@@ -33,7 +35,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
     fetchVideoFile();
   }
 
-  fetchVideoFile() async {
+  Future<void> fetchVideoFile() async {
     if (webViewManagerController.isWebView) {
       var mediaUrl =
           await AnimeService().fetchIframeEmbedded(animeUrl).catchError((_) {
@@ -44,7 +46,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
         Get.back();
       });
       if (!mounted) return;
-      Get.offNamed(Routes.webViewScreen, arguments: {
+      await Get.offNamed(Routes.webViewScreen, arguments: {
         'mediaUrl': 'https:' + mediaUrl,
       });
     }

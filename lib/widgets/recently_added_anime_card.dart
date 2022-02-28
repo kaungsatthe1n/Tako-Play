@@ -2,13 +2,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:tako_play/helpers/cache_manager.dart';
-import 'package:tako_play/helpers/recent_watch_manager.dart';
-import 'package:tako_play/models/anime.dart';
-import 'package:tako_play/models/recent_anime.dart';
-import 'package:tako_play/theme/tako_theme.dart';
-import 'package:tako_play/utils/constants.dart';
-import 'package:tako_play/utils/routes.dart';
+
+import '../helpers/cache_manager.dart';
+import '../helpers/recent_watch_manager.dart';
+import '../models/anime.dart';
+import '../models/recent_anime.dart';
+import '../theme/tako_theme.dart';
+import '../utils/constants.dart';
+import '../utils/routes.dart';
 
 class RecentlyAddedAnimeCard extends StatelessWidget {
   const RecentlyAddedAnimeCard({

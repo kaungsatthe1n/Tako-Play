@@ -4,12 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
+
 import '../bindings/managers_binding.dart';
-import '../utils/tako_route.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
+import '../utils/tako_route.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,

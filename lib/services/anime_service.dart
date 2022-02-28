@@ -1,9 +1,10 @@
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
-import 'package:tako_play/utils/constants.dart';
 import 'package:uuid/uuid.dart';
+
 import '../models/anime.dart';
 import '../services/request_service.dart';
+import '../utils/constants.dart';
 
 class AnimeService {
   var uuid = const Uuid();

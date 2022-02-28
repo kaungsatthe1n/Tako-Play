@@ -1,11 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:tako_play/widgets/cache_image_with_cachemanager.dart';
-import '../helpers/cache_manager.dart';
+
+import '../models/anime.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
-import '../models/anime.dart';
+import 'cache_image_with_cachemanager.dart';
 
 class AnimeDetailHeader extends StatelessWidget {
   const AnimeDetailHeader({

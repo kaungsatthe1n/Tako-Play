@@ -1,11 +1,4 @@
 class RecentAnime {
-  String id;
-  String name;
-  String epUrl;
-  String currentEp;
-  String imageUrl;
-  // String animeUrl;
-
   RecentAnime({
     required this.currentEp,
     required this.id,
@@ -14,6 +7,13 @@ class RecentAnime {
     required this.imageUrl,
     // required this.animeUrl,
   });
+
+  final String id;
+  final String name;
+  final String epUrl;
+  final String currentEp;
+  final String imageUrl;
+  // String animeUrl;
 
   factory RecentAnime.fromJson(Map<String, dynamic> json) => RecentAnime(
         id: json['id'],

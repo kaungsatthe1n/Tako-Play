@@ -1,29 +1,38 @@
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// [WebViewManager] manages the state of the web-view video player, allowing
+/// to turn it on/off at any time.
 class WebViewManager extends GetxController {
-  bool webView = false;
-  bool get isWebView => webView;
+  /// Flag indicating whether we are using a web-view based video player
+  bool _webView = false;
 
+  bool get isWebView => _webView;
+
+  /// Updates the state of the video player from/to web-view
   void changeWebViewType(value) {
-    webView = value;
-    updateVideoPlayerType(value);
+    _webView = value;
+    _updateVideoPlayerType(value);
     update();
   }
 
-  Future<void> getVideoPlayerType() async {
+  /// Fetches and returns the currently active video player type. Returns `true`
+  /// if web view player is enabled, or `false` if not.
+  Future<bool> getVideoPlayerType() async {
     final pref = await SharedPreferences.getInstance();
     final isWebView = pref.getBool('isWebViewPlayerType');
     if (isWebView != null) {
-      webView = isWebView;
+      _webView = isWebView;
       update();
     } else {
-      webView = false;
+      _webView = false;
       update();
     }
+    return _webView;
   }
 
-  Future<void> updateVideoPlayerType(flag) async {
+  /// Updates local settings for the web view player usage
+  Future<void> _updateVideoPlayerType(flag) async {
     final pref = await SharedPreferences.getInstance();
     pref.setBool('isWebViewPlayerType', flag);
   }

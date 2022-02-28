@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
-import '../screens/recent_list_screen.dart';
-import '../widgets/anime_drawer.dart';
 import 'package:get/get.dart';
+
 import '../helpers/webview_manager.dart';
 import '../screens/bookmarks_screen.dart';
+import '../screens/home_screen.dart';
+import '../screens/recent_list_screen.dart';
 import '../utils/routes.dart';
+import '../widgets/anime_drawer.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -49,8 +50,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
       body: Obx(
         () => IndexedStack(
-          children: _pages,
           index: currentIndex.value,
+          children: _pages,
         ),
       ),
       bottomNavigationBar: Obx(
