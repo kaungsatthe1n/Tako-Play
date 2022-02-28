@@ -235,7 +235,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                                 recentWatchManager
                                                     .addAnimeToRecent(
                                                         recentAnime);
-                                                Get.toNamed(
+                                                await Get.toNamed(
                                                     Routes.mediaFetchScreen,
                                                     arguments: {
                                                       'animeUrl': anime

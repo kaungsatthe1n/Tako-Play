@@ -46,10 +46,10 @@ class _WebViewScreenState extends State<WebViewScreen> {
         if (!isLandScape.value) {
           return true;
         } else {
-          SystemChrome.setPreferredOrientations([
+          await SystemChrome.setPreferredOrientations([
             DeviceOrientation.portraitUp,
           ]);
-          SystemChrome.setPreferredOrientations([
+          await SystemChrome.setPreferredOrientations([
             DeviceOrientation.portraitUp,
             DeviceOrientation.landscapeLeft,
             DeviceOrientation.landscapeRight,

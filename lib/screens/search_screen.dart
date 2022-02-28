@@ -175,7 +175,7 @@ class _SearchScreenState extends State<SearchScreen> {
           pref.getStringList('takoRecentSearches')?.toSet() ?? {};
 
       allSearches = {searchText, ...allSearches};
-      pref.setStringList('takoRecentSearches', allSearches.toList());
+      await pref.setStringList('takoRecentSearches', allSearches.toList());
     }
   }
 
@@ -185,7 +185,7 @@ class _SearchScreenState extends State<SearchScreen> {
         .getStringList('takoRecentSearches')!
         .where((result) => result != searchText)
         .toList();
-    pref.setStringList('takoRecentSearches', newList);
+    await pref.setStringList('takoRecentSearches', newList);
   }
 
   Future<List<String>> _getRecentSearches() async {

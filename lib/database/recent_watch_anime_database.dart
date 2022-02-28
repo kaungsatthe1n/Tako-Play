@@ -35,7 +35,7 @@ class RecentWatchAnimeDatabase {
   }
 
   Future _createDatabase(Database db, version) async {
-    db.execute('''
+    await db.execute('''
     CREATE TABLE $tableName (
       $idCol $type, $nameCol $type, $epUrlCol $type, $currentEpCol $type, $imageUrlCol $type)
     ''');
@@ -74,6 +74,6 @@ class RecentWatchAnimeDatabase {
 
   Future close() async {
     final db = await instance.database;
-    db.close();
+    await db.close();
   }
 }

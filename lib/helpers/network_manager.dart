@@ -29,7 +29,7 @@ class NetworkManager extends GetxController {
     _connectivity.onConnectivityChanged.listen(_onNetworkStateUpdated);
 
     // Make the initial connectivity check (just to be sure)
-    checkConnection();
+    await checkConnection();
   }
 
   /// Callback triggered once there is a change in network connection

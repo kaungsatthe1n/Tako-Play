@@ -52,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         isSameVersion = false;
         updateLink = github.downloadLink.toString();
-        Get.dialog(UpdateAlertDialog(
+        await Get.dialog(UpdateAlertDialog(
           downloadLink: github.downloadLink.toString(),
         ));
       }

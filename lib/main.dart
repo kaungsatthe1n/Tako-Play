@@ -11,6 +11,12 @@ import '../theme/tako_theme.dart';
 import '../utils/tako_route.dart';
 
 Future<void> main() async {
+  _configureApp();
+  _setUpLogging();
+  runApp(const MyApp());
+}
+
+void _configureApp() {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -18,8 +24,6 @@ Future<void> main() async {
   ]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
       overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top]);
-  _setUpLogging();
-  runApp(const MyApp());
 }
 
 void _setUpLogging() {

@@ -92,7 +92,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                               if (rawUrl == 'null') {
                                 hasError.value = true;
                               } else {
-                                String url = rawUrl.split("\"").toList()[1];
+                                String url = rawUrl.split('"').toList()[1];
 
                                 await _webViewController!
                                     .runJavascriptReturningResult(
@@ -115,11 +115,11 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                                   resolutions.putIfAbsent(
                                       resolution,
                                       () => url.replaceFirst(
-                                          RegExp(r"(.)[0-9]+(p.mp4)"),
+                                          RegExp(r'(.)[0-9]+(p.mp4)'),
                                           '.${quality}p.mp4'));
                                 }
 
-                                Get.offNamed(Routes.videoPlayerScreen,
+                                await Get.offNamed(Routes.videoPlayerScreen,
                                     arguments: {
                                       'url': url,
                                       'resolutions': resolutions,
