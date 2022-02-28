@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../utils/constants.dart';
 
+/// Main app theme, called [TakoTheme], is defined here.
 class TakoTheme {
   static TextTheme darkTextTheme = TextTheme(
     bodyText1: GoogleFonts.questrial(

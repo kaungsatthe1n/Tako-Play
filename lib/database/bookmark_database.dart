@@ -6,15 +6,16 @@ import '../models/bookmark.dart';
 
 class BookMarksDatabase {
   BookMarksDatabase._privateConstructor();
+
   static final BookMarksDatabase instance =
       BookMarksDatabase._privateConstructor();
   static Database? _database;
 
-  String tableBookmark = 'Bookmark';
-  String idCol = 'id';
-  String nameCol = 'name';
-  String imageUrlCol = 'imageUrl';
-  String animeUrlCol = 'animeUrl';
+  final String tableBookmark = 'Bookmark';
+  final String idCol = 'id';
+  final String nameCol = 'name';
+  final String imageUrlCol = 'imageUrl';
+  final String animeUrlCol = 'animeUrl';
   final dbName = 'takobookmarks.db';
   final idType = 'TEXT NOT NULL';
   final textType = 'TEXT NOT NULL';

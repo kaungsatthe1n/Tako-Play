@@ -1,8 +1,8 @@
-// Network Request
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+
+/// Collection of all app related constants go here
 
 const String version = 'v1.4.3';
 String updateLink = '';

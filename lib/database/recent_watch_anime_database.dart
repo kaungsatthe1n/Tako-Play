@@ -6,20 +6,21 @@ import '../models/recent_anime.dart';
 
 class RecentWatchAnimeDatabase {
   RecentWatchAnimeDatabase._privateConstructor();
+
   static final RecentWatchAnimeDatabase instance =
       RecentWatchAnimeDatabase._privateConstructor();
 
   Database? _database;
 
-  String tableName = 'RecentAnime';
-  String idCol = 'id';
-  String nameCol = 'name';
-  String epUrlCol = 'epUrl';
-  String currentEpCol = 'currentEp';
-  String imageUrlCol = 'imageUrl';
-  // String animeUrlCol = 'animeUrl';
+  final String tableName = 'RecentAnime';
+  final String idCol = 'id';
+  final String nameCol = 'name';
+  final String epUrlCol = 'epUrl';
+  final String currentEpCol = 'currentEp';
+  final String imageUrlCol = 'imageUrl';
+  // final String animeUrlCol = 'animeUrl';
 
-  String type = 'TEXT NOT NULL';
+  final String type = 'TEXT NOT NULL';
 
   Future<Database> get database async {
     if (_database != null) return _database!;
