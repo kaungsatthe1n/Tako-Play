@@ -4,14 +4,13 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tako_play/widgets/searched_result_anime_card.dart';
-import '../services/request_service.dart';
-import '../widgets/cache_image_with_cachemanager.dart';
-import '../utils/constants.dart';
-import '../theme/tako_theme.dart';
-import '../utils/routes.dart';
+
 import '../models/anime.dart';
 import '../services/anime_service.dart';
+import '../services/request_service.dart';
+import '../theme/tako_theme.dart';
+import '../utils/constants.dart';
+import '../widgets/searched_result_anime_card.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -176,7 +175,7 @@ class _SearchScreenState extends State<SearchScreen> {
           pref.getStringList('takoRecentSearches')?.toSet() ?? {};
 
       allSearches = {searchText, ...allSearches};
-      pref.setStringList('takoRecentSearches', allSearches.toList());
+      await pref.setStringList('takoRecentSearches', allSearches.toList());
     }
   }
 
@@ -186,7 +185,7 @@ class _SearchScreenState extends State<SearchScreen> {
         .getStringList('takoRecentSearches')!
         .where((result) => result != searchText)
         .toList();
-    pref.setStringList('takoRecentSearches', newList);
+    await pref.setStringList('takoRecentSearches', newList);
   }
 
   Future<List<String>> _getRecentSearches() async {

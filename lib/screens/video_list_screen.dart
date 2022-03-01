@@ -1,20 +1,22 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import '../widgets/cache_image_with_cachemanager.dart';
+
 import '../helpers/bookmark_manager.dart';
 import '../helpers/recent_watch_manager.dart';
-import '../models/recent_anime.dart';
-import '../widgets/anime_detail_header.dart';
-import '../widgets/plot_summary.dart';
+import '../models/anime.dart';
 import '../models/bookmark.dart';
+import '../models/recent_anime.dart';
+import '../services/anime_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
-import '../models/anime.dart';
-import '../services/anime_service.dart';
+import '../widgets/anime_detail_header.dart';
+import '../widgets/cache_image_with_cachemanager.dart';
+import '../widgets/plot_summary.dart';
 
 class VideoListScreen extends StatefulWidget {
   const VideoListScreen({Key? key}) : super(key: key);
@@ -233,7 +235,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                                 recentWatchManager
                                                     .addAnimeToRecent(
                                                         recentAnime);
-                                                Get.toNamed(
+                                                await Get.toNamed(
                                                     Routes.mediaFetchScreen,
                                                     arguments: {
                                                       'animeUrl': anime

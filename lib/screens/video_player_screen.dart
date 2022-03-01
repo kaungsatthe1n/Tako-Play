@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:get/get.dart';
+
 import '../utils/constants.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
@@ -35,7 +36,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     size: 28,
   );
 
-  mediaPlayerControllerSetUp() {
+  void mediaPlayerControllerSetUp() {
     _controller = BetterPlayerController(
       BetterPlayerConfiguration(
         autoDetectFullscreenAspectRatio: true,

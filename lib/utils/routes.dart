@@ -1,3 +1,5 @@
+/// [Routes] represents a list of all screen paths used for their respective
+/// screen widgets inside the app.
 class Routes {
   static const String mainScreen = '/';
   static const String homeScreen = '/home';

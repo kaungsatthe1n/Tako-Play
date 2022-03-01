@@ -1,24 +1,26 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:sqflite/sqflite.dart';
+
 import '../models/recent_anime.dart';
 
 class RecentWatchAnimeDatabase {
   RecentWatchAnimeDatabase._privateConstructor();
+
   static final RecentWatchAnimeDatabase instance =
       RecentWatchAnimeDatabase._privateConstructor();
 
   Database? _database;
 
-  String tableName = 'RecentAnime';
-  String idCol = 'id';
-  String nameCol = 'name';
-  String epUrlCol = 'epUrl';
-  String currentEpCol = 'currentEp';
-  String imageUrlCol = 'imageUrl';
-  // String animeUrlCol = 'animeUrl';
+  final String tableName = 'RecentAnime';
+  final String idCol = 'id';
+  final String nameCol = 'name';
+  final String epUrlCol = 'epUrl';
+  final String currentEpCol = 'currentEp';
+  final String imageUrlCol = 'imageUrl';
+  // final String animeUrlCol = 'animeUrl';
 
-  String type = 'TEXT NOT NULL';
+  final String type = 'TEXT NOT NULL';
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -34,7 +36,7 @@ class RecentWatchAnimeDatabase {
   }
 
   Future _createDatabase(Database db, version) async {
-    db.execute('''
+    await db.execute('''
     CREATE TABLE $tableName (
       $idCol $type, $nameCol $type, $epUrlCol $type, $currentEpCol $type, $imageUrlCol $type)
     ''');
@@ -73,6 +75,6 @@ class RecentWatchAnimeDatabase {
 
   Future close() async {
     final db = await instance.database;
-    db.close();
+    await db.close();
   }
 }

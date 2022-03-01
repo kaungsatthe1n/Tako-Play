@@ -1,23 +1,25 @@
 import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../widgets/movie_card.dart';
-import '../widgets/popular_anime_card.dart';
-import '../widgets/recently_added_anime_card.dart';
-import '../widgets/website_error_widget.dart';
+
+import '../helpers/network_manager.dart';
 import '../models/anime.dart';
 import '../models/github.dart';
+import '../screens/no_internet_screen.dart';
 import '../services/anime_service.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
-import '../helpers/network_manager.dart';
-import '../screens/no_internet_screen.dart';
+import '../widgets/movie_card.dart';
+import '../widgets/popular_anime_card.dart';
+import '../widgets/recently_added_anime_card.dart';
 import '../widgets/update_alert_dialog.dart';
+import '../widgets/website_error_widget.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -50,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         isSameVersion = false;
         updateLink = github.downloadLink.toString();
-        Get.dialog(UpdateAlertDialog(
+        await Get.dialog(UpdateAlertDialog(
           downloadLink: github.downloadLink.toString(),
         ));
       }

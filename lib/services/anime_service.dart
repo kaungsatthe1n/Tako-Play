@@ -1,12 +1,17 @@
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
-import 'package:tako_play/utils/constants.dart';
 import 'package:uuid/uuid.dart';
+
 import '../models/anime.dart';
 import '../services/request_service.dart';
+import '../utils/constants.dart';
 
+/// [AnimeService] contains a lot of convenience methods that allow easier
+/// access, management and data handling from remote APIs with the goal of
+/// providing the user with the best anime experience.
 class AnimeService {
-  var uuid = const Uuid();
+  final _uuid = const Uuid();
+
   Future<AnimeResults> getAnimes(request) async {
     List<Anime> _animeList = [];
     final response = await request;
@@ -46,7 +51,7 @@ class AnimeService {
           element.getElementsByClassName('released').first.text.trim();
 
       Anime animeInfo = Anime(
-        id: uuid.v4(),
+        id: _uuid.v4(),
         name: name,
         animeUrl: animeUrl,
         imageUrl: img,

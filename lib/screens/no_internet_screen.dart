@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../helpers/network_manager.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 
@@ -34,7 +37,7 @@ class NoInternetScreen extends StatelessWidget {
           ),
           const SizedBox(height: 15),
           MaterialButton(
-            onPressed: () {},
+            onPressed: _onTryAgainPressed,
             padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
@@ -45,5 +48,10 @@ class NoInternetScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _onTryAgainPressed() {
+    // Manually check if connected to internet
+    Get.find<NetworkManager>().checkConnection();
   }
 }

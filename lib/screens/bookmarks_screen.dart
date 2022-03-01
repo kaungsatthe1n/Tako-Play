@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:tako_play/widgets/cache_image_with_cachemanager.dart';
+
 import '../helpers/bookmark_manager.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
+import '../widgets/cache_image_with_cachemanager.dart';
 
 class BookMarksScreen extends StatelessWidget {
   final bookmarkMaanger = Get.find<BookMarkManager>();
@@ -13,7 +14,7 @@ class BookMarksScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: bookmarkMaanger.getAllBookMarkFromDatabase(),
+      future: bookmarkMaanger.loadBookMarksFromDatabase(),
       builder: (context, snapshot) => GetBuilder<BookMarkManager>(
         builder: (_) => ListView.builder(
             physics: const BouncingScrollPhysics(),

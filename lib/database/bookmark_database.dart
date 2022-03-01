@@ -1,19 +1,21 @@
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+
 import '../models/bookmark.dart';
 
 class BookMarksDatabase {
   BookMarksDatabase._privateConstructor();
+
   static final BookMarksDatabase instance =
       BookMarksDatabase._privateConstructor();
   static Database? _database;
 
-  String tableBookmark = 'Bookmark';
-  String idCol = 'id';
-  String nameCol = 'name';
-  String imageUrlCol = 'imageUrl';
-  String animeUrlCol = 'animeUrl';
+  final String tableBookmark = 'Bookmark';
+  final String idCol = 'id';
+  final String nameCol = 'name';
+  final String imageUrlCol = 'imageUrl';
+  final String animeUrlCol = 'animeUrl';
   final dbName = 'takobookmarks.db';
   final idType = 'TEXT NOT NULL';
   final textType = 'TEXT NOT NULL';
@@ -33,7 +35,7 @@ class BookMarksDatabase {
   }
 
   Future _createDatabase(Database db, version) async {
-    db.execute('''
+    await db.execute('''
     CREATE TABLE $tableBookmark(
       $idCol $idType, $nameCol $textType, $imageUrlCol $textType, $animeUrlCol $textType)''');
   }
@@ -64,6 +66,6 @@ class BookMarksDatabase {
 
   Future close() async {
     final db = await instance.database;
-    db.close();
+    await db.close();
   }
 }

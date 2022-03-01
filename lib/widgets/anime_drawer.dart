@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:tako_play/helpers/webview_manager.dart';
-import 'package:tako_play/theme/tako_theme.dart';
-import 'package:tako_play/utils/constants.dart';
-import 'package:tako_play/utils/routes.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import '../helpers/webview_manager.dart';
+import '../theme/tako_theme.dart';
+import '../utils/constants.dart';
+import '../utils/routes.dart';
 
 class AnimeDrawer extends StatelessWidget {
   const AnimeDrawer({

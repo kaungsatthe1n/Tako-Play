@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../widgets/recent_anime_card.dart';
+
 import '../helpers/recent_watch_manager.dart';
 import '../utils/constants.dart';
-
+import '../widgets/recent_anime_card.dart';
 
 class RecentListScreen extends StatelessWidget {
   final recentWatchManager = Get.find<RecentWatchManager>();
@@ -13,7 +13,7 @@ class RecentListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: recentWatchManager.getAllRecentAnimeFromDatabase(),
+      future: recentWatchManager.loadRecentAnimeFromDatabase(),
       builder: (_, snapshot) => GetBuilder<RecentWatchManager>(
         builder: (_) => ListView.separated(
           separatorBuilder: (context, index) => const SizedBox(

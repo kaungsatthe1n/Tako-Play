@@ -1,13 +1,14 @@
 class Github {
-  String? version;
-  String? newFeatures;
-  String? downloadLink;
-
   Github({
     this.downloadLink,
     this.newFeatures,
     this.version,
   });
+
+  final String? version;
+  final String? newFeatures;
+  final String? downloadLink;
+
   factory Github.fromJson(Map<String, dynamic>? json) {
     if (json != null) {
       return Github(
@@ -25,8 +26,11 @@ class Github {
 }
 
 class Assets {
-  String? downLoadUrl;
-  Assets({this.downLoadUrl});
+  Assets({
+    this.downLoadUrl,
+  });
+
+  final String? downLoadUrl;
 
   factory Assets.fromJson(Map<String, dynamic>? json) {
     if (json != null) {
