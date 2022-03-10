@@ -20,10 +20,17 @@ class _WebViewScreenState extends State<WebViewScreen> {
   var isLandScape = true.obs;
   final GlobalKey webViewKey = GlobalKey();
   WebViewController? _webViewController;
+
+  /// The initial url to start with
+  late final String _initialUrl;
+
   @override
   void initState() {
     super.initState();
+    _initialUrl = Get.arguments['mediaUrl'].toString();
+
     if (Platform.isAndroid) WebView.platform = AndroidWebView();
+    if (Platform.isIOS) WebView.platform = CupertinoWebView();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -93,29 +100,43 @@ class _WebViewScreenState extends State<WebViewScreen> {
                     },
                     onPageFinished: (_) async {
                       await Future.delayed(const Duration(seconds: 1));
-                      //
-                      for (var i = 0; i < 8; i++) {
+
+                      try {
+                        //
+                        for (var i = 0; i < 8; i++) {
+                          await _webViewController!.runJavascriptReturningResult(
+                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                          await _webViewController!.runJavascriptReturningResult(
+                              "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
+                        }
+                        //
+                        for (var i = 0; i < 8; i++) {
+                          await _webViewController!.runJavascriptReturningResult(
+                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                        }
                         await _webViewController!.runJavascriptReturningResult(
-                            "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                            "document.getElementsByClassName('jw-icon jw-icon-inline jw-button-color jw-reset jw-icon-fullscreen')[1].click();");
                         await _webViewController!.runJavascriptReturningResult(
-                            "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
-                      }
-                      //
-                      for (var i = 0; i < 8; i++) {
-                        await _webViewController!.runJavascriptReturningResult(
-                            "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                      }
-                      await _webViewController!.runJavascriptReturningResult(
-                          "document.getElementsByClassName('jw-icon jw-icon-inline jw-button-color jw-reset jw-icon-fullscreen')[1].click();");
-                      await _webViewController!.runJavascriptReturningResult(
-                          "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
-                      //
-                      for (var i = 0; i < 8; i++) {
-                        await _webViewController!.runJavascriptReturningResult(
-                            "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                            "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
+                        //
+                        for (var i = 0; i < 8; i++) {
+                          await _webViewController!.runJavascriptReturningResult(
+                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                        }
+                      } catch (e) {
+                        print(
+                            'An error occurred while parsing data from webview:');
+                        print(e.toString());
+                        rethrow;
                       }
                     },
                     navigationDelegate: (NavigationRequest request) {
+                      // If we are navigating to the destination url, allow it.
+                      if (request.url == _initialUrl) {
+                        return NavigationDecision.navigate;
+                      }
+
+                      // Otherwise, reject any navigation to other web urls
                       return NavigationDecision.prevent;
                     },
                     backgroundColor: const Color(0x00000000),
