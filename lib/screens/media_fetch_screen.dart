@@ -10,6 +10,7 @@ import '../services/anime_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
+import '../widgets/tako_play_web_view.dart';
 
 class MediaFetchScreen extends StatefulWidget {
   const MediaFetchScreen({Key? key}) : super(key: key);
@@ -20,7 +21,6 @@ class MediaFetchScreen extends StatefulWidget {
 
 class _MediaFetchScreenState extends State<MediaFetchScreen> {
   final GlobalKey webViewKey = GlobalKey();
-  WebViewController? _webViewController;
   final webViewManagerController = Get.find<WebViewManager>();
   final _random = Random();
   var hasError = false.obs;
@@ -67,26 +67,21 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                       if (snapshot.connectionState == ConnectionState.done) {
                         return SizedBox.fromSize(
                           size: Size(screenWidth / 1.5, screenHeight / 1.5),
-                          child: WebView(
+                          child: TakoPlayWebView(
                             initialUrl: 'https:${snapshot.data}',
-                            javascriptMode: JavascriptMode.unrestricted,
-                            allowsInlineMediaPlayback: true,
-                            onWebViewCreated: (controller) async {
-                              _webViewController = controller;
-                            },
-                            onPageFinished: (_) async {
+                            onLoadingFinished: (_webViewController) async {
                               mediaUrl = snapshot.data!;
                               // Ads Block
                               for (var i = 0; i < 8; i++) {
-                                await _webViewController!
+                                await _webViewController
                                     .runJavascriptReturningResult(
                                         "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                                await _webViewController!
+                                await _webViewController
                                     .runJavascriptReturningResult(
                                         "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
                               }
                               // Fetching VidStreaming Url
-                              String rawUrl = await _webViewController!
+                              String rawUrl = await _webViewController
                                   .runJavascriptReturningResult(
                                       "document.getElementsByClassName('jw-video jw-reset')[0].attributes.src.value;");
                               if (rawUrl == 'null') {
@@ -94,16 +89,16 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                               } else {
                                 String url = rawUrl.split('"').toList()[1];
 
-                                await _webViewController!
+                                await _webViewController
                                     .runJavascriptReturningResult(
                                         "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
-                                String resolutionCount = await _webViewController!
+                                String resolutionCount = await _webViewController
                                     .runJavascriptReturningResult(
                                         "document.getElementsByClassName('jw-reset jw-settings-submenu-items')[1].getElementsByClassName('jw-reset-text jw-settings-content-item')['length'];");
                                 for (var j = 0;
                                     j < double.parse(resolutionCount) - 1;
                                     j++) {
-                                  String rawResolution = await _webViewController!
+                                  String rawResolution = await _webViewController
                                       .runJavascriptReturningResult(
                                           "document.getElementsByClassName('jw-reset jw-settings-submenu-items')[1].getElementsByClassName('jw-reset-text jw-settings-content-item')[$j].textContent;");
                                   String resolution = rawResolution
@@ -126,10 +121,6 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                                     });
                               }
                             },
-                            navigationDelegate: (NavigationRequest request) {
-                              return NavigationDecision.prevent;
-                            },
-                            backgroundColor: const Color(0x00000000),
                           ),
                         );
                       } else {
