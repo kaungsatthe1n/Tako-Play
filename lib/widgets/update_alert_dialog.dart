@@ -16,19 +16,21 @@ class UpdateAlertDialog extends StatelessWidget {
     return AlertDialog(
         elevation: 10,
         backgroundColor: tkDarkBlue,
-        content: SizedBox(
-          height: (screenHeight * .18).h,
+        content: Container(
+          decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                margin: EdgeInsets.symmetric(vertical: 5.h, horizontal: 5.w),
+                margin: EdgeInsets.symmetric(vertical: 10.h, horizontal: 5.w),
                 child:
                     Text('Tako-Play', style: TakoTheme.darkTextTheme.headline3),
               ),
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                margin:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                 child: Text('New Update is available',
                     style: TakoTheme.darkTextTheme.bodyText1),
               ),
@@ -41,7 +43,11 @@ class UpdateAlertDialog extends StatelessWidget {
                   MaterialButton(
                     elevation: 5,
                     color: tkLightGreen.withAlpha(200),
-                    child: const Text('Update'),
+                    child: Text(
+                      'Update',
+                      style: TakoTheme.darkTextTheme.subtitle2!
+                          .copyWith(fontWeight: FontWeight.w600),
+                    ),
                     onPressed: () => launch(downloadLink),
                   ),
                 ],

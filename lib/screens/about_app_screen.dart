@@ -3,21 +3,15 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
+import '../widgets/tako_scaffold.dart';
 
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('About'),
-        leading: IconButton(
-            onPressed: () {
-              Get.back();
-            },
-            icon: const Icon(Icons.arrow_back_ios_new)),
-      ),
+    return TakoScaffoldWithBackButton(
+      appBarTitle: 'About',
       body: ListView(
         children: [
           const ListTile(

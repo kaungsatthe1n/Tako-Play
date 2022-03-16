@@ -63,8 +63,8 @@ class AnimeService {
   }
 
   Future<Anime> fetchAnimeDetails(String path) async {
-    List<String> _genre = [];
-    List<String>? _epLinks = [];
+    List<Genre> _genres = [];
+    List<Episode>? _episodes = [];
     final detailResponse =
         await RequestService.create().requestAnimeDetailResponse(path);
     dom.Document detailDoc = parse(detailResponse.body);
@@ -79,7 +79,10 @@ class AnimeService {
     final genres =
         info.getElementsByClassName('type')[2].getElementsByTagName('a');
     for (var gen in genres) {
-      _genre.add(gen.text.split(',').last);
+      final genreName = gen.text.split(',').last;
+      final genreLink = gen.attributes.values.first.toString();
+      final genre = Genre(name: genreName, link: genreLink);
+      _genres.add(genre);
     }
 
     final released = info
@@ -118,19 +121,28 @@ class AnimeService {
             .values
             .first
             .trim();
-        _epLinks.add(href);
+        final epNumber = element
+            .getElementsByTagName('a')
+            .first
+            .getElementsByClassName('name')
+            .first
+            .text
+            .trim().split('EP ')[1];
+
+        final episode = Episode(link: href, number: epNumber);
+        _episodes.add(episode);
       }
     } else {
-      _epLinks = [];
+      _episodes = [];
     }
 
     Anime anime = Anime(
       id: id,
       summary: summary,
-      genres: _genre,
+      genres: _genres,
       releasedDate: released,
       status: status,
-      epLinks: _epLinks.reversed.toList(),
+      episodes: _episodes.reversed.toList(),
     );
 
     return anime;

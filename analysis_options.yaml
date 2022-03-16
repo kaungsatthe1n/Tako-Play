@@ -15,3 +15,4 @@ linter:
     avoid_void_async: true
     avoid_returning_null_for_future: true
     prefer_const_constructors: false
+    constant_identifier_names : false

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -15,9 +14,11 @@ import '../services/anime_service.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
+import '../utils/tako_helper.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/popular_anime_card.dart';
 import '../widgets/recently_added_anime_card.dart';
+import '../widgets/tako_animation.dart';
 import '../widgets/update_alert_dialog.dart';
 import '../widgets/website_error_widget.dart';
 
@@ -28,14 +29,18 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   final networkManager = Get.find<NetworkManager>();
+  late AnimationController animationController;
   @override
   void initState() {
     super.initState();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
+    animationController = AnimationController(
+        duration: Duration(milliseconds: takoAnimationDuration), vsync: this);
     checkForUpdate();
   }
 
@@ -63,10 +68,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void dispose() {
+    animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final requestService = Provider.of<RequestService>(context, listen: false);
-    final itemHeight = (screenHeight * .26).h;
-    final itemWidth = (screenWidth / 2).w;
+    // final itemHeight = (screenHeight * .26).h;
+    // final itemWidth = (screenWidth / 2).w;
     return GetBuilder<NetworkManager>(
       builder: (_) => networkManager.isOnline
           ? FutureBuilder<List<AnimeResults>>(
@@ -115,31 +126,35 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         SizedBox(
-                          height: (screenHeight * .39).h,
-                          child: AnimationLimiter(
-                            child: ListView.builder(
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.symmetric(horizontal: 10.w),
-                              scrollDirection: Axis.horizontal,
-                              itemCount: popularList!.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                return AnimationConfiguration.staggeredList(
-                                  position: index,
-                                  duration: const Duration(milliseconds: 600),
-                                  child: SlideAnimation(
-                                    horizontalOffset: -80,
-                                    // verticalOffset: 100,
-                                    child: FadeInAnimation(
-                                      child: PopularAnimeCard(
-                                        itemHeight: itemHeight,
-                                        itemWidth: itemWidth,
-                                        anime: popularList[index],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                          height: 300,
+                          child: ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: popularList!.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              return AnimatedBuilder(
+                                animation: animationController,
+                                child: PopularAnimeCard(
+                                  anime: popularList[index],
+                                ),
+                                builder: (context, child) {
+                                  return Transform(
+                                    transform: Matrix4.translationValues(
+                                        -200 *
+                                            (1.0 -
+                                                TakoCurveAnimation(
+                                                        animationController,
+                                                        index,
+                                                        popularList.length)
+                                                    .value),
+                                        0,
+                                        0),
+                                    child: child,
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
                         Container(
@@ -170,30 +185,35 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         SizedBox(
-                          height: (screenHeight * .39).h,
-                          child: AnimationLimiter(
-                            child: ListView.builder(
-                              physics: const BouncingScrollPhysics(),
-                              padding: EdgeInsets.symmetric(horizontal: 10.w),
-                              scrollDirection: Axis.horizontal,
-                              itemCount: recentlyAdded!.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                return AnimationConfiguration.staggeredList(
-                                  position: index,
-                                  duration: const Duration(milliseconds: 600),
-                                  child: SlideAnimation(
-                                    horizontalOffset: -80,
-                                    // verticalOffset: 100,
-                                    child: FadeInAnimation(
-                                      child: RecentlyAddedAnimeCard(
-                                          itemHeight: itemHeight,
-                                          itemWidth: itemWidth,
-                                          anime: recentlyAdded[index]),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                          height: 300,
+                          child: ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            scrollDirection: Axis.horizontal,
+                            itemCount: recentlyAdded!.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              animationController.forward();
+                              return AnimatedBuilder(
+                                animation: animationController,
+                                child: RecentlyAddedAnimeCard(
+                                    anime: recentlyAdded[index]),
+                                builder: (context, child) {
+                                  return Transform(
+                                    transform: Matrix4.translationValues(
+                                        -200 *
+                                            (1.0 -
+                                                TakoCurveAnimation(
+                                                        animationController,
+                                                        index,
+                                                        recentlyAdded.length)
+                                                    .value),
+                                        0,
+                                        0),
+                                    child: child,
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ),
                         Container(

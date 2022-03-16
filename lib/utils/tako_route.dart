@@ -1,12 +1,15 @@
 import 'package:get/get.dart';
 
 import '../screens/about_app_screen.dart';
+import '../screens/genre_screen.dart';
+import '../screens/genre_selection_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/main_screen.dart';
 import '../screens/media_fetch_screen.dart';
 import '../screens/no_internet_screen.dart';
 import '../screens/recent_list_screen.dart';
 import '../screens/search_screen.dart';
+import '../screens/settings_screen.dart';
 import '../screens/video_list_screen.dart';
 import '../screens/video_player_screen.dart';
 import '../screens/webview_screen.dart';
@@ -58,5 +61,17 @@ class TakoRoute {
       name: Routes.noInternetScreen,
       page: () => const NoInternetScreen(),
     ),
+    GetPage(
+      name: Routes.settingsScreen,
+      page: () => const SettingScreen(),
+    ),
+    GetPage(
+      name: Routes.genreScreen,
+      page: () => const GenreScreen(),
+    ),
+    GetPage(
+      name: Routes.genreSelectionScreen,
+      page: () => const GenreSelectionScreen(),
+    )
   ];
 }
