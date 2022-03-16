@@ -16,15 +16,26 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  late final WebViewManager webViewManagerController;
   var currentIndex = 0.obs;
   var title = 'Home'.obs;
-  final webViewManagerController = Get.find<WebViewManager>();
 
   final List<Widget> _pages = [
     const HomeScreen(),
     RecentListScreen(),
     BookMarksScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    webViewManagerController = Get.find<WebViewManager>();
+
+    // Make sure we only call this once during main screen initialization to
+    // also properly initialize the webView status
+    webViewManagerController.getVideoPlayerType();
+  }
 
   @override
   Widget build(BuildContext context) {
