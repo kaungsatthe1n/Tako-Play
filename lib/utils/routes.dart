@@ -12,4 +12,7 @@ class Routes {
   static const String noInternetScreen = '/no-internet-screen';
   static const String webViewScreen = '/web-view';
   static const String videoPlayerScreen = '/video-player';
+  static const String settingsScreen = '/settings';
+  static const String genreScreen = '/genre';
+  static const String genreSelectionScreen = '/genreSelection'; 
 }

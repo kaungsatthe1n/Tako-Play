@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 
 import '../models/anime.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
+import '../utils/routes.dart';
 import 'cache_image_with_cachemanager.dart';
 
 class AnimeDetailHeader extends StatelessWidget {
@@ -79,10 +81,17 @@ class AnimeDetailHeader extends StatelessWidget {
                     children: anime.genres!
                         .map((genre) => Transform(
                               transform: Matrix4.identity()..scale(0.8),
-                              child: Chip(
+                              child: InkWell(
+                                onTap: () {
+                                  Get.toNamed(Routes.genreScreen,
+                                      arguments: genre);
+                                },
+                                child: Chip(
                                   materialTapTargetSize:
                                       MaterialTapTargetSize.shrinkWrap,
-                                  label: Text(genre.toString())),
+                                  label: Text(genre.name.toString()),
+                                ),
+                              ),
                             ))
                         .toList(),
                   ),

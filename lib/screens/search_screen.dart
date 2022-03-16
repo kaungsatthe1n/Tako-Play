@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../models/anime.dart';
 import '../services/anime_service.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
+import '../utils/tako_helper.dart';
 import '../widgets/searched_result_anime_card.dart';
+import '../widgets/tako_animation.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -19,27 +19,38 @@ class SearchScreen extends StatefulWidget {
   _SearchScreenState createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
+class _SearchScreenState extends State<SearchScreen>
+    with SingleTickerProviderStateMixin {
   var hasValue = false.obs;
   var title = ''.obs;
   final TextEditingController _controller = TextEditingController();
+  late AnimationController controller;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
+    controller = AnimationController(
+        duration: Duration(milliseconds: takoAnimationDuration), vsync: this);
     _controller.addListener(() {
       if (_controller.text.length >= 4) {
         title.value = _controller.text;
+        controller.reset();
         hasValue.value = true;
       }
     });
   }
 
   @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final itemHeight = ((screenHeight - kToolbarHeight - 24) / 2).h;
-    final itemWidth = (screenWidth / 2).w;
+    // final itemHeight = ((screenHeight - kToolbarHeight - 24) / 2).h;
+    // final itemWidth = (screenWidth / 2).w;
     final provider = Provider.of<RequestService>(context);
 
     return Scaffold(
@@ -69,9 +80,11 @@ class _SearchScreenState extends State<SearchScreen> {
                   },
                 ),
                 hintText: 'Search...',
-                border: InputBorder.none),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.all(20)),
             onSubmitted: (val) {
               _saveToRecentSearches(val);
+              controller.reset();
               hasValue.value = true;
               title.value = val;
             },
@@ -94,35 +107,38 @@ class _SearchScreenState extends State<SearchScreen> {
                     if (snapshot.connectionState == ConnectionState.done) {
                       final list = snapshot.data!.animeList;
 
-                      return AnimationLimiter(
-                        child: GridView.builder(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 20.w, vertical: 20.h),
-                          gridDelegate:
-                              SliverGridDelegateWithFixedCrossAxisCount(
-                            childAspectRatio: itemWidth / itemHeight,
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 10,
-                            mainAxisSpacing: 40,
-                          ),
-                          itemCount: list!.length,
-                          itemBuilder: (BuildContext context, int index) {
-                            return AnimationConfiguration.staggeredGrid(
-                              columnCount: 2,
-                              position: index,
-                              duration: const Duration(milliseconds: 800),
-                              child: SlideAnimation(
-                                verticalOffset: 100,
-                                // horizontalOffset: 50,
-                                child: FadeInAnimation(
-                                  child: SearchedResultAnimeCard(
-                                    anime: list[index],
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
+                      return GridView.builder(
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 20.w, vertical: 20.h),
+                        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                          childAspectRatio: .53,
+                          crossAxisSpacing: 30,
+                          mainAxisSpacing: 40,
+                          maxCrossAxisExtent: 220,
                         ),
+                        itemCount: list!.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          controller.forward();
+                          return AnimatedBuilder(
+                            animation: controller,
+                            child: SearchedResultAnimeCard(
+                              anime: list[index],
+                            ),
+                            builder: (BuildContext context, Widget? child) {
+                              return Transform(
+                                transform: Matrix4.translationValues(
+                                    0,
+                                    100 *
+                                        (1.0 -
+                                            TakoCurveAnimation(controller, index,
+                                                    list.length)
+                                                .value),
+                                    0),
+                                child: child,
+                              );
+                            },
+                          );
+                        },
                       );
                     } else {
                       return const Center(

@@ -11,13 +11,10 @@ import '../utils/routes.dart';
 class PopularAnimeCard extends StatelessWidget {
   const PopularAnimeCard({
     Key? key,
-    required this.itemHeight,
-    required this.itemWidth,
     required this.anime,
   }) : super(key: key);
 
-  final double itemHeight;
-  final double itemWidth;
+
   final Anime anime;
 
   @override
@@ -44,8 +41,8 @@ class PopularAnimeCard extends StatelessWidget {
                   child: CachedNetworkImage(
                     key: UniqueKey(),
                     cacheManager: CustomCacheManager.instance,
-                    height: itemHeight.toDouble().h,
-                    width: itemWidth.w,
+                    height: 200,
+                    width: 180,
                     fit: BoxFit.cover,
                     imageUrl: anime.imageUrl.toString(),
                   ),

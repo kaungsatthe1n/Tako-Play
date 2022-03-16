@@ -44,6 +44,13 @@ class _$RequestService extends RequestService {
     return client.send<dynamic, dynamic>($request);
   }
 
+  @override
+  Future<Response<dynamic>> requestAnimeGenre(String url, [int index = 1]) {
+    final $url = url+'?page=$index';
+    final $request = Request('GET', $url, '');
+    return client.send<dynamic, dynamic>($request);
+  }
+
   /// Not Concern with BaseUrl //
   @override
   Future<Response> requestCdnVideoLink(String url) {

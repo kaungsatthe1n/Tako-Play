@@ -5,12 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../helpers/media_quality_manager.dart';
 import '../helpers/webview_manager.dart';
 import '../services/anime_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
-import '../widgets/tako_play_web_view.dart';
+
 
 class MediaFetchScreen extends StatefulWidget {
   const MediaFetchScreen({Key? key}) : super(key: key);
@@ -22,15 +23,19 @@ class MediaFetchScreen extends StatefulWidget {
 class _MediaFetchScreenState extends State<MediaFetchScreen> {
   final GlobalKey webViewKey = GlobalKey();
   final webViewManagerController = Get.find<WebViewManager>();
+  final mediaFetchController = Get.find<MediaQualityManager>();
   final _random = Random();
   var hasError = false.obs;
   Map<String, String> resolutions = {};
+  List<String> _qualityList = [];
+  String _filteredUrl = '';
   final animeUrl = Get.arguments['animeUrl'];
   late final String mediaUrl;
 
   @override
   void initState() {
     super.initState();
+    mediaFetchController.getVideoQuality();
     if (Platform.isAndroid) WebView.platform = AndroidWebView();
     fetchVideoFile();
   }
@@ -90,6 +95,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                                 String url = rawUrl.split('"').toList()[1];
 
                                 await _webViewController
+
                                     .runJavascriptReturningResult(
                                         "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
                                 String resolutionCount = await _webViewController
@@ -107,18 +113,37 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                                       .replaceFirst('"', ' ')
                                       .trim();
                                   String quality = resolution.split(' P')[0];
+                                  _qualityList.add(quality);
                                   resolutions.putIfAbsent(
                                       resolution,
                                       () => url.replaceFirst(
                                           RegExp(r'(.)[0-9]+(p.mp4)'),
                                           '.${quality}p.mp4'));
                                 }
-
-                                await Get.offNamed(Routes.videoPlayerScreen,
-                                    arguments: {
-                                      'url': url,
-                                      'resolutions': resolutions,
-                                    });
+                                for (var qlt in _qualityList) {
+                                  takoDebugPrint(mediaFetchController.defaultQuality);
+                                  if (mediaFetchController.defaultQuality
+                                      .contains(qlt)) {
+                                    
+                                    _filteredUrl = url.replaceAll(
+                                        RegExp(r'(.)[0-9]+(p.mp4)'),
+                                        '.${qlt}p.mp4');
+                                  }
+                                }
+                                takoDebugPrint('Filter Url : $_filteredUrl');
+                                if (_filteredUrl != '') {
+                                  await Get.offNamed(Routes.videoPlayerScreen,
+                                      arguments: {
+                                        'url': _filteredUrl,
+                                        'resolutions': resolutions,
+                                      });
+                                } else {
+                                  await Get.offNamed(Routes.videoPlayerScreen,
+                                      arguments: {
+                                        'url': url,
+                                        'resolutions': resolutions,
+                                      });
+                                }
                               }
                             },
                           ),

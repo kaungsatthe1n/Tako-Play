@@ -22,7 +22,6 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    // Container(),
     RecentListScreen(),
     BookMarksScreen(),
   ];
@@ -41,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: AnimeDrawer(webViewManagerController: webViewManagerController),
+      drawer: AnimeDrawer(),
       appBar: AppBar(
         actions: [
           Obx(

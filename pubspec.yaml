@@ -3,7 +3,7 @@ description: A new Flutter project.
 
 publish_to: "none"
 
-version: 1.4.3+1
+version: 1.5.0+1
 
 environment:
   sdk: ">=2.12.0 <3.0.0"
@@ -19,7 +19,6 @@ dependencies:
   flutter_cache_manager: ^3.3.0
   flutter_screenutil: ^5.3.1
   flutter_spinkit: ^5.1.0
-  flutter_staggered_animations: ^1.0.0
   get: ^4.6.0
   google_fonts: ^2.3.1
   html: ^0.15.0

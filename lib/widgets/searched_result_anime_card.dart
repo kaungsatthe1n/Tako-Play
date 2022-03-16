@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'dart:math' as math;
 import '../models/anime.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
@@ -30,41 +30,45 @@ class SearchedResultAnimeCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Stack(
-                children: [
-                  AspectRatio(
-                    aspectRatio: 0.7,
-                    child: ClipRRect(
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: NetworkImageWithCacheManager(
                         imageUrl: anime.imageUrl.toString(),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        gradient: const LinearGradient(
-                            colors: [
-                              Colors.transparent,
-
-                              // Colors.white12,
-                              tkGradientBlue,
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Tooltip(
+                          message: anime.name
+                                  .toString()
+                                  .isCaseInsensitiveContains('dub')
+                              ? 'Dub'
+                              : 'Sub',
+                          triggerMode: TooltipTriggerMode.tap,
+                          child: Icon(Icons.album_rounded,
+                              size: 25,
+                              color: anime.name
+                                      .toString()
+                                      .isCaseInsensitiveContains('dub')
+                                  ? Colors.orange
+                                  : Color.fromARGB(255, 212, 0, 99)),
+                        ),
                       ),
                     ),
-                  )
-                ],
+                  ],
+                ),
               ),
               Container(
-                margin: const EdgeInsets.only(top: 20),
+                margin: const EdgeInsets.symmetric(vertical: 20),
                 child: Material(
                   color: Colors.transparent,
                   child: Text(
@@ -75,7 +79,6 @@ class SearchedResultAnimeCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const Spacer(),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 4),
@@ -90,7 +93,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                     maxLines: 2,
                     textAlign: TextAlign.center,
                     style: TakoTheme.darkTextTheme.bodyText1!
-                        .copyWith(color: tkLightGreen),
+                        .copyWith(color: Colors.white),
                   ),
                 ),
               ),

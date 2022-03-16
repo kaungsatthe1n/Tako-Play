@@ -14,13 +14,9 @@ import '../utils/routes.dart';
 class RecentlyAddedAnimeCard extends StatelessWidget {
   const RecentlyAddedAnimeCard({
     Key? key,
-    required this.itemHeight,
-    required this.itemWidth,
     required this.anime,
   }) : super(key: key);
 
-  final double itemHeight;
-  final double itemWidth;
   final Anime anime;
 
   @override
@@ -53,8 +49,8 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(15),
                     child: CachedNetworkImage(
                       key: UniqueKey(),
-                      height: itemHeight.toDouble().h,
-                      width: itemWidth.w,
+                      height: 200,
+                      width: 180,
                       cacheManager: CustomCacheManager.instance,
                       fit: BoxFit.cover,
                       imageUrl: anime.imageUrl.toString(),
@@ -62,14 +58,14 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                   ),
                   Container(
                     alignment: Alignment.center,
-                    height: itemHeight.toDouble().h,
-                    width: itemWidth.w,
+                    height: 200,
+                    width: 180,
                     decoration: const BoxDecoration(
                       color: Colors.black38,
                     ),
                     child: const Icon(
-                      Icons.play_circle,
-                      size: 35,
+                      Icons.play_arrow_rounded,
+                      size: 38,
                     ),
                   ),
                   Positioned(
