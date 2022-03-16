@@ -14,9 +14,12 @@ import '../services/anime_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
+import '../utils/tako_helper.dart';
 import '../widgets/anime_detail_header.dart';
 import '../widgets/cache_image_with_cachemanager.dart';
 import '../widgets/plot_summary.dart';
+import '../widgets/tako_animation.dart';
+import '../widgets/tako_scaffold.dart';
 
 class VideoListScreen extends StatefulWidget {
   const VideoListScreen({Key? key}) : super(key: key);
@@ -25,8 +28,8 @@ class VideoListScreen extends StatefulWidget {
   _VideoListScreenState createState() => _VideoListScreenState();
 }
 
-class _VideoListScreenState extends State<VideoListScreen> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+class _VideoListScreenState extends State<VideoListScreen>
+    with SingleTickerProviderStateMixin {
   final RecentWatchManager recentWatchManager = Get.find();
   final BookMarkManager bookMarkManager = Get.find();
   var selectedIndex = 9999999.obs;
@@ -34,10 +37,23 @@ class _VideoListScreenState extends State<VideoListScreen> {
   final name = Get.arguments['anime'].name.toString();
   final imageUrl = Get.arguments['anime'].imageUrl.toString();
   final animeUrl = Get.arguments['anime'].animeUrl.toString();
+  late AnimationController animationController;
+  late Animation<double> fadeAnimation;
+  bool hasRemainingEp = false;
+  int remainingEp = 0;
+  int totalChipCount = 0;
+  RxList<Episode> epChunkList = <Episode>[].obs;
+  String start = '';
+  String end = '';
+  int finalChipCount = 0;
 
   @override
   void initState() {
     super.initState();
+    animationController = AnimationController(
+        duration: Duration(milliseconds: takoAnimationDuration), vsync: this);
+    fadeAnimation =
+        Tween<double>(begin: 0, end: 1).animate(animationController);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -45,6 +61,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
 
   @override
   void dispose() {
+    animationController.dispose();
     super.dispose();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -55,17 +72,8 @@ class _VideoListScreenState extends State<VideoListScreen> {
   Widget build(BuildContext context) {
     return Hero(
       tag: Get.arguments['anime'].id.toString(),
-      child: Scaffold(
-        key: _formKey,
-        appBar: AppBar(
-            title: const Text(
-              'Player',
-            ),
-            leading: IconButton(
-                onPressed: () {
-                  Get.back();
-                },
-                icon: const Icon(Icons.arrow_back_ios_new))),
+      child: TakoScaffoldWithBackButton(
+        appBarTitle: 'Player',
         body: FutureBuilder<Anime>(
             future: AnimeService().fetchAnimeDetails(animeUrl),
             builder: (context, snapshot) {
@@ -79,6 +87,19 @@ class _VideoListScreenState extends State<VideoListScreen> {
               }
               if (snapshot.connectionState == ConnectionState.done) {
                 final anime = snapshot.data;
+                if ((anime!.episodes!.length % 50).floor() < 50) {
+                  hasRemainingEp = true;
+                  remainingEp = (anime.episodes!.length % 50).floor();
+                }
+                totalChipCount = (anime.episodes!.length / 50).floor();
+                epChunkList.value = anime.episodes!.sublist(
+                    0,
+                    (hasRemainingEp == true && anime.episodes!.length < 50)
+                        ? remainingEp
+                        : 50);
+                finalChipCount = totalChipCount + (hasRemainingEp ? 1 : 0);
+
+                print('Ep Chunk List ${epChunkList.length}+ $remainingEp');
                 return Stack(
                   fit: StackFit.expand,
                   children: [
@@ -112,7 +133,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
                           child: ListView(
                             children: [
                               AnimeDetailHeader(
-                                anime: anime!,
+                                anime: anime,
                                 name: name,
                                 imageUrl: imageUrl,
                               ),
@@ -191,83 +212,153 @@ class _VideoListScreenState extends State<VideoListScreen> {
                                 ),
                               ),
                               Padding(
-                                padding: EdgeInsets.only(bottom: 20.h),
+                                padding: EdgeInsets.only(bottom: 5),
                                 child: const Divider(),
                               ),
-                              // Episodes Grid View
-                              anime.epLinks!.isNotEmpty
-                                  ? GridView.builder(
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      shrinkWrap: true,
-                                      gridDelegate:
-                                          const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 5,
-                                        mainAxisSpacing: 20,
-                                        crossAxisSpacing: 20,
-                                      ),
-                                      itemCount: anime.epLinks!.length,
-                                      itemBuilder:
-                                          (BuildContext context, int index) {
-                                        return Obx(
-                                          () => Material(
-                                            borderRadius:
-                                                BorderRadius.circular(10),
-                                            color: selectedIndex.value == index
-                                                ? tkDarkGreen
-                                                : tkLightGreen.withAlpha(200),
+                              anime.episodes!.length > 50
+                                  ? SizedBox(
+                                      height: 70,
+                                      child: ListView.builder(
+                                        itemCount: finalChipCount,
+                                        itemBuilder: (context, index) {
+                                          return Padding(
+                                            padding: const EdgeInsets.all(8.0),
                                             child: InkWell(
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                              onTap: () async {
-                                                selectedIndex.value = index;
-                                                final recentAnime = RecentAnime(
-                                                  id: anime.id.toString(),
-                                                  name: name,
-                                                  currentEp:
-                                                      'Episode ${index + 1}',
-                                                  imageUrl: imageUrl,
-                                                  epUrl: anime.epLinks![index]
-                                                      .toString(),
-                                                  // animeUrl: animeUrl,
-                                                );
-                                                // Add to Recent Anime List
-                                                recentWatchManager
-                                                    .addAnimeToRecent(
-                                                        recentAnime);
-                                                await Get.toNamed(
-                                                    Routes.mediaFetchScreen,
-                                                    arguments: {
-                                                      'animeUrl': anime
-                                                          .epLinks![index]
-                                                          .toString()
-                                                    });
+                                              onTap: () {
+                                                animationController.reset();
+                                                getEpisodeRange(index);
+                                                if (finalChipCount ==
+                                                    (index + 1)) {
+                                                  takoDebugPrint('last chip');
+                                                  epChunkList.value =
+                                                      anime.episodes!.sublist(
+                                                    int.parse(start) - 1,
+                                                  );
+                                                } else {
+                                                  epChunkList.value =
+                                                      anime.episodes!.sublist(
+                                                          int.parse(start) - 1,
+                                                          int.parse(end));
+                                                }
                                               },
-                                              splashColor: Colors.white,
-                                              child: Container(
-                                                alignment: Alignment.center,
-                                                decoration: BoxDecoration(
-                                                    boxShadow: const [
-                                                      BoxShadow(
-                                                        color: Colors.black12,
-                                                        spreadRadius: 2,
-                                                        blurRadius: 7,
-                                                        offset: Offset(0, 5),
-                                                      ),
-                                                    ],
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            10)),
-                                                child: Text(
-                                                  (index + 1).toString(),
-                                                  style: TakoTheme
-                                                      .darkTextTheme.headline6,
+                                              child: Chip(
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 10),
+                                                label: Text(
+                                                  getEpisodeRange(index),
                                                 ),
                                               ),
                                             ),
-                                          ),
-                                        );
-                                      },
+                                          );
+                                        },
+                                        scrollDirection: Axis.horizontal,
+                                      ))
+                                  : SizedBox(),
+                              // Episodes Grid View
+                              anime.episodes!.isNotEmpty
+                                  ? Obx(
+                                      () => GridView.builder(
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        shrinkWrap: true,
+                                        gridDelegate:
+                                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                                          mainAxisSpacing: 20,
+                                          crossAxisSpacing: 20,
+                                          maxCrossAxisExtent: 50,
+                                        ),
+                                        itemCount: epChunkList.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          animationController.forward();
+                                          return Obx(
+                                            () => AnimatedBuilder(
+                                              animation: animationController,
+                                              child: Material(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                color:
+                                                    selectedIndex.value == index
+                                                        ? Color.fromARGB(
+                                                            255, 50, 55, 66)
+                                                        : tkLightGreen
+                                                            .withAlpha(200),
+                                                child: InkWell(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  onTap: () async {
+                                                    selectedIndex.value = index;
+                                                    final recentAnime =
+                                                        RecentAnime(
+                                                      id: anime.id.toString(),
+                                                      name: name,
+                                                      currentEp:
+                                                          'Episode ${epChunkList[index].number}',
+                                                      imageUrl: imageUrl,
+                                                      epUrl: epChunkList[index]
+                                                          .link
+                                                          .toString(),
+                                                      // animeUrl: animeUrl,
+                                                    );
+                                                    // Add to Recent Anime List
+                                                    recentWatchManager
+                                                        .addAnimeToRecent(
+                                                            recentAnime);
+                                                    await Get.toNamed(
+                                                        Routes.mediaFetchScreen,
+                                                        arguments: {
+                                                          'animeUrl':
+                                                              epChunkList[index]
+                                                                  .link
+                                                                  .toString()
+                                                        });
+                                                  },
+                                                  splashColor: Colors.white,
+                                                  child: Container(
+                                                    alignment: Alignment.center,
+                                                    decoration: BoxDecoration(
+                                                        boxShadow: const [
+                                                          BoxShadow(
+                                                            color:
+                                                                Colors.black12,
+                                                            spreadRadius: 2,
+                                                            blurRadius: 7,
+                                                            offset:
+                                                                Offset(0, 5),
+                                                          ),
+                                                        ],
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(10)),
+                                                    child: Text(
+                                                      epChunkList[index].number,
+                                                      style: TakoTheme
+                                                          .darkTextTheme
+                                                          .headline6,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              builder: (context, child) {
+                                                return Transform(
+                                                  transform: Matrix4.translationValues(
+                                                      0,
+                                                      100 *
+                                                          (1.0 -
+                                                              TakoCurveAnimation(
+                                                                      animationController,
+                                                                      index,
+                                                                      epChunkList
+                                                                          .length)
+                                                                  .value),
+                                                      0),
+                                                  child: child,
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     )
                                   : Padding(
                                       padding: const EdgeInsets.symmetric(
@@ -313,5 +404,16 @@ class _VideoListScreenState extends State<VideoListScreen> {
             }),
       ),
     );
+  }
+
+  String getEpisodeRange(int index) {
+    start = ((index * 50) + 1).toString();
+    end = ((50 * (index + 1))).toString();
+    if (index == totalChipCount && hasRemainingEp) {
+      end = ((50 * index) + remainingEp).toString();
+    }
+    // startVal = start;
+    // endVal = (int.parse(end) + 1).toString();
+    return ('$start - $end');
   }
 }

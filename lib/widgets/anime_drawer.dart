@@ -11,10 +11,7 @@ import '../utils/routes.dart';
 class AnimeDrawer extends StatelessWidget {
   const AnimeDrawer({
     Key? key,
-    required this.webViewManagerController,
   }) : super(key: key);
-
-  final WebViewManager webViewManagerController;
 
   @override
   Widget build(BuildContext context) {
@@ -81,19 +78,18 @@ class AnimeDrawer extends StatelessWidget {
               leading: const Icon(Icons.info),
               title: const Text('About TakoPlay'),
             ),
-            GetBuilder(
-              init: webViewManagerController,
-              initState: (_) {
-                webViewManagerController.getVideoPlayerType();
-              },
-              builder: (_) => SwitchListTile(
-                activeColor: tkLightGreen,
-                value: webViewManagerController.isWebView,
-                onChanged: webViewManagerController.changeWebViewType,
-                title: const Text('Video Player Type'),
-                subtitle: const Text('Enable Webview ?'),
-              ),
-            )
+            ListTile(
+              onTap: () => Get.toNamed(Routes.genreSelectionScreen),
+              hoverColor: Colors.white,
+              leading: const Icon(Icons.list_outlined),
+              title: const Text('Genres'),
+            ),
+            ListTile(
+              onTap: () => Get.toNamed(Routes.settingsScreen),
+              hoverColor: Colors.white,
+              leading: const Icon(Icons.settings),
+              title: const Text('Settings'),
+            ),
           ],
         ),
       ),

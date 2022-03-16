@@ -6,8 +6,7 @@ part 'request_service.chopper.dart';
 
 /// [RequestService] is a data source consuming remote APIs for fetching and
 /// managing data about the actual anime. The implementation of those requests
-/// can be found in the auto-generated file `request_service.chopper.dart` which
-/// should not be manually edited, since any changes will be overridden after
+/// can be found in the auto-generated file `request_service.chopper.dart` , since any changes will be overridden after
 /// running the build command.
 @ChopperApi(baseUrl: baseUrl)
 abstract class RequestService extends ChopperService {
@@ -24,6 +23,8 @@ abstract class RequestService extends ChopperService {
 
   @Get(path: 'anime-movies.html')
   Future<Response> requestMoviesResponse();
+
+  Future<Response> requestAnimeGenre(String url,[int index]);
 
   Future<Response> requestEpisodesResponse(String id);
 
