@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 /// Collection of all app related constants go here
 
-const String version = 'v1.4.3';
+const String version = 'v1.5.1';
 String updateLink = '';
 bool isSameVersion = true;
 const license = 'MIT License';
@@ -83,15 +82,10 @@ const String YURI = '$baseUrl/genre/yuri';
 const Color tkDarkBlue = Color(0xFF0D1321);
 const Color tkDarkerBlue = Color(0xFF060B16);
 const Color tkDarkGreen = Color(0xFF1D4C4F);
-const Color tkLightGreen = Color(0xFF12B471);
 const Color tkGrey = Color(0xFF323435);
 const Color tkGradientBlue = Color(0xFF133F6E);
 const Color tkGradientBlack = Color(0xFF28313B);
 
-// ScreenUtil
-
-double screenWidth = ScreenUtil().screenWidth;
-double screenHeight = ScreenUtil().screenHeight;
 
 const loadingIndicator = SpinKitSquareCircle(
   color: tkGradientBlue,

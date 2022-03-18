@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-import '../helpers/webview_manager.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
@@ -17,11 +14,11 @@ class AnimeDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        color: tkDarkBlue,
+        color: tkDarkerBlue,
         child: ListView(
           children: [
             SizedBox(
-              height: (screenHeight * .39).h,
+              height: 300,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -31,7 +28,7 @@ class AnimeDrawer extends StatelessWidget {
                     left: 0,
                     right: 0,
                     child: Container(
-                      margin: EdgeInsets.symmetric(horizontal: 5.h),
+                      margin: EdgeInsets.symmetric(horizontal: 5),
                       child: Image.asset(
                         'assets/images/rem.jpg',
                         fit: BoxFit.cover,
@@ -47,10 +44,10 @@ class AnimeDrawer extends StatelessWidget {
                     bottom: 0,
                     child: Container(
                       alignment: Alignment.centerLeft,
-                      padding: EdgeInsets.symmetric(horizontal: 20.w),
-                      height: (screenHeight * .07).h,
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      height: 60,
                       decoration: BoxDecoration(
-                          color: tkLightGreen.withOpacity(.7),
+                          color: tkDarkBlue.withOpacity(.7),
                           borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(10),
                               topRight: Radius.circular(10))),
@@ -64,7 +61,7 @@ class AnimeDrawer extends StatelessWidget {
               ),
             ),
             SizedBox(
-              height: (screenHeight * .02).h,
+              height: 20,
             ),
             ListTile(
               hoverColor: Colors.white,

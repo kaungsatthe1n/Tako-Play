@@ -1,6 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../helpers/cache_manager.dart';
@@ -39,8 +38,8 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
       child: AspectRatio(
         aspectRatio: 3 / 6,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 10.h),
-          margin: EdgeInsets.symmetric(horizontal: 10.w),
+          padding: EdgeInsets.symmetric(vertical: 10),
+          margin: EdgeInsets.symmetric(horizontal: 10),
           child: Column(
             children: [
               Stack(
@@ -90,7 +89,7 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                 ],
               ),
               SizedBox(
-                height: (screenHeight * .02).h,
+                height: 20,
               ),
               Flexible(
                 child: Text(

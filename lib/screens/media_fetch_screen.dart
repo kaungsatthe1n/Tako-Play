@@ -11,7 +11,8 @@ import '../services/anime_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
-
+import '../utils/tako_helper.dart';
+import '../widgets/tako_play_web_view.dart';
 
 class MediaFetchScreen extends StatefulWidget {
   const MediaFetchScreen({Key? key}) : super(key: key);
@@ -71,7 +72,8 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.done) {
                         return SizedBox.fromSize(
-                          size: Size(screenWidth / 1.5, screenHeight / 1.5),
+                          size: Size(MediaQuery.of(context).size.width / 1.5,
+                              MediaQuery.of(context).size.height / 1.5),
                           child: TakoPlayWebView(
                             initialUrl: 'https:${snapshot.data}',
                             onLoadingFinished: (_webViewController) async {
@@ -89,13 +91,19 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                               String rawUrl = await _webViewController
                                   .runJavascriptReturningResult(
                                       "document.getElementsByClassName('jw-video jw-reset')[0].attributes.src.value;");
-                              if (rawUrl == 'null') {
+                              for (var i = 0; i < 8; i++) {
+                                rawUrl = await _webViewController
+                                    .runJavascriptReturningResult(
+                                        "document.getElementsByClassName('jw-video jw-reset')[0].attributes.src.value;");
+                              }
+                              if (rawUrl == 'null' ||
+                                  !rawUrl
+                                      .contains(RegExp(r'(.)[0-9]+(p.mp4)'))) {
                                 hasError.value = true;
                               } else {
                                 String url = rawUrl.split('"').toList()[1];
-
+                                // takoDebugPrint(await _webViewController.runJavascriptReturningResult('document.documentElement.outerHTML;'));
                                 await _webViewController
-
                                     .runJavascriptReturningResult(
                                         "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
                                 String resolutionCount = await _webViewController
@@ -121,16 +129,14 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                                           '.${quality}p.mp4'));
                                 }
                                 for (var qlt in _qualityList) {
-                                  takoDebugPrint(mediaFetchController.defaultQuality);
                                   if (mediaFetchController.defaultQuality
                                       .contains(qlt)) {
-                                    
                                     _filteredUrl = url.replaceAll(
                                         RegExp(r'(.)[0-9]+(p.mp4)'),
                                         '.${qlt}p.mp4');
                                   }
                                 }
-                                takoDebugPrint('Filter Url : $_filteredUrl');
+                                // takoDebugPrint('Filter Url : $_filteredUrl');
                                 if (_filteredUrl != '') {
                                   await Get.offNamed(Routes.videoPlayerScreen,
                                       arguments: {
@@ -158,17 +164,26 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                  'assets/gif/anime${1 + _random.nextInt(25)}.gif',
-                  width: 350,
-                  height: 200,
+                Obx(
+                  () => Image.asset(
+                    hasError.value
+                        ? 'assets/gif/anime-cry.gif'
+                        : 'assets/gif/anime${1 + _random.nextInt(25)}.gif',
+                    width: 350,
+                    height: 200,
+                  ),
                 ),
                 SizedBox(
-                  height: screenHeight * .10,
+                  height: 20,
                 ),
-                Text(
-                  'Please Wait ...',
-                  style: TakoTheme.darkTextTheme.bodyText1,
+                Obx(
+                  () => Visibility(
+                    visible: !hasError.value,
+                    child: Text(
+                      'Please Wait ...',
+                      style: TakoTheme.darkTextTheme.bodyText1,
+                    ),
+                  ),
                 ),
                 Obx(
                   () => Visibility(
@@ -176,7 +191,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Text(
-                        'Loading too slow ?',
+                        'Episode can\'t be fetch',
                         style: TakoTheme.darkTextTheme.headline3,
                       ),
                     ),
@@ -198,8 +213,12 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      color: tkLightGreen,
-                      child: const Text('Continue with WebView Player'),
+                      color: tkGradientBlue,
+                      child: Text(
+                        'Continue with WebView Player',
+                        style: TakoTheme.darkTextTheme.headline3!
+                            .copyWith(fontSize: 17.0),
+                      ),
                     ),
                   ),
                 ),

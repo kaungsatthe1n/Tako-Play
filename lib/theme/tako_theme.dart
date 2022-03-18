@@ -80,13 +80,9 @@ class TakoTheme {
         backgroundColor: Colors.green,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        selectedItemColor: tkLightGreen,
+        selectedItemColor: Colors.white,
         unselectedItemColor: Colors.white60,
         backgroundColor: tkDarkBlue,
-      ),
-      checkboxTheme: CheckboxThemeData(
-        checkColor: MaterialStateProperty.all(Colors.black),
-        fillColor: MaterialStateProperty.all(tkLightGreen.withAlpha(205)),
       ),
       textTheme: darkTextTheme,
     );

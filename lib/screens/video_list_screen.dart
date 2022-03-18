@@ -1,8 +1,6 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../helpers/bookmark_manager.dart';
@@ -46,6 +44,7 @@ class _VideoListScreenState extends State<VideoListScreen>
   String start = '';
   String end = '';
   int finalChipCount = 0;
+  var selectedChipIndex = 0.obs;
 
   @override
   void initState() {
@@ -138,16 +137,16 @@ class _VideoListScreenState extends State<VideoListScreen>
                                 imageUrl: imageUrl,
                               ),
                               SizedBox(
-                                height: 40.h,
+                                height: 40,
                               ),
                               PlotSummary(
                                 summary: anime.summary.toString(),
                               ),
                               Container(
                                 margin: EdgeInsets.only(
-                                  top: 40.h,
-                                  left: 10.w,
-                                  right: 10.w,
+                                  top: 40,
+                                  left: 10,
+                                  right: 10,
                                 ),
                                 child: Row(
                                   mainAxisAlignment:
@@ -199,13 +198,13 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                 ? Icons.bookmark
                                                 : Icons
                                                     .bookmark_border_outlined,
-                                            color: tkLightGreen,
+                                            color: Colors.white,
                                           ),
                                           label: Text(
                                             'BookMark',
                                             style: TakoTheme
                                                 .darkTextTheme.bodyText1!
-                                                .copyWith(color: tkLightGreen),
+                                                .copyWith(color: Colors.white),
                                           )),
                                     )
                                   ],
@@ -222,9 +221,12 @@ class _VideoListScreenState extends State<VideoListScreen>
                                         itemCount: finalChipCount,
                                         itemBuilder: (context, index) {
                                           return Padding(
-                                            padding: const EdgeInsets.all(8.0),
+                                            padding: const EdgeInsets.only(
+                                                bottom: 20, left: 8, right: 8),
                                             child: InkWell(
                                               onTap: () {
+                                                selectedChipIndex.value = index;
+                                                selectedIndex.value = 99999999;
                                                 animationController.reset();
                                                 getEpisodeRange(index);
                                                 if (finalChipCount ==
@@ -241,11 +243,20 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                           int.parse(end));
                                                 }
                                               },
-                                              child: Chip(
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 10),
-                                                label: Text(
-                                                  getEpisodeRange(index),
+                                              child: Obx(
+                                                () => Chip(
+                                                  backgroundColor:
+                                                      selectedChipIndex.value ==
+                                                              index
+                                                          ? tkGradientBlue
+                                                          : Color.fromARGB(255, 19, 18, 18).withOpacity(.8),
+                                                  padding: EdgeInsets.symmetric(
+                                                      horizontal: 10),
+                                                  label: Text(
+                                                      getEpisodeRange(index),
+                                                      style: TakoTheme
+                                                          .darkTextTheme
+                                                          .subtitle1!),
                                                 ),
                                               ),
                                             ),
@@ -279,10 +290,8 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                     BorderRadius.circular(10),
                                                 color:
                                                     selectedIndex.value == index
-                                                        ? Color.fromARGB(
-                                                            255, 50, 55, 66)
-                                                        : tkLightGreen
-                                                            .withAlpha(200),
+                                                        ? tkGradientBlue
+                                                        : Colors.white,
                                                 child: InkWell(
                                                   borderRadius:
                                                       BorderRadius.circular(10),
@@ -334,7 +343,14 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                       epChunkList[index].number,
                                                       style: TakoTheme
                                                           .darkTextTheme
-                                                          .headline6,
+                                                          .headline6!
+                                                          .copyWith(
+                                                              color: selectedIndex
+                                                                          .value ==
+                                                                      index
+                                                                  ? Colors.white
+                                                                  : Colors
+                                                                      .black),
                                                     ),
                                                   ),
                                                 ),

@@ -33,7 +33,7 @@ class SettingScreen extends StatelessWidget {
               webViewManagerController.getVideoPlayerType();
             },
             builder: (_) => SwitchListTile(
-              activeColor: tkLightGreen,
+              activeColor: tkGradientBlue,
               value: webViewManagerController.isWebView,
               onChanged: webViewManagerController.changeWebViewType,
               title: const Text('Video Player Type'),

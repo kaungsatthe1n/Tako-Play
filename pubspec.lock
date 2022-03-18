@@ -195,13 +195,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.1.0"
-  flutter_screenutil:
-    dependency: "direct main"
-    description:
-      name: flutter_screenutil
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "5.3.1"
   flutter_spinkit:
     dependency: "direct main"
     description:

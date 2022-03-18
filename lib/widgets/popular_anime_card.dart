@@ -1,11 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../helpers/cache_manager.dart';
 import '../models/anime.dart';
 import '../theme/tako_theme.dart';
-import '../utils/constants.dart';
 import '../utils/routes.dart';
 
 class PopularAnimeCard extends StatelessWidget {
@@ -30,8 +28,8 @@ class PopularAnimeCard extends StatelessWidget {
         child: AspectRatio(
           aspectRatio: 3 / 6,
           child: Container(
-            padding: EdgeInsets.symmetric(vertical: 10.h),
-            margin: EdgeInsets.symmetric(horizontal: 10.w),
+            padding: EdgeInsets.symmetric(vertical: 10),
+            margin: EdgeInsets.symmetric(horizontal: 10),
             child: Flex(
               direction: Axis.vertical,
               mainAxisAlignment: MainAxisAlignment.start,
@@ -48,7 +46,7 @@ class PopularAnimeCard extends StatelessWidget {
                   ),
                 ),
                 SizedBox(
-                  height: (screenHeight * .02).h,
+                  height: 20,
                 ),
                 Flexible(
                   child: Text(

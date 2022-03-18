@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:math' as math;
 import '../models/anime.dart';
 import '../theme/tako_theme.dart';
-import '../utils/constants.dart';
 import '../utils/routes.dart';
 import '../widgets/cache_image_with_cachemanager.dart';
 

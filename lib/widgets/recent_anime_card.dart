@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
 import '../theme/tako_theme.dart';
@@ -26,7 +25,7 @@ class RecentAnimeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100.h,
+      height: 100,
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6), color: Colors.black38),
       child: Material(

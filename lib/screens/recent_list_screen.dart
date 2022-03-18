@@ -32,7 +32,7 @@ class RecentListScreen extends StatelessWidget {
               direction: DismissDirection.endToStart,
               background: const Icon(
                 Icons.delete_rounded,
-                color: tkLightGreen,
+                color: tkGradientBlue,
               ),
               child: RecentAnimeCard(
                 id: recentWatchManager.animeList[index].id,

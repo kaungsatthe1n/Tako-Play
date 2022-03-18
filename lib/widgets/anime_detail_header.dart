@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-
 import '../models/anime.dart';
 import '../theme/tako_theme.dart';
-import '../utils/constants.dart';
 import '../utils/routes.dart';
 import 'cache_image_with_cachemanager.dart';
 
@@ -22,7 +19,7 @@ class AnimeDetailHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: screenHeight * .30,
+      height: 230,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,14 +33,14 @@ class AnimeDetailHeader extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 20.w,
+            width: 20,
           ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  margin: EdgeInsets.symmetric(vertical: 15.h),
+                  margin: EdgeInsets.symmetric(vertical: 15),
                   child: Text(
                     name,
                     style: TakoTheme.darkTextTheme.headline4!.copyWith(),

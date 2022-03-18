@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import '../helpers/network_manager.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
@@ -42,7 +41,7 @@ class NoInternetScreen extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(15),
             ),
-            color: tkLightGreen,
+            color: tkGradientBlue,
             child: const Text('Try Again'),
           ),
         ],

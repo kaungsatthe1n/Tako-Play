@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
@@ -46,17 +45,15 @@ class MyApp extends StatelessWidget {
           dispose: (_, RequestService service) => service.client.dispose(),
         ),
       ],
-      child: ScreenUtilInit(
-        designSize: const Size(360, 764),
-        builder: () => GetMaterialApp(
+      child: 
+        GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'TakoPlay',
           theme: TakoTheme.dark(),
           initialRoute: '/',
           initialBinding: ManagerBinding(),
           getPages: TakoRoute.pages,
-        ),
-      ),
-    );
+        ));
+      
   }
 }

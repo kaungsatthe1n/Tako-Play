@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../theme/tako_theme.dart';
-import '../utils/constants.dart';
 
 class WebsiteErrorWidget extends StatelessWidget {
   const WebsiteErrorWidget({
@@ -14,9 +12,9 @@ class WebsiteErrorWidget extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Image.asset('assets/images/deku.gif'),
-        SizedBox(height: screenHeight * .05),
+        SizedBox(height: 20),
         Container(
-          margin: EdgeInsets.symmetric(vertical: 20.h, horizontal: 20.w),
+          margin: EdgeInsets.symmetric(vertical: 20, horizontal: 20),
           alignment: Alignment.center,
           child: Text(
             'Temporarily Down For Maintainance.',

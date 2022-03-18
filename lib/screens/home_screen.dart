@@ -2,10 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-
 import '../helpers/network_manager.dart';
 import '../models/anime.dart';
 import '../models/github.dart';
@@ -14,7 +12,6 @@ import '../services/anime_service.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
-import '../utils/tako_helper.dart';
 import '../widgets/movie_card.dart';
 import '../widgets/popular_anime_card.dart';
 import '../widgets/recently_added_anime_card.dart';
@@ -104,19 +101,19 @@ class _HomeScreenState extends State<HomeScreen>
                       children: [
                         Container(
                           margin: EdgeInsets.symmetric(
-                              horizontal: 20.w, vertical: 20.h),
+                              horizontal: 20, vertical: 20),
                           child: Row(
                             children: [
                               Text(
                                 'Popular',
                                 style:
                                     TakoTheme.darkTextTheme.headline4!.copyWith(
-                                  color: tkLightGreen,
+                                  color: Colors.white,
                                 ),
                               ),
                               Padding(
                                   padding:
-                                      EdgeInsets.symmetric(horizontal: 20.w),
+                                      EdgeInsets.symmetric(horizontal: 20),
                                   child: const Icon(
                                     Icons.local_fire_department_sharp,
                                     color: Colors.orange,
@@ -129,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen>
                           height: 300,
                           child: ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            padding: EdgeInsets.symmetric(horizontal: 10),
                             scrollDirection: Axis.horizontal,
                             itemCount: popularList!.length,
                             itemBuilder: (BuildContext context, int index) {
@@ -159,10 +156,10 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         Container(
                           margin: EdgeInsets.only(
-                            top: 10.h,
-                            left: 20.w,
-                            right: 20.w,
-                            bottom: 20.h,
+                            top: 10,
+                            left: 20,
+                            right: 20,
+                            bottom: 20,
                           ),
                           child: Row(
                             children: [
@@ -170,11 +167,11 @@ class _HomeScreenState extends State<HomeScreen>
                                 'Recently Added ',
                                 style:
                                     TakoTheme.darkTextTheme.headline4!.copyWith(
-                                  color: tkLightGreen,
+                                  color: Colors.white,
                                 ),
                               ),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                                padding: EdgeInsets.symmetric(horizontal: 20),
                                 child: const Icon(
                                   Icons.bubble_chart_rounded,
                                   color: Color(0xFF58E6DE),
@@ -188,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen>
                           height: 300,
                           child: ListView.builder(
                             physics: const BouncingScrollPhysics(),
-                            padding: EdgeInsets.symmetric(horizontal: 10.w),
+                            padding: EdgeInsets.symmetric(horizontal: 10),
                             scrollDirection: Axis.horizontal,
                             itemCount: recentlyAdded!.length,
                             itemBuilder: (BuildContext context, int index) {
@@ -218,18 +215,18 @@ class _HomeScreenState extends State<HomeScreen>
                         ),
                         Container(
                           margin: EdgeInsets.symmetric(
-                              horizontal: 20.w, vertical: 20.h),
+                              horizontal: 20, vertical: 20),
                           child: Row(
                             children: [
                               Text(
                                 'Movies',
                                 style:
                                     TakoTheme.darkTextTheme.headline4!.copyWith(
-                                  color: tkLightGreen,
+                                  color: Colors.white,
                                 ),
                               ),
                               Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 20.w),
+                                padding: EdgeInsets.symmetric(horizontal: 20),
                                 child: const Icon(
                                   Icons.movie_creation_sharp,
                                   color: Color(0xFFF5EB64),

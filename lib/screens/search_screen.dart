@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +7,6 @@ import '../services/anime_service.dart';
 import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
-import '../utils/tako_helper.dart';
 import '../widgets/searched_result_anime_card.dart';
 import '../widgets/tako_animation.dart';
 
@@ -109,9 +107,9 @@ class _SearchScreenState extends State<SearchScreen>
 
                       return GridView.builder(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 20.w, vertical: 20.h),
+                            horizontal: 20, vertical: 20),
                         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                          childAspectRatio: .53,
+                          childAspectRatio: .56,
                           crossAxisSpacing: 30,
                           mainAxisSpacing: 40,
                           maxCrossAxisExtent: 220,
@@ -174,7 +172,7 @@ class _SearchScreenState extends State<SearchScreen>
                                       },
                                       icon: const Icon(
                                         Icons.delete_rounded,
-                                        color: tkLightGreen,
+                                        color: Colors.white,
                                       )));
                             });
                       }

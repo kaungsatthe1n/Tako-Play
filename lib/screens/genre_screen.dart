@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -67,9 +66,9 @@ class _GenreScreenState extends State<GenreScreen>
 
                       return GridView.builder(
                         padding: EdgeInsets.symmetric(
-                            horizontal: 20.w, vertical: 20.h),
+                            horizontal: 20, vertical: 20),
                         gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-                          childAspectRatio: .53,
+                          childAspectRatio: .56,
                           crossAxisSpacing: 30,
                           mainAxisSpacing: 40,
                           maxCrossAxisExtent: 220,

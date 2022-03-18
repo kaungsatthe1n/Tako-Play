@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../utils/constants.dart';
 import '../widgets/tako_scaffold.dart';
+import '../widgets/update_alert_dialog.dart';
 
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({Key? key}) : super(key: key);
@@ -37,7 +37,7 @@ class AboutAppScreen extends StatelessWidget {
               Get.dialog(const AlertDialog(
                 backgroundColor: tkDarkBlue,
                 content: Text(
-                    '(-) Ui Changes in Recently Added Anime List.\n\n(-) Fixed Duplicate Recently Watched Anime.'),
+                    '(--) New Features ~~~ \n\n(-) Added Preferred video quality.\n\n(-) Added Genre to Filter Animes.\n\n(-) Added new icon for (Sub) and (Dub).\n\n(-) Pressing on a genre of the anime will take you to the page with list of anime with that genre.  \n\n(--) Minor Changes ~~~ \n\n(-) Fixed Laggy Animation and Added Animation to some UI.\n\n(-) Fixed Layout Error in Big Screen Device.\n\n(-) Black Screen Issue In WebView Player. '),
               ));
             },
           ),
@@ -49,23 +49,8 @@ class AboutAppScreen extends StatelessWidget {
                   content: Text('No Update Available'),
                 ));
               } else {
-                Get.dialog(AlertDialog(
-                  backgroundColor: tkDarkBlue,
-                  content: SizedBox(
-                    height: (screenHeight * .15).h,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('New Update is Available\n'),
-                        MaterialButton(
-                            elevation: 5,
-                            color: tkLightGreen.withAlpha(200),
-                            child: const Text('Update'),
-                            onPressed: () => launch(updateLink.toString())),
-                      ],
-                    ),
-                  ),
-                ));
+                Get.dialog(
+                    UpdateAlertDialog(downloadLink: updateLink.toString()));
               }
             },
             title: const Text('Check For Update '),

@@ -116,6 +116,10 @@ final List<Genre> genreList = [
     link: HORROR,
   ),
   Genre(
+    name: 'Josei',
+    link: JOSEI,
+  ),
+  Genre(
     name: 'Kids',
     link: KIDS,
   ),

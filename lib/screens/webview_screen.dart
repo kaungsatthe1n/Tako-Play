@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../utils/constants.dart';
+import '../utils/tako_helper.dart';
 import '../widgets/tako_play_web_view.dart';
 
 class WebViewScreen extends StatefulWidget {
@@ -33,16 +34,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   @override
   void dispose() {
-    super.dispose();
-
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
     ]);
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    takoDebugPrint(Get.arguments['mediaUrl'].toString());
     return WillPopScope(
       onWillPop: () async {
         if (!isLandScape.value) {
@@ -85,14 +85,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
               fit: StackFit.expand,
               children: [
                 SizedBox.fromSize(
-                  size: Size(screenWidth, screenHeight),
+                  size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height),
                   child: TakoPlayWebView(
                     initialUrl: Get.arguments['mediaUrl'].toString(),
                     onLoadingFinished: (_webViewController) async {
-                      await Future.delayed(const Duration(seconds: 1));
                       try {
                         //
-                        for (var i = 0; i < 8; i++) {
+                        for (var i = 0; i < 10; i++) {
                           await _webViewController.runJavascriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                           await _webViewController.runJavascriptReturningResult(
@@ -109,6 +108,11 @@ class _WebViewScreenState extends State<WebViewScreen> {
                             "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
                         //
                         for (var i = 0; i < 8; i++) {
+                          await _webViewController.runJavascriptReturningResult(
+                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
+                        }
+                        await Future.delayed(const Duration(seconds: 1));
+                        for (var i = 0; i < 10; i++) {
                           await _webViewController.runJavascriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
