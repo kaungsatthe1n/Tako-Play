@@ -25,7 +25,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
-    WidgetsBinding.instance!.addObserver(this);
+    WidgetsBinding.instance.addObserver(this);
 
     mediaPlayerControllerSetUp();
     _controller.setOverriddenFit(BoxFit.contain);
@@ -103,7 +103,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
   @override
   void dispose() {
     super.dispose();
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     _controller.clearCache();
     _controller.dispose();
     SystemChrome.setPreferredOrientations([

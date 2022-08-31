@@ -66,7 +66,7 @@ class TakoTheme {
       backgroundColor: Colors.black,
       scaffoldBackgroundColor: tkDarkerBlue,
       primaryColor: tkDarkBlue,
-      accentColor: tkGradientBlue,
+      colorScheme: ColorScheme.fromSwatch().copyWith(secondary: tkGradientBlue),
       appBarTheme: const AppBarTheme(
         foregroundColor: Colors.white,
         backgroundColor: tkDarkBlue,
