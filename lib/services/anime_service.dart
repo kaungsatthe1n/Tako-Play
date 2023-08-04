@@ -127,7 +127,8 @@ class AnimeService {
             .getElementsByClassName('name')
             .first
             .text
-            .trim().split('EP ')[1];
+            .trim()
+            .split('EP ')[1];
 
         final episode = Episode(link: href, number: epNumber);
         _episodes.add(episode);

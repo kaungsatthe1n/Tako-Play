@@ -25,8 +25,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   void initState() {
     super.initState();
-    if (Platform.isAndroid) WebView.platform = AndroidWebView();
-    if (Platform.isIOS) WebView.platform = CupertinoWebView();
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -43,6 +42,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   @override
   Widget build(BuildContext context) {
     takoDebugPrint(Get.arguments['mediaUrl'].toString());
+    print(Get.arguments['mediaUrl'].toString());
     return WillPopScope(
       onWillPop: () async {
         if (!isLandScape.value) {
@@ -85,35 +85,36 @@ class _WebViewScreenState extends State<WebViewScreen> {
               fit: StackFit.expand,
               children: [
                 SizedBox.fromSize(
-                  size: Size(MediaQuery.of(context).size.width, MediaQuery.of(context).size.height),
+                  size: Size(MediaQuery.of(context).size.width,
+                      MediaQuery.of(context).size.height),
                   child: TakoPlayWebView(
                     initialUrl: Get.arguments['mediaUrl'].toString(),
                     onLoadingFinished: (_webViewController) async {
                       try {
                         //
                         for (var i = 0; i < 10; i++) {
-                          await _webViewController.runJavascriptReturningResult(
+                          await _webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                          await _webViewController.runJavascriptReturningResult(
+                          await _webViewController.runJavaScriptReturningResult(
                               "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
                         }
                         //
                         for (var i = 0; i < 8; i++) {
-                          await _webViewController.runJavascriptReturningResult(
+                          await _webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
-                        await _webViewController.runJavascriptReturningResult(
+                        await _webViewController.runJavaScriptReturningResult(
                             "document.getElementsByClassName('jw-icon jw-icon-inline jw-button-color jw-reset jw-icon-fullscreen')[1].click();");
-                        await _webViewController.runJavascriptReturningResult(
+                        await _webViewController.runJavaScriptReturningResult(
                             "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
                         //
                         for (var i = 0; i < 8; i++) {
-                          await _webViewController.runJavascriptReturningResult(
+                          await _webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
                         await Future.delayed(const Duration(seconds: 1));
                         for (var i = 0; i < 10; i++) {
-                          await _webViewController.runJavascriptReturningResult(
+                          await _webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
                       } catch (e) {

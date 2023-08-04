@@ -12,7 +12,6 @@ class PopularAnimeCard extends StatelessWidget {
     required this.anime,
   }) : super(key: key);
 
-
   final Anime anime;
 
   @override
@@ -49,14 +48,16 @@ class PopularAnimeCard extends StatelessWidget {
                   height: 20,
                 ),
                 Flexible(
-                  child: Text(
-                    anime.name.toString(),
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    style: TakoTheme.darkTextTheme.bodyText1!
-                        .copyWith(decoration: TextDecoration.none),
+                    child: Text(
+                  anime.name.toString(),
+                  maxLines: 2,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                ),
+                )),
               ],
             ),
           ),

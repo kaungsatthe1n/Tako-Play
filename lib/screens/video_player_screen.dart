@@ -23,9 +23,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     super.initState();
 
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
     ]);
-    WidgetsBinding.instance!.addObserver(this);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    WidgetsBinding.instance.addObserver(this);
 
     mediaPlayerControllerSetUp();
     _controller.setOverriddenFit(BoxFit.contain);
@@ -107,7 +108,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
     _controller.clearCache();
     _controller.dispose();
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
     ]);
   }
 

@@ -20,7 +20,7 @@ final resolutionRegExp = RegExp(r'[0-9]+(P)');
 const String takoPlay = 'https://github.com/kaungsatthe1n/Tako-Play';
 const String takoTracker = 'https://github.com/kaungsatthe1n/Tako-AnimeTracker';
 const String mailing =
-    'mailto:parrotksh@gmail.com?subject=[TakoPlay: (Ver: $version)]';
+    'mailo:parrotksh@gmail.com?subject=[TakoPlay: (Ver: $version)]';
 const userAgent =
     'Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36';
 const origin = 'https://goload.one';
@@ -85,7 +85,6 @@ const Color tkDarkGreen = Color(0xFF1D4C4F);
 const Color tkGrey = Color(0xFF323435);
 const Color tkGradientBlue = Color(0xFF133F6E);
 const Color tkGradientBlack = Color(0xFF28313B);
-
 
 const loadingIndicator = SpinKitSquareCircle(
   color: tkGradientBlue,

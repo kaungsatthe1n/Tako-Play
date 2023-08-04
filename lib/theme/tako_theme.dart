@@ -1,72 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../utils/constants.dart';
 
 /// Main app theme, called [TakoTheme], is defined here.
 class TakoTheme {
-  static TextTheme darkTextTheme = TextTheme(
-    bodyText1: GoogleFonts.questrial(
-      fontSize: 15.0,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-    ),
-    bodyText2: GoogleFonts.questrial(
-      fontSize: 15.0,
-      fontWeight: FontWeight.normal,
-      color: Colors.white,
-    ),
-    subtitle1: GoogleFonts.questrial(
-      fontSize: 15.0,
-      fontWeight: FontWeight.w700,
-      color: Colors.white,
-    ),
-    subtitle2: GoogleFonts.questrial(
-      fontSize: 17.0,
-      color: Colors.white,
-    ),
-    headline1: GoogleFonts.questrial(
-      fontSize: 31.0,
-      fontWeight: FontWeight.bold,
-      color: Colors.white,
-    ),
-    headline2: GoogleFonts.questrial(
-      fontSize: 20.0,
-      fontWeight: FontWeight.w700,
-      color: Colors.white,
-    ),
-    headline3: GoogleFonts.questrial(
-      fontSize: 19.0,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-      decoration: TextDecoration.none,
-    ),
-    headline4: GoogleFonts.questrial(
-      fontSize: 22.0,
-      fontWeight: FontWeight.w700,
-      color: Colors.white,
-      decoration: TextDecoration.none,
-    ),
-    headline5: GoogleFonts.questrial(
-      fontSize: 19.0,
-      fontWeight: FontWeight.w700,
-      color: Colors.white,
-      decoration: TextDecoration.none,
-    ),
-    headline6: GoogleFonts.questrial(
-      fontSize: 19.0,
-      fontWeight: FontWeight.w600,
-      color: Colors.white,
-    ),
-  );
+  static TextTheme darkTextTheme = TextTheme();
 
   static ThemeData dark() {
     return ThemeData(
       brightness: Brightness.dark,
-      backgroundColor: Colors.black,
-      scaffoldBackgroundColor: tkDarkerBlue,
       primaryColor: tkDarkBlue,
-      accentColor: tkGradientBlue,
+      scaffoldBackgroundColor: tkDarkerBlue,
+      colorScheme: ColorScheme.dark(
+        primary: tkDarkBlue,
+        onPrimary: Colors.white,
+        secondary: Colors.green,
+        onSecondary: Colors.white,
+        error: Colors.red,
+        onError: Colors.white,
+        onBackground: Colors.white,
+        surface: Colors.grey,
+        onSurface: Colors.white,
+      ),
+      hintColor: tkGradientBlue,
       appBarTheme: const AppBarTheme(
         foregroundColor: Colors.white,
         backgroundColor: tkDarkBlue,
@@ -84,7 +40,6 @@ class TakoTheme {
         unselectedItemColor: Colors.white60,
         backgroundColor: tkDarkBlue,
       ),
-      textTheme: darkTextTheme,
     );
   }
 }

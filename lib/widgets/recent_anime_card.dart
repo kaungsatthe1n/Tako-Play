@@ -61,8 +61,11 @@ class RecentAnimeCard extends StatelessWidget {
                                 vertical: 2, horizontal: 12),
                             child: Text(
                               name,
-                              style: TakoTheme.darkTextTheme.headline3!
-                                  .copyWith(fontSize: 18.0),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                               maxLines: 2,
                             ),
                           ),
@@ -71,11 +74,11 @@ class RecentAnimeCard extends StatelessWidget {
                                 vertical: 2, horizontal: 12),
                             child: Text(
                               currentEp,
-                              style: TakoTheme.darkTextTheme.subtitle2!
-                                  .copyWith(
-                                      color: const Color(0xFF58E6DE),
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],

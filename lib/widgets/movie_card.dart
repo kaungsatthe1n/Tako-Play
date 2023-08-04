@@ -45,27 +45,30 @@ class MovieCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                    child: Text(
-                      anime.name.toString(),
-                      softWrap: true,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TakoTheme.darkTextTheme.subtitle2!
-                          .copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  ),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                      child: Text(
+                        anime.name.toString(),
+                        softWrap: true,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )),
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                    child: Text(
-                      anime.releasedDate.toString(),
-                      softWrap: true,
-                      style: TakoTheme.darkTextTheme.subtitle1!
-                          .copyWith(color: Colors.white),
-                    ),
-                  ),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+                      child: Text(
+                        anime.releasedDate.toString(),
+                        softWrap: true,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      )),
                 ],
               ),
             ),

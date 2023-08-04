@@ -24,13 +24,18 @@ abstract class RequestService extends ChopperService {
   @Get(path: 'anime-movies.html')
   Future<Response> requestMoviesResponse();
 
-  Future<Response> requestAnimeGenre(String url,[int index]);
+  Future<Response> requestAnimeGenre(String url, [int index]);
 
   Future<Response> requestEpisodesResponse(String id);
 
   Future<Response> requestGitHubUpdate(String url);
 
   Future<Response> requestCdnVideoLink(String url);
+
+  Future<Response> requestAnimeCdn(String url);
+
+  Future<Response> requestAnimeData(
+      String host, String encryptedId, String encryptAjaxParams, String id);
 
   static RequestService create() {
     final client = ChopperClient(

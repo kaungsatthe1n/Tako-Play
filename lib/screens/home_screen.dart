@@ -103,18 +103,19 @@ class _HomeScreenState extends State<HomeScreen>
                           margin: EdgeInsets.symmetric(
                               horizontal: 20, vertical: 20),
                           child: Row(
-                            children: [
-                              Text(
-                                'Popular',
-                                style:
-                                    TakoTheme.darkTextTheme.headline4!.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
+                            children: const [
+                              Text('Popular',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)
+                                  //     TakoTheme.darkTextTheme.headline4!.copyWith(
+                                  //   color: Colors.white,
+                                  // ),
+                                  ),
                               Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 20),
-                                  child: const Icon(
+                                  padding: EdgeInsets.symmetric(horizontal: 20),
+                                  child: Icon(
                                     Icons.local_fire_department_sharp,
                                     color: Colors.orange,
                                     size: 25,
@@ -162,17 +163,15 @@ class _HomeScreenState extends State<HomeScreen>
                             bottom: 20,
                           ),
                           child: Row(
-                            children: [
-                              Text(
-                                'Recently Added ',
-                                style:
-                                    TakoTheme.darkTextTheme.headline4!.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
+                            children: const [
+                              Text('Recently Added ',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold)),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.bubble_chart_rounded,
                                   color: Color(0xFF58E6DE),
                                   size: 25,
@@ -217,17 +216,17 @@ class _HomeScreenState extends State<HomeScreen>
                           margin: EdgeInsets.symmetric(
                               horizontal: 20, vertical: 20),
                           child: Row(
-                            children: [
+                            children: const [
                               Text(
                                 'Movies',
-                                style:
-                                    TakoTheme.darkTextTheme.headline4!.copyWith(
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold),
                               ),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 20),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.movie_creation_sharp,
                                   color: Color(0xFFF5EB64),
                                   size: 25,
