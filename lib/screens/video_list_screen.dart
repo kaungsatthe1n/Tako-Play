@@ -62,6 +62,9 @@ class _VideoListScreenState extends State<VideoListScreen>
   void dispose() {
     animationController.dispose();
     super.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: SystemUiOverlay.values);
+
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
@@ -80,7 +83,11 @@ class _VideoListScreenState extends State<VideoListScreen>
                 return Center(
                   child: Text(
                     'An Error ccurred',
-                    style: TakoTheme.darkTextTheme.headline3,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 );
               }
@@ -99,6 +106,7 @@ class _VideoListScreenState extends State<VideoListScreen>
                 finalChipCount = totalChipCount + (hasRemainingEp ? 1 : 0);
 
                 print('Ep Chunk List ${epChunkList.length}+ $remainingEp');
+                print(epChunkList[1].link.toString());
                 return Stack(
                   fit: StackFit.expand,
                   children: [
@@ -154,7 +162,11 @@ class _VideoListScreenState extends State<VideoListScreen>
                                   children: [
                                     Text(
                                       'Episodes',
-                                      style: TakoTheme.darkTextTheme.headline5,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                     GetBuilder<BookMarkManager>(
                                       builder: (_) => TextButton.icon(
@@ -202,9 +214,11 @@ class _VideoListScreenState extends State<VideoListScreen>
                                           ),
                                           label: Text(
                                             'BookMark',
-                                            style: TakoTheme
-                                                .darkTextTheme.bodyText1!
-                                                .copyWith(color: Colors.white),
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           )),
                                     )
                                   ],
@@ -249,14 +263,20 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                       selectedChipIndex.value ==
                                                               index
                                                           ? tkGradientBlue
-                                                          : Color.fromARGB(255, 19, 18, 18).withOpacity(.8),
+                                                          : Color.fromARGB(255,
+                                                                  19, 18, 18)
+                                                              .withOpacity(.8),
                                                   padding: EdgeInsets.symmetric(
                                                       horizontal: 10),
                                                   label: Text(
-                                                      getEpisodeRange(index),
-                                                      style: TakoTheme
-                                                          .darkTextTheme
-                                                          .subtitle1!),
+                                                    getEpisodeRange(index),
+                                                    style: TextStyle(
+                                                      color: Colors.black54,
+                                                      fontSize: 20,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -296,6 +316,9 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                   borderRadius:
                                                       BorderRadius.circular(10),
                                                   onTap: () async {
+                                                    print(epChunkList[index]
+                                                        .link
+                                                        .toString());
                                                     selectedIndex.value = index;
                                                     final recentAnime =
                                                         RecentAnime(
@@ -341,16 +364,12 @@ class _VideoListScreenState extends State<VideoListScreen>
                                                                 .circular(10)),
                                                     child: Text(
                                                       epChunkList[index].number,
-                                                      style: TakoTheme
-                                                          .darkTextTheme
-                                                          .headline6!
-                                                          .copyWith(
-                                                              color: selectedIndex
-                                                                          .value ==
-                                                                      index
-                                                                  ? Colors.white
-                                                                  : Colors
-                                                                      .black),
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 20,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -381,8 +400,11 @@ class _VideoListScreenState extends State<VideoListScreen>
                                           horizontal: 10),
                                       child: Text(
                                         'Coming Soon ..',
-                                        style:
-                                            TakoTheme.darkTextTheme.subtitle2,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                             ],

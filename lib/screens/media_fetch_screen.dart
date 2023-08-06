@@ -1,18 +1,18 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import '../helpers/media_quality_manager.dart';
 import '../helpers/webview_manager.dart';
 import '../services/anime_service.dart';
-import '../theme/tako_theme.dart';
+import '../services/request_service.dart';
 import '../utils/constants.dart';
+import '../utils/extractor.dart';
 import '../utils/routes.dart';
-import '../utils/tako_helper.dart';
 import '../widgets/tako_play_web_view.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart';
 
 class MediaFetchScreen extends StatefulWidget {
   const MediaFetchScreen({Key? key}) : super(key: key);
@@ -27,7 +27,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
   final mediaFetchController = Get.find<MediaQualityManager>();
   final _random = Random();
   var hasError = false.obs;
-  Map<String, String> resolutions = {};
+  Map<String, String> resolutions = {'sd': ''};
   List<String> _qualityList = [];
   String _filteredUrl = '';
   final animeUrl = Get.arguments['animeUrl'];
@@ -37,7 +37,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
   void initState() {
     super.initState();
     mediaFetchController.getVideoQuality();
-    if (Platform.isAndroid) WebView.platform = AndroidWebView();
+
     fetchVideoFile();
   }
 
@@ -53,7 +53,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       });
       if (!mounted) return;
       await Get.offNamed(Routes.webViewScreen, arguments: {
-        'mediaUrl': 'https:' + mediaUrl,
+        'mediaUrl': mediaUrl,
       });
     }
   }
@@ -75,81 +75,51 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                           size: Size(MediaQuery.of(context).size.width / 1.5,
                               MediaQuery.of(context).size.height / 1.5),
                           child: TakoPlayWebView(
-                            initialUrl: 'https:${snapshot.data}',
-                            onLoadingFinished: (_webViewController) async {
+                            initialUrl: '${snapshot.data}',
+                            onLoadingFinished: (webViewController) async {
                               mediaUrl = snapshot.data!;
                               // Ads Block
-                              for (var i = 0; i < 8; i++) {
-                                await _webViewController
-                                    .runJavascriptReturningResult(
-                                        "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                                await _webViewController
-                                    .runJavascriptReturningResult(
-                                        "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
-                              }
+                              final response = await RequestService.create()
+                                  .requestAnimeDetailResponse(animeUrl);
+
+                              dom.Document document = parse(response.body);
+
+                              String newRawUrl = document
+                                  .getElementsByClassName('vidcdn')
+                                  .first
+                                  .getElementsByTagName('a')
+                                  .first
+                                  .attributes
+                                  .values
+                                  .last
+                                  .toString();
+
+                              // New fetch
+                              // String newRawUrl = await webViewController
+                              //     .runJavaScriptReturningResult(
+                              //         "document.getElementsByClassName('vidcdn')[0].attributes.data-video.value;")
+                              //     .toString();
+
+                              List<String> data =
+                                  await extractor().extract(newRawUrl);
+
                               // Fetching VidStreaming Url
-                              String rawUrl = await _webViewController
-                                  .runJavascriptReturningResult(
-                                      "document.getElementsByClassName('jw-video jw-reset')[0].attributes.src.value;");
-                              for (var i = 0; i < 8; i++) {
-                                rawUrl = await _webViewController
-                                    .runJavascriptReturningResult(
-                                        "document.getElementsByClassName('jw-video jw-reset')[0].attributes.src.value;");
-                              }
-                              if (rawUrl == 'null' ||
-                                  !rawUrl
-                                      .contains(RegExp(r'(.)[0-9]+(p.mp4)'))) {
-                                hasError.value = true;
+                              String rawUrl = data[0];
+
+                              _filteredUrl = rawUrl;
+                              // takoDebugPrint('Filter Url : $_filteredUrl');
+                              if (_filteredUrl != '') {
+                                await Get.offNamed(Routes.videoPlayerScreen,
+                                    arguments: {
+                                      'url': _filteredUrl,
+                                      'resolutions': resolutions,
+                                    });
                               } else {
-                                String url = rawUrl.split('"').toList()[1];
-                                // takoDebugPrint(await _webViewController.runJavascriptReturningResult('document.documentElement.outerHTML;'));
-                                await _webViewController
-                                    .runJavascriptReturningResult(
-                                        "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
-                                String resolutionCount = await _webViewController
-                                    .runJavascriptReturningResult(
-                                        "document.getElementsByClassName('jw-reset jw-settings-submenu-items')[1].getElementsByClassName('jw-reset-text jw-settings-content-item')['length'];");
-                                for (var j = 0;
-                                    j < double.parse(resolutionCount) - 1;
-                                    j++) {
-                                  String rawResolution = await _webViewController
-                                      .runJavascriptReturningResult(
-                                          "document.getElementsByClassName('jw-reset jw-settings-submenu-items')[1].getElementsByClassName('jw-reset-text jw-settings-content-item')[$j].textContent;");
-                                  String resolution = rawResolution
-                                      .replaceFirst('"', ' ')
-                                      .trim()
-                                      .replaceFirst('"', ' ')
-                                      .trim();
-                                  String quality = resolution.split(' P')[0];
-                                  _qualityList.add(quality);
-                                  resolutions.putIfAbsent(
-                                      resolution,
-                                      () => url.replaceFirst(
-                                          RegExp(r'(.)[0-9]+(p.mp4)'),
-                                          '.${quality}p.mp4'));
-                                }
-                                for (var qlt in _qualityList) {
-                                  if (mediaFetchController.defaultQuality
-                                      .contains(qlt)) {
-                                    _filteredUrl = url.replaceAll(
-                                        RegExp(r'(.)[0-9]+(p.mp4)'),
-                                        '.${qlt}p.mp4');
-                                  }
-                                }
-                                // takoDebugPrint('Filter Url : $_filteredUrl');
-                                if (_filteredUrl != '') {
-                                  await Get.offNamed(Routes.videoPlayerScreen,
-                                      arguments: {
-                                        'url': _filteredUrl,
-                                        'resolutions': resolutions,
-                                      });
-                                } else {
-                                  await Get.offNamed(Routes.videoPlayerScreen,
-                                      arguments: {
-                                        'url': url,
-                                        'resolutions': resolutions,
-                                      });
-                                }
+                                await Get.offNamed(Routes.videoPlayerScreen,
+                                    arguments: {
+                                      'url': rawUrl,
+                                      'resolutions': resolutions,
+                                    });
                               }
                             },
                           ),
@@ -181,7 +151,11 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                     visible: !hasError.value,
                     child: Text(
                       'Please Wait ...',
-                      style: TakoTheme.darkTextTheme.bodyText1,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -192,7 +166,11 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Text(
                         'Episode can\'t be fetch',
-                        style: TakoTheme.darkTextTheme.headline3,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -204,7 +182,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                       onPressed: hasError.value
                           ? () {
                               Get.offNamed(Routes.webViewScreen, arguments: {
-                                'mediaUrl': 'https:' + mediaUrl,
+                                'mediaUrl': mediaUrl,
                               });
                             }
                           : null,
@@ -216,8 +194,11 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                       color: tkGradientBlue,
                       child: Text(
                         'Continue with WebView Player',
-                        style: TakoTheme.darkTextTheme.headline3!
-                            .copyWith(fontSize: 17.0),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),

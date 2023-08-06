@@ -43,7 +43,11 @@ class AnimeDetailHeader extends StatelessWidget {
                   margin: EdgeInsets.symmetric(vertical: 15),
                   child: Text(
                     name,
-                    style: TakoTheme.darkTextTheme.headline4!.copyWith(),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
                 Container(
@@ -51,11 +55,21 @@ class AnimeDetailHeader extends StatelessWidget {
                     child: Text.rich(
                       TextSpan(children: [
                         TextSpan(
-                            text: 'Released: ',
-                            style: TakoTheme.darkTextTheme.bodyText2),
+                          text: 'Released: ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         TextSpan(
-                            text: anime.releasedDate.toString(),
-                            style: TakoTheme.darkTextTheme.bodyText1),
+                          text: anime.releasedDate.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ]),
                     )),
                 Container(
@@ -63,11 +77,21 @@ class AnimeDetailHeader extends StatelessWidget {
                     child: Text.rich(
                       TextSpan(children: [
                         TextSpan(
-                            text: 'Status: ',
-                            style: TakoTheme.darkTextTheme.bodyText2),
+                          text: 'Status: ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         TextSpan(
-                            text: anime.status.toString(),
-                            style: TakoTheme.darkTextTheme.bodyText1),
+                          text: anime.status.toString(),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ]),
                     )),
                 const SizedBox(

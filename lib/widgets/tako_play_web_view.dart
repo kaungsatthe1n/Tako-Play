@@ -23,29 +23,35 @@ class TakoPlayWebView extends StatefulWidget {
 }
 
 class _TakoPlayWebViewState extends State<TakoPlayWebView> {
-  WebViewController? _webViewController;
+  late WebViewController _webViewController;
 
   @override
-  Widget build(BuildContext context) => WebView(
-        initialUrl: widget.initialUrl,
-        javascriptMode: JavascriptMode.unrestricted,
-        allowsInlineMediaPlayback: true,
-        backgroundColor: const Color(0x00000000),
-        onWebViewCreated: (controller) async {
-          _webViewController = controller;
+  void initState() {
+    super.initState();
+    _webViewController = WebViewController();
+    _webViewController
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(Color.fromARGB(255, 255, 255, 255))
+      ..loadRequest(Uri.parse(widget.initialUrl))
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (url) {
+          if (widget.onLoadingFinished != null) {
+            widget.onLoadingFinished!.call(_webViewController);
+          }
         },
-        onPageFinished: (_) async {
-          if (_webViewController == null) return;
-          widget.onLoadingFinished?.call(_webViewController!);
-        },
-        navigationDelegate: (NavigationRequest request) {
-          // If we are navigating to the destination url, allow it.
+        onNavigationRequest: (request) {
           if (request.url == widget.initialUrl) {
             return NavigationDecision.navigate;
           }
-
-          // Otherwise, reject any navigation to other web urls
           return NavigationDecision.prevent;
         },
-      );
+      ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WebViewWidget(
+      controller: _webViewController,
+    );
+  }
 }

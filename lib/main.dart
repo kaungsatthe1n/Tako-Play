@@ -39,14 +39,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
-      providers: [
-        Provider(
-          create: (_) => RequestService.create(),
-          dispose: (_, RequestService service) => service.client.dispose(),
-        ),
-      ],
-      child: 
-        GetMaterialApp(
+        providers: [
+          Provider(
+            create: (_) => RequestService.create(),
+            dispose: (_, RequestService service) => service.client.dispose(),
+          ),
+        ],
+        child: GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'TakoPlay',
           theme: TakoTheme.dark(),
@@ -54,6 +53,5 @@ class MyApp extends StatelessWidget {
           initialBinding: ManagerBinding(),
           getPages: TakoRoute.pages,
         ));
-      
   }
 }
