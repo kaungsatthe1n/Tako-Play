@@ -1,13 +1,8 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 // import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-
-import '../utils/constants.dart';
 import '../utils/tako_helper.dart';
 import '../widgets/tako_play_web_view.dart';
 
@@ -89,32 +84,32 @@ class _WebViewScreenState extends State<WebViewScreen> {
                       MediaQuery.of(context).size.height),
                   child: TakoPlayWebView(
                     initialUrl: Get.arguments['mediaUrl'].toString(),
-                    onLoadingFinished: (_webViewController) async {
+                    onLoadingFinished: (webViewController) async {
                       try {
                         //
                         for (var i = 0; i < 10; i++) {
-                          await _webViewController.runJavaScriptReturningResult(
+                          await webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                          await _webViewController.runJavaScriptReturningResult(
+                          await webViewController.runJavaScriptReturningResult(
                               "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
                         }
                         //
                         for (var i = 0; i < 8; i++) {
-                          await _webViewController.runJavaScriptReturningResult(
+                          await webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
-                        await _webViewController.runJavaScriptReturningResult(
+                        await webViewController.runJavaScriptReturningResult(
                             "document.getElementsByClassName('jw-icon jw-icon-inline jw-button-color jw-reset jw-icon-fullscreen')[1].click();");
-                        await _webViewController.runJavaScriptReturningResult(
+                        await webViewController.runJavaScriptReturningResult(
                             "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
                         //
                         for (var i = 0; i < 8; i++) {
-                          await _webViewController.runJavaScriptReturningResult(
+                          await webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
                         await Future.delayed(const Duration(seconds: 1));
                         for (var i = 0; i < 10; i++) {
-                          await _webViewController.runJavaScriptReturningResult(
+                          await webViewController.runJavaScriptReturningResult(
                               "document.getElementsByTagName('iframe')[$i].style.display='none';");
                         }
                       } catch (e) {

@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart';
 
 import '../helpers/media_quality_manager.dart';
 import '../helpers/webview_manager.dart';
@@ -11,8 +13,6 @@ import '../utils/constants.dart';
 import '../utils/extractor.dart';
 import '../utils/routes.dart';
 import '../widgets/tako_play_web_view.dart';
-import 'package:html/dom.dart' as dom;
-import 'package:html/parser.dart';
 
 class MediaFetchScreen extends StatefulWidget {
   const MediaFetchScreen({Key? key}) : super(key: key);
@@ -28,7 +28,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
   final _random = Random();
   var hasError = false.obs;
   Map<String, String> resolutions = {'sd': ''};
-  List<String> _qualityList = [];
+  // final List<String> _qualityList = [];
   String _filteredUrl = '';
   final animeUrl = Get.arguments['animeUrl'];
   late final String mediaUrl;
@@ -63,147 +63,150 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          Opacity(
-            opacity: 0,
-            child: webViewManagerController.isWebView
-                ? const SizedBox()
-                : FutureBuilder<String>(
-                    future: AnimeService().fetchIframeEmbedded(animeUrl),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.done) {
-                        return SizedBox.fromSize(
-                          size: Size(MediaQuery.of(context).size.width / 1.5,
-                              MediaQuery.of(context).size.height / 1.5),
-                          child: TakoPlayWebView(
-                            initialUrl: '${snapshot.data}',
-                            onLoadingFinished: (webViewController) async {
-                              mediaUrl = snapshot.data!;
-                              // Ads Block
-                              final response = await RequestService.create()
-                                  .requestAnimeDetailResponse(animeUrl);
+          _buildWebView(),
+          _buildCenterContent(),
+        ],
+      ),
+    );
+  }
 
-                              dom.Document document = parse(response.body);
+  Widget _buildWebView() {
+    return Opacity(
+      opacity: 0,
+      child: webViewManagerController.isWebView
+          ? const SizedBox()
+          : FutureBuilder<String>(
+              future: AnimeService().fetchIframeEmbedded(animeUrl),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  return _buildWebViewContent(snapshot.data);
+                } else {
+                  return const SizedBox();
+                }
+              },
+            ),
+    );
+  }
 
-                              String newRawUrl = document
-                                  .getElementsByClassName('vidcdn')
-                                  .first
-                                  .getElementsByTagName('a')
-                                  .first
-                                  .attributes
-                                  .values
-                                  .last
-                                  .toString();
+  Widget _buildWebViewContent(String? snapshotData) {
+    return SizedBox.fromSize(
+      size: Size(
+        MediaQuery.of(context).size.width / 1.5,
+        MediaQuery.of(context).size.height / 1.5,
+      ),
+      child: TakoPlayWebView(
+        initialUrl: '$snapshotData',
+        onLoadingFinished: (webViewController) async {
+          mediaUrl = snapshotData!;
+          final response = await RequestService.create()
+              .requestAnimeDetailResponse(animeUrl);
 
-                              // New fetch
-                              // String newRawUrl = await webViewController
-                              //     .runJavaScriptReturningResult(
-                              //         "document.getElementsByClassName('vidcdn')[0].attributes.data-video.value;")
-                              //     .toString();
+          dom.Document document = parse(response.body);
 
-                              List<String> data =
-                                  await extractor().extract(newRawUrl);
+          String newRawUrl = document
+              .getElementsByClassName('vidcdn')
+              .first
+              .getElementsByTagName('a')
+              .first
+              .attributes
+              .values
+              .last
+              .toString();
 
-                              // Fetching VidStreaming Url
-                              String rawUrl = data[0];
+          if (!mounted) return;
+          List<String> data = await extractor().extract(newRawUrl);
 
-                              _filteredUrl = rawUrl;
-                              // takoDebugPrint('Filter Url : $_filteredUrl');
-                              if (_filteredUrl != '') {
-                                await Get.offNamed(Routes.videoPlayerScreen,
-                                    arguments: {
-                                      'url': _filteredUrl,
-                                      'resolutions': resolutions,
-                                    });
-                              } else {
-                                await Get.offNamed(Routes.videoPlayerScreen,
-                                    arguments: {
-                                      'url': rawUrl,
-                                      'resolutions': resolutions,
-                                    });
-                              }
-                            },
-                          ),
-                        );
-                      } else {
-                        return const SizedBox();
-                      }
-                    }),
+          String rawUrl = data[0];
+          if (!mounted) return;
+          _filteredUrl = rawUrl;
+
+          if (_filteredUrl != '') {
+            await Get.offNamed(Routes.videoPlayerScreen, arguments: {
+              'url': _filteredUrl,
+              'resolutions': resolutions,
+            });
+          } else {
+            await Get.offNamed(Routes.videoPlayerScreen, arguments: {
+              'url': rawUrl,
+              'resolutions': resolutions,
+            });
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildCenterContent() {
+    return Container(
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Obx(
+            () => Image.asset(
+              hasError.value
+                  ? 'assets/gif/anime-cry.gif'
+                  : 'assets/gif/anime${1 + _random.nextInt(25)}.gif',
+              width: 350,
+              height: 200,
+            ),
           ),
-          Container(
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Obx(
-                  () => Image.asset(
-                    hasError.value
-                        ? 'assets/gif/anime-cry.gif'
-                        : 'assets/gif/anime${1 + _random.nextInt(25)}.gif',
-                    width: 350,
-                    height: 200,
+          SizedBox(height: 20),
+          Obx(
+            () => Visibility(
+              visible: !hasError.value,
+              child: Text(
+                'Please Wait ...',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Obx(
+            () => Visibility(
+              visible: hasError.value,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Text(
+                  'Episode can\'t be fetched',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(
-                  height: 20,
+              ),
+            ),
+          ),
+          Obx(
+            () => Visibility(
+              visible: hasError.value,
+              child: MaterialButton(
+                onPressed: hasError.value
+                    ? () {
+                        Get.offNamed(Routes.webViewScreen, arguments: {
+                          'mediaUrl': mediaUrl,
+                        });
+                      }
+                    : null,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
                 ),
-                Obx(
-                  () => Visibility(
-                    visible: !hasError.value,
-                    child: Text(
-                      'Please Wait ...',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                color: tkGradientBlue,
+                child: Text(
+                  'Continue with WebView Player',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                Obx(
-                  () => Visibility(
-                    visible: hasError.value,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        'Episode can\'t be fetch',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Obx(
-                  () => Visibility(
-                    visible: hasError.value,
-                    child: MaterialButton(
-                      onPressed: hasError.value
-                          ? () {
-                              Get.offNamed(Routes.webViewScreen, arguments: {
-                                'mediaUrl': mediaUrl,
-                              });
-                            }
-                          : null,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 30, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      color: tkGradientBlue,
-                      child: Text(
-                        'Continue with WebView Player',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],

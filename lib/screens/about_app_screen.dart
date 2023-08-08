@@ -23,7 +23,7 @@ class AboutAppScreen extends StatelessWidget {
             subtitle: Text('Kaung Satt Hein'),
           ),
           ListTile(
-            onTap: () => launch(takoPlay),
+            onTap: () => _launchUrl(takoPlay),
             title: const Text('Source Code'),
             subtitle: const Text(takoPlay),
           ),
@@ -56,11 +56,17 @@ class AboutAppScreen extends StatelessWidget {
             title: const Text('Check For Update '),
           ),
           ListTile(
-            onTap: () => launch(mailing),
+            onTap: () => _launchUrl(mailing),
             title: const Text('Contact Developer'),
           ),
         ],
       ),
     );
+  }
+}
+
+Future<void> _launchUrl(url) async {
+  if (!await launchUrl(Uri.parse(url))) {
+    throw Exception('Could not launch $url');
   }
 }

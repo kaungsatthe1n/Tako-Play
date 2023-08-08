@@ -13,7 +13,7 @@ class AnimeService {
   final _uuid = const Uuid();
 
   Future<AnimeResults> getAnimes(request) async {
-    List<Anime> _animeList = [];
+    List<Anime> animeList = [];
     final response = await request;
     dom.Document document = parse(response.body);
 
@@ -57,14 +57,14 @@ class AnimeService {
         imageUrl: img,
         releasedDate: releasedDate,
       );
-      _animeList.add(animeInfo);
+      animeList.add(animeInfo);
     }
-    return AnimeResults(animeList: _animeList);
+    return AnimeResults(animeList: animeList);
   }
 
   Future<Anime> fetchAnimeDetails(String path) async {
-    List<Genre> _genres = [];
-    List<Episode>? _episodes = [];
+    List<Genre> genres0 = [];
+    List<Episode>? episodes = [];
     final detailResponse =
         await RequestService.create().requestAnimeDetailResponse(path);
     dom.Document detailDoc = parse(detailResponse.body);
@@ -82,7 +82,7 @@ class AnimeService {
       final genreName = gen.text.split(',').last;
       final genreLink = gen.attributes.values.first.toString();
       final genre = Genre(name: genreName, link: genreLink);
-      _genres.add(genre);
+      genres0.add(genre);
     }
 
     final released = info
@@ -131,19 +131,19 @@ class AnimeService {
             .split('EP ')[1];
 
         final episode = Episode(link: href, number: epNumber);
-        _episodes.add(episode);
+        episodes.add(episode);
       }
     } else {
-      _episodes = [];
+      episodes = [];
     }
 
     Anime anime = Anime(
       id: id,
       summary: summary,
-      genres: _genres,
+      genres: genres0,
       releasedDate: released,
       status: status,
-      episodes: _episodes.reversed.toList(),
+      episodes: episodes.reversed.toList(),
     );
 
     return anime;
@@ -192,7 +192,7 @@ class AnimeService {
   }
 
   Future<AnimeResults> getRecentlyAddedAnimes() async {
-    List<Anime> _animeList = [];
+    List<Anime> animeList = [];
     final response =
         await RequestService.create().requestRecentlyAddedResponse();
     dom.Document document = parse(response.body);
@@ -227,8 +227,8 @@ class AnimeService {
         currentEp: currentEp,
         imageUrl: img,
       );
-      _animeList.add(animeInfo);
+      animeList.add(animeInfo);
     }
-    return AnimeResults(animeList: _animeList);
+    return AnimeResults(animeList: animeList);
   }
 }

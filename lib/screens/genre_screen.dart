@@ -56,7 +56,7 @@ class _GenreScreenState extends State<GenreScreen>
                       return Center(
                         child: Text(
                           'No Results Found !',
-                          style: TakoTheme.darkTextTheme.headline3,
+                          style: TakoTheme.darkTextTheme.displaySmall,
                         ),
                       );
                     }
@@ -160,7 +160,7 @@ class _GenreScreenState extends State<GenreScreen>
                     ),
                     child: Text(
                       _pageIndex.toString(),
-                      style: TakoTheme.darkTextTheme.headline3!.copyWith(
+                      style: TakoTheme.darkTextTheme.displaySmall!.copyWith(
                         color: Colors.black,
                       ),
                     ),

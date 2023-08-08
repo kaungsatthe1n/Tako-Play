@@ -73,7 +73,7 @@ class BookMarksScreen extends StatelessWidget {
                             child: Text(
                               bookmarkMaanger.bookMarks[index].name,
                               softWrap: true,
-                              style: TakoTheme.darkTextTheme.headline3,
+                              style: TakoTheme.darkTextTheme.displaySmall,
                             ),
                           ),
                         ),

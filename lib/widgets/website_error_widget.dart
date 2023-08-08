@@ -19,7 +19,7 @@ class WebsiteErrorWidget extends StatelessWidget {
           child: Text(
             'Temporarily Down For Maintainance.',
             textAlign: TextAlign.center,
-            style: TakoTheme.darkTextTheme.headline4,
+            style: TakoTheme.darkTextTheme.headlineMedium,
           ),
         )
       ],

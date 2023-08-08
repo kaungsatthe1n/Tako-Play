@@ -22,17 +22,17 @@ class NoInternetScreen extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             'Oops !',
-            style: TakoTheme.darkTextTheme.headline1,
+            style: TakoTheme.darkTextTheme.displayLarge,
           ),
           const SizedBox(height: 15),
           Text(
             'There is no internet connection',
-            style: TakoTheme.darkTextTheme.subtitle2,
+            style: TakoTheme.darkTextTheme.titleSmall,
           ),
           const SizedBox(height: 10),
           Text(
             'Please check your internet connection',
-            style: TakoTheme.darkTextTheme.subtitle2,
+            style: TakoTheme.darkTextTheme.titleSmall,
           ),
           const SizedBox(height: 15),
           MaterialButton(

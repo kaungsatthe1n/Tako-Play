@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/anime.dart';
-import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
 import 'cache_image_with_cachemanager.dart';
 

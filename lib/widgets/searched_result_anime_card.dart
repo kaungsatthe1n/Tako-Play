@@ -73,7 +73,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                     anime.name.toString(),
                     maxLines: 2,
                     textAlign: TextAlign.center,
-                    style: TakoTheme.darkTextTheme.bodyText1,
+                    style: TakoTheme.darkTextTheme.bodyLarge,
                   ),
                 ),
               ),
@@ -90,7 +90,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                     anime.releasedDate.toString(),
                     maxLines: 2,
                     textAlign: TextAlign.center,
-                    style: TakoTheme.darkTextTheme.bodyText1!
+                    style: TakoTheme.darkTextTheme.bodyLarge!
                         .copyWith(color: Colors.white),
                   ),
                 ),
