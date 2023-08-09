@@ -4,8 +4,6 @@ import 'package:get/get.dart';
 
 import '../helpers/cache_manager.dart';
 import '../models/anime.dart';
-import '../theme/tako_theme.dart';
-import '../utils/constants.dart';
 import '../utils/routes.dart';
 
 class MovieCard extends StatelessWidget {

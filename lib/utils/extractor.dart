@@ -1,9 +1,10 @@
 import 'dart:convert';
+
+import 'package:aespack/aespack.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
 
 import '../services/request_service.dart';
-import 'package:aespack/aespack.dart';
 
 class extractor {
   Future<List<String>> extract(String url) async {
@@ -64,7 +65,7 @@ class extractor {
     var encryptedId = preEncryptedId!;
 
     var prehost = url.split('https://')[1].split('/')[0];
-    var host = 'https://' + prehost + '/';
+    var host = 'https://$prehost/';
 
     // var token = url.split('token=')[1].split('&')[0];
 

@@ -33,7 +33,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
   }
 
   final indicator = const SpinKitSquareCircle(
-    color: tkGradientBlue,
+    color: Colors.white,
     size: 28,
   );
 
@@ -48,6 +48,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
         autoPlay: true,
         allowedScreenSleep: false,
         autoDispose: true,
+        fullScreenByDefault: true,
         fullScreenAspectRatio: 16 / 9,
         controlsConfiguration: BetterPlayerControlsConfiguration(
           overflowModalColor: Colors.black87,
@@ -61,7 +62,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
           progressBarPlayedColor: tkGradientBlue,
           progressBarBufferedColor: Colors.grey,
           progressBarBackgroundColor: tkGrey,
-          progressBarHandleColor: tkGradientBlue,
+          progressBarHandleColor: Colors.white,
         ),
       ),
       betterPlayerDataSource: BetterPlayerDataSource(
@@ -104,21 +105,32 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
   @override
   void dispose() {
     super.dispose();
-    WidgetsBinding.instance!.removeObserver(this);
+    WidgetsBinding.instance.removeObserver(this);
     _controller.clearCache();
     _controller.dispose();
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.portraitUp,
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        key: _formKey,
-        backgroundColor: Colors.black,
-        body: BetterPlayer(
-          controller: _controller,
-        ));
+    return WillPopScope(
+      onWillPop: () async {
+        var isPortrait =
+            MediaQuery.of(context).orientation == Orientation.portrait;
+        if (!isPortrait) {
+          _controller.exitFullScreen();
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+          key: _formKey,
+          backgroundColor: Colors.black,
+          body: BetterPlayer(
+            controller: _controller,
+          )),
+    );
   }
 }

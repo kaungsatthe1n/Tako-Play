@@ -3,7 +3,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 /// Collection of all app related constants go here
 
-const String version = 'v1.5.1';
+const String version = 'v1.6.3';
 String updateLink = '';
 bool isSameVersion = true;
 const license = 'MIT License';
@@ -20,7 +20,7 @@ final resolutionRegExp = RegExp(r'[0-9]+(P)');
 const String takoPlay = 'https://github.com/kaungsatthe1n/Tako-Play';
 const String takoTracker = 'https://github.com/kaungsatthe1n/Tako-AnimeTracker';
 const String mailing =
-    'mailo:parrotksh@gmail.com?subject=[TakoPlay: (Ver: $version)]';
+    'mailto:parrotksh@gmail.com?subject=[TakoPlay: (Ver: $version)]';
 const userAgent =
     'Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36';
 const origin = 'https://goload.one';
@@ -87,7 +87,7 @@ const Color tkGradientBlue = Color(0xFF133F6E);
 const Color tkGradientBlack = Color(0xFF28313B);
 
 const loadingIndicator = SpinKitSquareCircle(
-  color: tkGradientBlue,
+  color: Colors.white,
 );
 
 const int takoAnimationDuration = 1800;

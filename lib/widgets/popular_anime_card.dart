@@ -52,11 +52,8 @@ class PopularAnimeCard extends StatelessWidget {
                   anime.name.toString(),
                   maxLines: 2,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TakoTheme.darkTextTheme.bodyLarge!
+                      .copyWith(decoration: TextDecoration.none),
                 )),
               ],
             ),

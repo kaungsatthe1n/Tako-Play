@@ -48,6 +48,7 @@ class MyApp extends StatelessWidget {
         child: GetMaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'TakoPlay',
+          defaultTransition: Transition.cupertino,
           theme: TakoTheme.dark(),
           initialRoute: '/',
           initialBinding: ManagerBinding(),

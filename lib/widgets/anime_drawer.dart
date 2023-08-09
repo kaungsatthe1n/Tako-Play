@@ -53,7 +53,7 @@ class AnimeDrawer extends StatelessWidget {
                               topRight: Radius.circular(10))),
                       child: Text(
                         'TakoPlay',
-                        style: TakoTheme.darkTextTheme.headline4,
+                        style: TakoTheme.darkTextTheme.headlineMedium,
                       ),
                     ),
                   )
@@ -65,7 +65,7 @@ class AnimeDrawer extends StatelessWidget {
             ),
             ListTile(
               hoverColor: Colors.white,
-              onTap: () => launch(takoTracker),
+              onTap: () => _launchUrl(takoTracker),
               leading: const Icon(Icons.apps_outlined),
               title: const Text('Other App'),
             ),
@@ -91,5 +91,11 @@ class AnimeDrawer extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> _launchUrl(url) async {
+  if (!await launchUrl(Uri.parse(url))) {
+    throw Exception('Could not launch $url');
   }
 }

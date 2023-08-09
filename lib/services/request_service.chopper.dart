@@ -32,7 +32,7 @@ class _$RequestService extends RequestService {
 
   @override
   Future<Response<dynamic>> requestAnimeCdn(String url) {
-    final $url = Uri.parse('$url');
+    final $url = Uri.parse(url);
     final $request = Request('GET', $url, Uri.parse(''));
     return client.send<dynamic, dynamic>($request);
   }
@@ -64,7 +64,7 @@ class _$RequestService extends RequestService {
 
   @override
   Future<Response<dynamic>> requestAnimeGenre(String url, [int index = 1]) {
-    final $url = Uri.parse(url + '?page=$index');
+    final $url = Uri.parse('$url?page=$index');
     final $request = Request('GET', $url, Uri.parse(''));
     return client.send<dynamic, dynamic>($request);
   }

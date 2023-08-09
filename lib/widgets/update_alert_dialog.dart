@@ -49,7 +49,7 @@ class UpdateAlertDialog extends StatelessWidget {
                   ),
                   Text(
                     'Version Update',
-                    style: TakoTheme.darkTextTheme.headline3!
+                    style: TakoTheme.darkTextTheme.displaySmall!
                         .copyWith(color: tkDarkBlue),
                   ),
                 ],
@@ -82,7 +82,7 @@ class UpdateAlertDialog extends StatelessWidget {
                 },
                 child: Text(
                   'Cancel',
-                  style: TakoTheme.darkTextTheme.subtitle1,
+                  style: TakoTheme.darkTextTheme.titleMedium,
                 ),
               )),
               Container(
@@ -97,10 +97,10 @@ class UpdateAlertDialog extends StatelessWidget {
                         BorderRadius.only(bottomRight: Radius.circular(20))),
                 height: 50,
                 minWidth: double.infinity,
-                onPressed: () => launch(downloadLink),
+                onPressed: () => _launchUrl(downloadLink),
                 child: Text(
                   'Update',
-                  style: TakoTheme.darkTextTheme.subtitle1,
+                  style: TakoTheme.darkTextTheme.titleMedium,
                 ),
               )),
             ])
@@ -141,5 +141,11 @@ class UpdateAlertDialog extends StatelessWidget {
       //   ],
       // ),
     );
+  }
+}
+
+Future<void> _launchUrl(url) async {
+  if (!await launchUrl(Uri.parse(url))) {
+    throw Exception('Could not launch $url');
   }
 }

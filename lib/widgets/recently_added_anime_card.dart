@@ -83,7 +83,7 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                         ),
                         child: Text(
                           anime.currentEp.toString(),
-                          style: TakoTheme.darkTextTheme.subtitle1,
+                          style: TakoTheme.darkTextTheme.titleMedium,
                         ),
                       ))
                 ],
@@ -96,7 +96,7 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                   anime.name.toString(),
                   maxLines: 2,
                   textAlign: TextAlign.center,
-                  style: TakoTheme.darkTextTheme.bodyText1,
+                  style: TakoTheme.darkTextTheme.bodyLarge,
                 ),
               ),
             ],
