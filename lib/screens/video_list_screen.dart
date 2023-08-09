@@ -193,7 +193,7 @@ class _VideoListScreenState extends State<VideoListScreen>
               ),
               label: Text(
                 'BookMark',
-                style: TakoTheme.darkTextTheme.bodyLarge!,
+                style: TakoTheme.darkTextTheme.bodyLarge,
               ),
             ),
           ),
@@ -263,7 +263,7 @@ class _VideoListScreenState extends State<VideoListScreen>
                 color: selectedChipIndex.value == index
                     ? Colors.white
                     : tkGradientBlue,
-                fontSize: 20,
+                fontSize: 17,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -373,11 +373,7 @@ class _VideoListScreenState extends State<VideoListScreen>
           ),
           child: Text(
             epChunkList[index].number,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TakoTheme.darkTextTheme.displayMedium
           ),
         ),
       ),

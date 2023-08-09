@@ -7,7 +7,7 @@ class TakoTheme {
   static TextTheme darkTextTheme = TextTheme(
     bodyLarge: TextStyle(
       fontSize: 15.0,
-      fontWeight: FontWeight.w600,
+      fontWeight: FontWeight.w400,
       color: Colors.white,
     ),
     bodyMedium: TextStyle(
@@ -67,7 +67,7 @@ class TakoTheme {
       colorScheme: ColorScheme.dark(
         primary: Colors.white,
         onPrimary: Colors.white,
-        secondary: Colors.green,
+        secondary: Colors.white38,
         onSecondary: Colors.white,
         error: Colors.red,
         onError: Colors.white,

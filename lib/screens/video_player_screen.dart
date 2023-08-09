@@ -33,7 +33,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
   }
 
   final indicator = const SpinKitSquareCircle(
-    color: tkGradientBlue,
+    color: Colors.white,
     size: 28,
   );
 
@@ -62,7 +62,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen>
           progressBarPlayedColor: tkGradientBlue,
           progressBarBufferedColor: Colors.grey,
           progressBarBackgroundColor: tkGrey,
-          progressBarHandleColor: tkGradientBlue,
+          progressBarHandleColor: Colors.white,
         ),
       ),
       betterPlayerDataSource: BetterPlayerDataSource(

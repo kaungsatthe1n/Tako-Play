@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/anime.dart';
+import '../theme/tako_theme.dart';
 import '../utils/routes.dart';
 import 'cache_image_with_cachemanager.dart';
 
@@ -55,19 +56,11 @@ class AnimeDetailHeader extends StatelessWidget {
                       TextSpan(children: [
                         TextSpan(
                           text: 'Released: ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TakoTheme.darkTextTheme.bodyLarge
                         ),
                         TextSpan(
                           text: anime.releasedDate.toString(),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TakoTheme.darkTextTheme.bodyLarge
                         ),
                       ]),
                     )),
@@ -77,19 +70,11 @@ class AnimeDetailHeader extends StatelessWidget {
                       TextSpan(children: [
                         TextSpan(
                           text: 'Status: ',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TakoTheme.darkTextTheme.bodyLarge
                         ),
                         TextSpan(
                           text: anime.status.toString(),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: TakoTheme.darkTextTheme.bodyLarge
                         ),
                       ]),
                     )),

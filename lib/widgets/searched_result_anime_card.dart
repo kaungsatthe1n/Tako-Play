@@ -90,8 +90,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                     anime.releasedDate.toString(),
                     maxLines: 2,
                     textAlign: TextAlign.center,
-                    style: TakoTheme.darkTextTheme.bodyLarge!
-                        .copyWith(color: Colors.white),
+                    style: TakoTheme.darkTextTheme.bodyLarge,
                   ),
                 ),
               ),
