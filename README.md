@@ -52,21 +52,6 @@ flutter analyze
 flutter test
 ```
 
-Run named end-to-end flows on a connected simulator or device:
-
-```bash
-flutter test integration_test/home_catalog_detail_flow_test.dart -d <device-id>
-flutter test integration_test/search_flow_test.dart -d <device-id>
-flutter test integration_test/library_flow_test.dart -d <device-id>
-flutter test integration_test/watchlist_flow_test.dart -d <device-id>
-flutter test integration_test/episode_error_and_recent_flow_test.dart -d <device-id>
-flutter test integration_test/detail_error_recovery_flow_test.dart -d <device-id>
-flutter test integration_test/drawer_preferences_and_about_flow_test.dart -d <device-id>
-```
-
-The end-to-end flows use local catalog fixtures, so they do not depend on a
-live catalog or player page.
-
 ## License
 
 Released under the [MIT License](LICENSE).
