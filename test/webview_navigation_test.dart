@@ -20,6 +20,18 @@ void main() {
     expect(isTrustedPlayerHost('ad.example.net', trustedHosts), isFalse);
   });
 
+  test('preserves a valid episode page as the player request referrer', () {
+    expect(
+      playerRequestHeaders(
+        'https://catalog.example.com/episode-1#player',
+      ),
+      {'Referer': 'https://catalog.example.com/episode-1'},
+    );
+    expect(
+        playerRequestHeaders('http://catalog.example.com/episode-1'), isEmpty);
+    expect(playerRequestHeaders('not a url'), isEmpty);
+  });
+
   test('only retries another advertised player after its document returns 410',
       () {
     final activePlayer = Uri.parse('https://player.example.com/embed/1');

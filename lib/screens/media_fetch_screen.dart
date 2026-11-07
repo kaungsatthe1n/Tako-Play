@@ -45,6 +45,7 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       if (!mounted) return;
       await Get.offNamed(Routes.webViewScreen, arguments: {
         'mediaUrls': embeddedMediaUrls,
+        'episodeUrl': animeUrl.toString(),
       });
     } catch (_) {
       hasError.value = true;

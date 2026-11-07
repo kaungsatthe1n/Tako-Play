@@ -14,6 +14,7 @@ class TakoPlayWebView extends StatefulWidget {
     required this.initialUrl,
     required this.onLoadingChanged,
     this.fallbackUrls = const [],
+    this.referrerUrl,
     this.onControllerCreated,
     super.key,
   });
@@ -21,6 +22,7 @@ class TakoPlayWebView extends StatefulWidget {
   final String initialUrl;
   final ValueChanged<bool> onLoadingChanged;
   final List<String> fallbackUrls;
+  final String? referrerUrl;
   final ValueChanged<WebViewController>? onControllerCreated;
 
   @override
@@ -31,6 +33,7 @@ class _TakoPlayWebViewState extends State<TakoPlayWebView> {
   late final WebViewController _webViewController;
   final Set<String> _trustedPlayerHosts = <String>{};
   late final List<Uri> _playerUris;
+  late final Map<String, String> _playerRequestHeaders;
   Uri? _activePageUri;
   var _playerIndex = 0;
   var _mainFrameNavigationLocked = false;
@@ -43,6 +46,7 @@ class _TakoPlayWebViewState extends State<TakoPlayWebView> {
         .whereType<Uri>()
         .where((uri) => uri.scheme == 'https' && uri.host.isNotEmpty)
         .toList(growable: false);
+    _playerRequestHeaders = playerRequestHeaders(widget.referrerUrl);
     final initialUri = _playerUris.first;
     _preparePlayerLoad(initialUri);
 
@@ -72,7 +76,7 @@ class _TakoPlayWebViewState extends State<TakoPlayWebView> {
           onNavigationRequest: _handleNavigation,
         ),
       )
-      ..loadRequest(initialUri);
+      ..loadRequest(initialUri, headers: _playerRequestHeaders);
     widget.onControllerCreated?.call(_webViewController);
   }
 
@@ -113,7 +117,9 @@ class _TakoPlayWebViewState extends State<TakoPlayWebView> {
     _playerIndex += 1;
     final nextUri = _playerUris[_playerIndex];
     _preparePlayerLoad(nextUri);
-    unawaited(_webViewController.loadRequest(nextUri));
+    unawaited(
+      _webViewController.loadRequest(nextUri, headers: _playerRequestHeaders),
+    );
   }
 
   void _preparePlayerLoad(Uri uri) {
@@ -195,4 +201,19 @@ bool isTrustedPlayerHost(String host, Set<String> trustedHosts) {
         normalizedHost == trustedHost ||
         normalizedHost.endsWith('.$trustedHost'),
   );
+}
+
+/// Builds the request context that a browser would normally include when an
+/// advertised player iframe is opened from an episode page.
+///
+/// Invalid and non-HTTPS values are discarded rather than being forwarded to
+/// a third-party player host.
+Map<String, String> playerRequestHeaders(String? referrerUrl) {
+  final uri = referrerUrl == null ? null : Uri.tryParse(referrerUrl);
+  if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+    return const <String, String>{};
+  }
+  return <String, String>{
+    'Referer': uri.removeFragment().toString(),
+  };
 }

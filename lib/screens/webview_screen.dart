@@ -42,6 +42,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
     return playerUrls;
   }
 
+  String? get _episodeUrl {
+    final value = Get.arguments?['episodeUrl'];
+    if (value is! String) return null;
+    final uri = Uri.tryParse(value);
+    return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty
+        ? uri.toString()
+        : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -80,6 +89,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
             TakoPlayWebView(
               initialUrl: mediaUrls.first,
               fallbackUrls: mediaUrls.skip(1).toList(growable: false),
+              referrerUrl: _episodeUrl,
               onControllerCreated: (controller) =>
                   _webViewController = controller,
               onLoadingChanged: (isLoading) {
