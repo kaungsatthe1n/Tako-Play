@@ -1,78 +1,72 @@
-# Tako Play
+# TakoPlay
 
-<p align="center"><a href="https://github.com/kaungsatthe1n/Tako-Play"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/logo.jpg?raw=true" width="150" height="auto" style="border-radius:60%"></a></p>
-
-<h2 align="center" ><img src="https://pngimage.net/wp-content/uploads/2018/06/funny-anime-png-2.png" width="80"/><span style="font-size:100%"> A Mobile App to Watch Anime With No ADS !! .  </span><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/rem_show.png?raw=true"  width="70"/><h3/>
-
-<h3 align ="center"> Please Do not put Tako-Play to Google PlayStore or Any other Store !! <h3/>
-
-## Download App
-
-- #### Android : [Download TakoPlay.apk](https://github.com/kaungsatthe1n/Tako-Play/releases/download/v1.5.1/TakoPlay-v1.5.1.apk)
-
-- #### IOS : _Coming soon ..._
+TakoPlay is an educational Flutter app for browsing an anime catalog, finding
+titles, saving favourites, tracking recently opened episodes, and handing an
+episode to an external web player. It does not host or provide video content.
 
 ## Screenshots
 
-<p align="center">
-  <img src="assets/screenshots/discover-current.jpg" alt="TakoPlay Discover screen" width="32%">
-  <img src="assets/screenshots/update-current.jpg" alt="TakoPlay update available prompt" width="32%">
-</p>
+Current iPhone simulator captures of the redesigned interface.
 
-<p align="center"><em>Current Discover and update-prompt designs on iPhone.</em></p>
+| Discover | Update prompt |
+| :---: | :---: |
+| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay update available prompt](assets/screenshots/update-current.jpg) |
 
-## Brief About App
+## Features
 
-Parsing require data from website and serve anime with Ads FREE :bangbang:
+- Popular, recently added, and movie catalog sections
+- Search with recent-query history
+- Episode lists, saved titles, and watchlist progress
+- Genre browsing and pagination
+- External WebView player handoff with source-provided fallback URLs
+- Player-type and preferred-quality settings
+- Release update checks
 
-### Features
+## Requirements
 
-- Popular Animes
-- Recently Added Animes
-- Movies
-- Search Anime
-- Bookmark Animes
-- Webview Player Support
-- No Annoying Ads
-- Auto Video Quality Detect
-- Update Support
+- Flutter SDK 3.32 or later
+- Xcode for iOS simulator builds
+- Android Studio and an Android SDK for Android builds
 
-## Clone Repository
-
-Open Your `Terminal` and `Paste`
+## Get started
 
 ```bash
-$ git clone https://github.com/kaungsatthe1n/Tako-Play.git
+git clone https://github.com/kaungsatthe1n/Tako-Play.git
+cd Tako-Play
+flutter pub get
+flutter run
 ```
 
-## Build Setup
+The default catalog source can be changed for an owned deployment:
 
 ```bash
-
-# install dependencies
-
-$ flutter pub get
+flutter run --dart-define=SOURCE_BASE_URL=https://catalog.example.com
 ```
 
 ## Testing
 
-```bash
-# Unit and widget tests
-$ flutter test
+Run the unit and widget suite:
 
-# Named end-to-end flows on a connected simulator or device
-$ flutter test integration_test/home_catalog_detail_flow_test.dart -d <device-id>
-$ flutter test integration_test/search_flow_test.dart -d <device-id>
-$ flutter test integration_test/library_flow_test.dart -d <device-id>
-$ flutter test integration_test/watchlist_flow_test.dart -d <device-id>
-$ flutter test integration_test/episode_error_and_recent_flow_test.dart -d <device-id>
-$ flutter test integration_test/detail_error_recovery_flow_test.dart -d <device-id>
-$ flutter test integration_test/drawer_preferences_and_about_flow_test.dart -d <device-id>
+```bash
+flutter analyze
+flutter test
 ```
 
-The E2E flows use local catalog fixtures, so they validate app behavior without
-depending on changing third-party catalog or player pages.
+Run named end-to-end flows on a connected simulator or device:
 
-## Found This Project Useful ?
+```bash
+flutter test integration_test/home_catalog_detail_flow_test.dart -d <device-id>
+flutter test integration_test/search_flow_test.dart -d <device-id>
+flutter test integration_test/library_flow_test.dart -d <device-id>
+flutter test integration_test/watchlist_flow_test.dart -d <device-id>
+flutter test integration_test/episode_error_and_recent_flow_test.dart -d <device-id>
+flutter test integration_test/detail_error_recovery_flow_test.dart -d <device-id>
+flutter test integration_test/drawer_preferences_and_about_flow_test.dart -d <device-id>
+```
 
-You can leave a star :star: at the top-right corner of this repository.
+The end-to-end flows use local catalog fixtures, so they do not depend on a
+live catalog or player page.
+
+## License
+
+Released under the [MIT License](LICENSE).
