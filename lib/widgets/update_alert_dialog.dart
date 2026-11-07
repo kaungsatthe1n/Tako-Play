@@ -6,9 +6,9 @@ import '../utils/constants.dart';
 
 class UpdateAlertDialog extends StatelessWidget {
   const UpdateAlertDialog({
-    Key? key,
+    super.key,
     required this.downloadLink,
-  }) : super(key: key);
+  });
   final String downloadLink;
 
   @override
@@ -144,7 +144,7 @@ class UpdateAlertDialog extends StatelessWidget {
   }
 }
 
-Future<void> _launchUrl(url) async {
+Future<void> _launchUrl(String url) async {
   if (!await launchUrl(Uri.parse(url))) {
     throw Exception('Could not launch $url');
   }

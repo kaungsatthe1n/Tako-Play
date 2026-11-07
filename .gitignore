@@ -30,6 +30,7 @@
 .pub-cache/
 .pub/
 /build/
+/coverage/
 
 # Web related
 lib/generated_plugin_registrant.dart
@@ -47,4 +48,8 @@ app.*.map.json
 
 # Android build
 android/app/build/
+android/build/
 android/gradle
+
+# Flutter and Xcode generated iOS integration files
+ios/Flutter/ephemeral/

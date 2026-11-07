@@ -1,5 +1,6 @@
+/// The subset of a GitHub release used by the in-app update prompt.
 class Github {
-  Github({
+  const Github({
     this.downloadLink,
     this.newFeatures,
     this.version,
@@ -9,35 +10,29 @@ class Github {
   final String? newFeatures;
   final String? downloadLink;
 
-  factory Github.fromJson(Map<String, dynamic>? json) {
-    if (json != null) {
-      return Github(
-        version: json['tag_name'],
-        newFeatures: json['body'],
-        downloadLink: (json['assets'] as List<dynamic>)
-            .map((e) => Assets.fromJson(e as Map<String, dynamic>))
-            .toList()
-            .first
-            .downLoadUrl,
-      );
+  factory Github.fromJson(Map<String, dynamic> json) {
+    String? downloadLink;
+    final assets = json['assets'];
+    if (assets is List) {
+      for (final asset in assets) {
+        if (asset is! Map) continue;
+        final value = asset['browser_download_url'];
+        if (value is String && value.trim().isNotEmpty) {
+          downloadLink = value.trim();
+          break;
+        }
+      }
     }
-    return Github();
+
+    return Github(
+      version: _nonEmptyString(json['tag_name']),
+      newFeatures: _nonEmptyString(json['body']),
+      downloadLink: downloadLink,
+    );
   }
-}
 
-class Assets {
-  Assets({
-    this.downLoadUrl,
-  });
-
-  final String? downLoadUrl;
-
-  factory Assets.fromJson(Map<String, dynamic>? json) {
-    if (json != null) {
-      return Assets(
-        downLoadUrl: json['browser_download_url'],
-      );
-    }
-    return Assets();
+  static String? _nonEmptyString(Object? value) {
+    if (value is! String || value.trim().isEmpty) return null;
+    return value.trim();
   }
 }

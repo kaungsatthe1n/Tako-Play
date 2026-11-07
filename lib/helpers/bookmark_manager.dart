@@ -7,6 +7,11 @@ import '../models/bookmark.dart';
 /// favourite shows by bookmarking them. All bookmarks are stored locally
 /// on-device.
 class BookMarkManager extends GetxController {
+  BookMarkManager({BookmarkStore? database})
+      : _database = database ?? BookMarksDatabase.instance;
+
+  final BookmarkStore _database;
+
   /// List of all stored bookmark
   List<BookMark> _list = [];
 
@@ -19,31 +24,29 @@ class BookMarkManager extends GetxController {
 
   /// Loads all locally stored bookmarks from the bookmarks database
   Future<void> loadBookMarksFromDatabase() async {
-    final dataList = await BookMarksDatabase.instance.getAllBookMarks();
-    if (dataList != null) {
-      _list = dataList;
-      for (var bookMark in _list) {
-        _idList.add(bookMark.id);
-      }
-    } else {
-      _list = [];
-      _idList = [];
+    final dataList = await _database.getAllBookMarks();
+    _idList = [];
+    _list = dataList;
+    for (final bookMark in _list) {
+      _idList.add(bookMark.id);
     }
+    update();
   }
 
   /// Creates a new bookmark
-  void addToBookMarks(BookMark item) {
+  Future<void> addToBookMarks(BookMark item) async {
+    if (_idList.contains(item.id)) return;
+    await _database.insert(item);
     _list.add(item);
     _idList.add(item.id);
-    BookMarksDatabase.instance.insert(item);
     update();
   }
 
   /// Removes an existing bookmark
-  void removeFromBookMarks(BookMark item) {
+  Future<void> removeFromBookMarks(BookMark item) async {
+    await _database.delete(item.id);
     _list.removeWhere((element) => element.id == item.id);
     _idList.remove(item.id);
-    BookMarksDatabase.instance.delete(item.id);
     update();
   }
 }

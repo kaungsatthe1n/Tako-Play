@@ -10,9 +10,15 @@ class WebViewManager extends GetxController {
   bool get isWebView => _webView;
 
   /// Updates the state of the video player from/to web-view
-  void changeWebViewType(value) {
+  @override
+  void onInit() {
+    super.onInit();
+    getVideoPlayerType();
+  }
+
+  Future<void> changeWebViewType(bool value) async {
+    await _updateVideoPlayerType(value);
     _webView = value;
-    _updateVideoPlayerType(value);
     update();
   }
 
@@ -32,7 +38,7 @@ class WebViewManager extends GetxController {
   }
 
   /// Updates local settings for the web view player usage
-  Future<void> _updateVideoPlayerType(flag) async {
+  Future<void> _updateVideoPlayerType(bool flag) async {
     final pref = await SharedPreferences.getInstance();
     await pref.setBool('isWebViewPlayerType', flag);
   }

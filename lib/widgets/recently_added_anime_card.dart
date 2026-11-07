@@ -3,103 +3,100 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../helpers/cache_manager.dart';
-import '../helpers/recent_watch_manager.dart';
 import '../models/anime.dart';
-import '../models/recent_anime.dart';
-import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
 
 class RecentlyAddedAnimeCard extends StatelessWidget {
-  const RecentlyAddedAnimeCard({
-    Key? key,
-    required this.anime,
-  }) : super(key: key);
+  const RecentlyAddedAnimeCard({super.key, required this.anime});
 
   final Anime anime;
 
   @override
   Widget build(BuildContext context) {
-    final RecentWatchManager recentWatchManager = Get.find();
-    return GestureDetector(
-      onTap: () {
-        final recentAnime = RecentAnime(
-          id: anime.id.toString(),
-          name: anime.name.toString(),
-          currentEp: anime.currentEp.toString(),
-          imageUrl: anime.imageUrl.toString(),
-          epUrl: anime.animeUrl.toString(),
-        );
-        // Add to Recent Anime List
-        recentWatchManager.addAnimeToRecent(recentAnime);
-        Get.toNamed(Routes.mediaFetchScreen,
-            arguments: {'animeUrl': anime.animeUrl.toString()});
-      },
-      child: AspectRatio(
-        aspectRatio: 3 / 6,
+    return SizedBox(
+      width: 178,
+      child: GestureDetector(
+        onTap: () => Get.toNamed(
+          Routes.videoListScreen,
+          arguments: {'anime': anime},
+        ),
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 10),
-          margin: EdgeInsets.symmetric(horizontal: 10),
-          child: Column(
-            children: [
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: CachedNetworkImage(
-                      key: UniqueKey(),
-                      height: 200,
-                      width: 180,
-                      cacheManager: CustomCacheManager.instance,
-                      fit: BoxFit.cover,
-                      imageUrl: anime.imageUrl.toString(),
+          margin: const EdgeInsets.only(right: 12),
+          decoration: BoxDecoration(
+            color: tkDarkBlue,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          key: ValueKey(anime.imageUrl),
+                          cacheManager: CustomCacheManager.instance,
+                          fit: BoxFit.cover,
+                          imageUrl: anime.imageUrl.toString(),
+                          errorWidget: (_, __, ___) =>
+                              const ColoredBox(color: tkGrey),
+                        ),
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Colors.transparent, Colors.black87],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 9,
+                          bottom: 9,
+                          child: Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: const BoxDecoration(
+                              color: tkGradientBlue,
+                              shape: BoxShape.circle,
+                            ),
+                            child:
+                                const Icon(Icons.play_arrow_rounded, size: 18),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Container(
-                    alignment: Alignment.center,
-                    height: 200,
-                    width: 180,
-                    decoration: const BoxDecoration(
-                      color: Colors.black38,
-                    ),
-                    child: const Icon(
-                      Icons.play_arrow_rounded,
-                      size: 38,
-                    ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  anime.currentEp.isNotEmpty
+                      ? anime.currentEp.replaceFirst('EP', 'Episode')
+                      : 'New episode',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: tkCoral,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
-                  Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: tkGradientBlue.withOpacity(.85),
-                          borderRadius: const BorderRadius.only(
-                              bottomLeft: Radius.circular(15),
-                              bottomRight: Radius.circular(15)),
-                        ),
-                        child: Text(
-                          anime.currentEp.toString(),
-                          style: TakoTheme.darkTextTheme.titleMedium,
-                        ),
-                      ))
-                ],
-              ),
-              SizedBox(
-                height: 20,
-              ),
-              Flexible(
-                child: Text(
+                ),
+                const SizedBox(height: 3),
+                Text(
                   anime.name.toString(),
                   maxLines: 2,
-                  textAlign: TextAlign.center,
-                  style: TakoTheme.darkTextTheme.bodyLarge,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w800),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+              ],
+            ),
           ),
         ),
       ),

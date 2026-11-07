@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import '../helpers/cache_manager.dart';
 
 class NetworkImageWithCacheManager extends StatelessWidget {
-  const NetworkImageWithCacheManager({Key? key, required this.imageUrl})
-      : super(key: key);
+  const NetworkImageWithCacheManager({super.key, required this.imageUrl});
   final String imageUrl;
 
   @override
   Widget build(BuildContext context) {
     return CachedNetworkImage(
-      key: UniqueKey(),
       cacheManager: CustomCacheManager.instance,
       errorWidget: (context, _, widget) {
         return const Icon(Icons.error_sharp);
