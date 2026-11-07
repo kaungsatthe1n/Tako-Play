@@ -1,98 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import '../models/anime.dart';
-import '../theme/tako_theme.dart';
+import '../utils/constants.dart';
 import '../utils/routes.dart';
-import '../widgets/cache_image_with_cachemanager.dart';
+import 'cache_image_with_cachemanager.dart';
 
 class SearchedResultAnimeCard extends StatelessWidget {
-  const SearchedResultAnimeCard({
-    Key? key,
-    required this.anime,
-  }) : super(key: key);
+  const SearchedResultAnimeCard({super.key, required this.anime});
+
   final Anime anime;
 
   @override
   Widget build(BuildContext context) {
+    final isDub = anime.name.toString().toLowerCase().contains('dub');
     return GestureDetector(
-      onTap: () {
-        Get.toNamed(
-          Routes.videoListScreen,
-          arguments: {'anime': anime},
-        );
-      },
+      onTap: () =>
+          Get.toNamed(Routes.videoListScreen, arguments: {'anime': anime}),
       child: Hero(
         tag: anime.id.toString(),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
+        child: Material(
+          color: Colors.transparent,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: NetworkImageWithCacheManager(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      NetworkImageWithCacheManager(
                         imageUrl: anime.imageUrl.toString(),
                       ),
-                    ),
-                    Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
+                      const DecoratedBox(
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Tooltip(
-                          message: anime.name
-                                  .toString()
-                                  .isCaseInsensitiveContains('dub')
-                              ? 'Dub'
-                              : 'Sub',
-                          triggerMode: TooltipTriggerMode.tap,
-                          child: Icon(Icons.album_rounded,
-                              size: 25,
-                              color: anime.name
-                                      .toString()
-                                      .isCaseInsensitiveContains('dub')
-                                  ? Colors.orange
-                                  : Color.fromARGB(255, 212, 0, 99)),
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Colors.transparent, Color(0xB0090A12)],
+                            stops: [.48, 1],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 20),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Text(
-                    anime.name.toString(),
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    style: TakoTheme.darkTextTheme.bodyLarge,
+                      Positioned(
+                        left: 10,
+                        bottom: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isDub ? Colors.orange : tkGradientBlue,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            isDub ? 'DUB' : 'SUB',
+                            style: const TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF133F6E),
-                  borderRadius: BorderRadius.circular(30),
+              const SizedBox(height: 9),
+              Text(
+                anime.name.toString(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.18,
+                  fontWeight: FontWeight.w800,
                 ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: Text(
-                    anime.releasedDate.toString(),
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    style: TakoTheme.darkTextTheme.bodyLarge,
-                  ),
-                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                anime.releasedDate.isNotEmpty ? anime.releasedDate : 'Anime',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: tkMutedText, fontSize: 11),
               ),
             ],
           ),

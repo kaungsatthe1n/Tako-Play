@@ -2,255 +2,310 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/anime.dart';
 import '../services/anime_service.dart';
 import '../services/request_service.dart';
-import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/searched_result_anime_card.dart';
-import '../widgets/tako_animation.dart';
+import '../widgets/tako_loading_indicator.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  const SearchScreen({super.key});
 
   @override
-  _SearchScreenState createState() => _SearchScreenState();
+  State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen>
-    with SingleTickerProviderStateMixin {
-  var hasValue = false.obs;
-  var title = ''.obs;
-  final TextEditingController _controller = TextEditingController();
-  late AnimationController controller;
-  final _formKey = GlobalKey<FormState>();
+class _SearchScreenState extends State<SearchScreen> {
+  final hasValue = false.obs;
+  final title = ''.obs;
+  final _controller = TextEditingController();
   Timer? _debounceTimer;
+  var _requestRevision = 0;
 
   @override
   void initState() {
     super.initState();
-    initializeAnimationController();
-    setupTextControllerListener();
+    _controller.addListener(_onTextChanged);
   }
 
-  void initializeAnimationController() {
-    controller = AnimationController(
-      duration: Duration(milliseconds: takoAnimationDuration),
-      vsync: this,
-    );
-  }
-
-  void setupTextControllerListener() {
-    _controller.addListener(handleTextControllerChange);
-  }
-
-  void handleTextControllerChange() {
-    if (_controller.text.length >= 4) {
-      cancelExistingDebounceTimer();
-
-      startDebounceTimer(() {
-        performActionAfterDelay();
-      });
-    }
-  }
-
-  void cancelExistingDebounceTimer() {
+  void _onTextChanged() {
     _debounceTimer?.cancel();
-  }
-
-  void startDebounceTimer(VoidCallback action) {
-    _debounceTimer = Timer(Duration(seconds: 1), action);
-  }
-
-  void performActionAfterDelay() {
-    title.value = _controller.text;
-    controller.reset();
-    hasValue.value = true;
+    if (_controller.text.trim().length < 3) {
+      hasValue.value = false;
+      return;
+    }
+    _debounceTimer = Timer(const Duration(milliseconds: 550), () {
+      title.value = _controller.text.trim();
+      hasValue.value = true;
+    });
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    _debounceTimer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<RequestService>(context);
-
+    final provider = Get.find<RequestService>();
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Get.back();
-          },
-          icon: const Icon(Icons.arrow_back_ios_new),
-        ),
-        title: TextField(
-          key: _formKey,
-          controller: _controller,
-          decoration: InputDecoration(
-            prefixIcon: const Icon(
-              Icons.search,
-              color: Colors.white,
-            ),
-            suffixIcon: IconButton(
-              icon: const Icon(
-                Icons.clear,
-                color: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: Get.back,
+                    icon: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: tkDarkBlue,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded, size: 20),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Search',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 25,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -.8,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () {
-                _controller.clear();
-                hasValue.value = false;
-              },
             ),
-            hintText: 'Search...',
-            hintStyle: TextStyle(color: Colors.white),
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.all(20),
-          ),
-          onSubmitted: (val) {
-            _saveToRecentSearches(val);
-            controller.reset();
-            hasValue.value = true;
-            title.value = val;
-          },
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: TextField(
+                autofocus: true,
+                controller: _controller,
+                textInputAction: TextInputAction.search,
+                onSubmitted: (value) {
+                  final query = value.trim();
+                  if (query.isEmpty) return;
+                  _saveToRecentSearches(query);
+                  title.value = query;
+                  hasValue.value = true;
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search anime, movies, genres…',
+                  prefixIcon: const Icon(Icons.search_rounded, color: tkCoral),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _controller,
+                    builder: (_, value, __) => value.text.isEmpty
+                        ? const SizedBox.shrink()
+                        : IconButton(
+                            onPressed: _controller.clear,
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Obx(
+                () => AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 260),
+                  child: hasValue.value
+                      ? _buildResults(provider)
+                      : _buildRecentSearches(),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-      body: Obx(
-        () => hasValue.value
-            ? _buildAnimeResults(provider)
-            : _buildRecentSearches(),
       ),
     );
   }
 
-// Widget for displaying anime search results
-  Widget _buildAnimeResults(RequestService provider) {
+  Widget _buildResults(RequestService provider) {
     return FutureBuilder<AnimeResults>(
-      future:
-          AnimeService().getAnimes(provider.requestSearchResponse(title.value)),
+      key: ValueKey('${title.value}:$_requestRevision'),
+      future: AnimeService(requestService: provider)
+          .getAnimes(provider.requestSearchResponse(title.value)),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(
-            child: Text(
-              'No Results Found !',
-              style: TakoTheme.darkTextTheme.displaySmall,
-            ),
+          return _emptyState(
+            'Search failed. Check your connection and try again.',
+            Icons.wifi_off_rounded,
+            onRetry: () => setState(() => _requestRevision++),
           );
         }
-        if (snapshot.connectionState == ConnectionState.done) {
-          final list = snapshot.data!.animeList;
-
-          return GridView.builder(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-            gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-              childAspectRatio: .56,
-              crossAxisSpacing: 30,
-              mainAxisSpacing: 40,
-              maxCrossAxisExtent: 220,
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: TakoLoadingIndicator());
+        }
+        final list = snapshot.data?.animeList ?? <Anime>[];
+        if (list.isEmpty) {
+          return _emptyState('No matches found', Icons.search_off_rounded);
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 0, 22, 12),
+              child: Text(
+                '${list.length} results for “${title.value}”',
+                style: const TextStyle(color: tkMutedText, fontSize: 13),
+              ),
             ),
-            itemCount: list!.length,
-            itemBuilder: (BuildContext context, int index) {
-              controller.forward();
-              return AnimatedBuilder(
-                animation: controller,
-                child: SearchedResultAnimeCard(anime: list[index]),
-                builder: (BuildContext context, Widget? child) {
-                  return Transform(
-                    transform: Matrix4.translationValues(
-                      0,
-                      100 *
-                          (1.0 -
-                              TakoCurveAnimation(controller, index, list.length)
-                                  .value),
-                      0,
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: .57,
+                  crossAxisSpacing: 14,
+                  mainAxisSpacing: 18,
+                ),
+                itemCount: list.length,
+                itemBuilder: (_, index) => TweenAnimationBuilder<double>(
+                  duration:
+                      Duration(milliseconds: 220 + (index.clamp(0, 8) * 35)),
+                  curve: Curves.easeOutCubic,
+                  tween: Tween(begin: 0, end: 1),
+                  builder: (_, value, child) => Opacity(
+                    opacity: value,
+                    child: Transform.translate(
+                      offset: Offset(0, 18 * (1 - value)),
+                      child: child,
                     ),
-                    child: child,
-                  );
-                },
-              );
-            },
-          );
-        } else {
-          return const Center(
-            child: loadingIndicator,
-          );
-        }
+                  ),
+                  child: SearchedResultAnimeCard(anime: list[index]),
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
 
-// Widget for displaying recent searches
   Widget _buildRecentSearches() {
     return FutureBuilder<List<String>>(
       future: _getRecentSearches(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.done) {
-          final searches = snapshot.data;
-          if (searches!.isNotEmpty) {
-            return ListView.builder(
-              itemCount: searches.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  key: Key(index.toString()),
-                  onTap: () {
-                    FocusManager.instance.primaryFocus?.unfocus();
-                    setState(() {
-                      title.value = searches[index];
-                      _controller.text = title.value;
+      builder: (_, snapshot) {
+        final searches = snapshot.data ?? <String>[];
+        if (searches.isEmpty) {
+          return _emptyState('Start typing to find something great',
+              Icons.auto_awesome_rounded);
+        }
+        return ListView(
+          key: const ValueKey('recent-searches'),
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(bottom: 10),
+              child: Text('RECENT SEARCHES',
+                  style: TextStyle(
+                      color: tkMutedText,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800)),
+            ),
+            ...searches.map(
+              (search) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Material(
+                  color: tkDarkBlue,
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    onTap: () {
+                      _controller.text = search;
+                      title.value = search;
                       hasValue.value = true;
-                    });
-                  },
-                  title: Text(searches[index]),
-                  trailing: IconButton(
-                    onPressed: () {
-                      _deleteSearch(searches[index]);
-                      setState(() {});
                     },
-                    icon: const Icon(
-                      Icons.delete_rounded,
-                      color: Colors.white,
+                    leading:
+                        const Icon(Icons.history_rounded, color: tkMutedText),
+                    title: Text(search,
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
+                    trailing: IconButton(
+                      onPressed: () async {
+                        await _deleteSearch(search);
+                        setState(() {});
+                      },
+                      icon: const Icon(Icons.close_rounded, color: tkMutedText),
                     ),
                   ),
-                );
-              },
-            );
-          }
-        }
-        return const SizedBox();
+                ),
+              ),
+            ),
+          ],
+        );
       },
     );
   }
 
-  Future<void> _saveToRecentSearches(searchText) async {
-    if (searchText != null) {
-      final pref = await SharedPreferences.getInstance();
-      Set<String> allSearches =
-          pref.getStringList('takoRecentSearches')?.toSet() ?? {};
-
-      allSearches = {searchText, ...allSearches};
-      await pref.setStringList('takoRecentSearches', allSearches.toList());
-    }
+  Widget _emptyState(
+    String label,
+    IconData icon, {
+    VoidCallback? onRetry,
+  }) {
+    return Center(
+      key: ValueKey(label),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration:
+                const BoxDecoration(color: tkDarkBlue, shape: BoxShape.circle),
+            child: Icon(icon, size: 30, color: tkCoral),
+          ),
+          const SizedBox(height: 14),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+          if (onRetry != null) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Try again'),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
-  Future<void> _deleteSearch(searchText) async {
-    final pref = await SharedPreferences.getInstance();
-    final newList = pref
-        .getStringList('takoRecentSearches')!
-        .where((result) => result != searchText)
-        .toList();
-    await pref.setStringList('takoRecentSearches', newList);
+  Future<void> _saveToRecentSearches(String searchText) async {
+    final preferences = await SharedPreferences.getInstance();
+    final allSearches =
+        preferences.getStringList('takoRecentSearches') ?? <String>[];
+    await preferences.setStringList(
+      'takoRecentSearches',
+      [searchText, ...allSearches.where((item) => item != searchText)]
+          .take(8)
+          .toList(),
+    );
+  }
+
+  Future<void> _deleteSearch(String searchText) async {
+    final preferences = await SharedPreferences.getInstance();
+    final searches =
+        preferences.getStringList('takoRecentSearches') ?? <String>[];
+    await preferences.setStringList(
+      'takoRecentSearches',
+      searches.where((item) => item != searchText).toList(),
+    );
   }
 
   Future<List<String>> _getRecentSearches() async {
-    final pref = await SharedPreferences.getInstance();
-    final allSearches = pref.getStringList('takoRecentSearches');
-    if (allSearches != null) {
-      return allSearches.toList();
-    }
-    return [];
+    final preferences = await SharedPreferences.getInstance();
+    return preferences.getStringList('takoRecentSearches') ?? <String>[];
   }
 }

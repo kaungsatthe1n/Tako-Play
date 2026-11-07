@@ -1,3 +1,8 @@
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
 include: package:flutter_lints/flutter.yaml
 
 linter:
@@ -13,6 +18,5 @@ linter:
     close_sinks: true
     cancel_subscriptions: true
     avoid_void_async: true
-    avoid_returning_null_for_future: true
     prefer_const_constructors: false
     constant_identifier_names : false

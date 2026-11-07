@@ -1,162 +1,196 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-// import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:get/get.dart';
-import '../utils/tako_helper.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+
+import '../widgets/tako_loading_indicator.dart';
 import '../widgets/tako_play_web_view.dart';
 
 class WebViewScreen extends StatefulWidget {
-  const WebViewScreen({Key? key}) : super(key: key);
+  const WebViewScreen({super.key});
 
   @override
   State<WebViewScreen> createState() => _WebViewScreenState();
 }
 
 class _WebViewScreenState extends State<WebViewScreen> {
-  var isLandScape = true.obs;
-  final GlobalKey webViewKey = GlobalKey();
+  var _isLoading = true;
+  WebViewController? _webViewController;
+  var _hasReleasedWebView = false;
+  var _allowPop = false;
+  var _isClosing = false;
+
+  List<String> get _mediaUrls {
+    final arguments = Get.arguments;
+    final values = arguments?['mediaUrls'] is List
+        ? arguments!['mediaUrls'] as List
+        : [arguments?['mediaUrl']];
+
+    final playerUrls = <String>[];
+    for (final value in values) {
+      if (value is! String) continue;
+      final uri = Uri.tryParse(value);
+      if (uri != null &&
+          uri.scheme == 'https' &&
+          uri.host.isNotEmpty &&
+          !playerUrls.contains(value)) {
+        playerUrls.add(value);
+      }
+    }
+    return playerUrls;
+  }
+
+  String? get _episodeUrl {
+    final value = Get.arguments?['episodeUrl'];
+    if (value is! String) return null;
+    final uri = Uri.tryParse(value);
+    return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty
+        ? uri.toString()
+        : null;
+  }
 
   @override
   void initState() {
     super.initState();
-
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
     ]);
   }
 
   @override
   void dispose() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-    ]);
+    unawaited(_releaseWebView());
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.edgeToEdge,
+    );
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    takoDebugPrint(Get.arguments['mediaUrl'].toString());
-    print(Get.arguments['mediaUrl'].toString());
-    return WillPopScope(
-      onWillPop: () async {
-        if (!isLandScape.value) {
-          return true;
-        } else {
-          await SystemChrome.setPreferredOrientations([
-            DeviceOrientation.portraitUp,
-          ]);
-          await SystemChrome.setPreferredOrientations([
-            DeviceOrientation.portraitUp,
-            DeviceOrientation.landscapeLeft,
-            DeviceOrientation.landscapeRight,
-          ]);
+    final mediaUrls = _mediaUrls;
+    if (mediaUrls.isEmpty) return _invalidEmbed();
 
-          return false;
-        }
+    return PopScope(
+      canPop: _allowPop,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_closePlayerAndPop());
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: Center(child: OrientationBuilder(builder: (context, orientation) {
-          if (orientation == Orientation.landscape) {
-            isLandScape.value = true;
-            SystemChrome.setEnabledSystemUIMode(
-              SystemUiMode.immersiveSticky,
-            );
-          } else {
-            isLandScape.value = false;
-            SystemChrome.setEnabledSystemUIMode(
-              SystemUiMode.manual,
-              overlays: [
-                SystemUiOverlay.top,
-                SystemUiOverlay.bottom,
-              ],
-            );
-          }
-          return AspectRatio(
-            aspectRatio:
-                orientation == Orientation.landscape ? 16 / 9 : 4 / 2.885,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                SizedBox.fromSize(
-                  size: Size(MediaQuery.of(context).size.width,
-                      MediaQuery.of(context).size.height),
-                  child: TakoPlayWebView(
-                    initialUrl: Get.arguments['mediaUrl'].toString(),
-                    onLoadingFinished: (webViewController) async {
-                      try {
-                        //
-                        for (var i = 0; i < 10; i++) {
-                          await webViewController.runJavaScriptReturningResult(
-                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                          await webViewController.runJavaScriptReturningResult(
-                              "document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();");
-                        }
-                        //
-                        for (var i = 0; i < 8; i++) {
-                          await webViewController.runJavaScriptReturningResult(
-                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                        }
-                        await webViewController.runJavaScriptReturningResult(
-                            "document.getElementsByClassName('jw-icon jw-icon-inline jw-button-color jw-reset jw-icon-fullscreen')[1].click();");
-                        await webViewController.runJavaScriptReturningResult(
-                            "if(document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].ariaLabel == 'Play'){document.getElementsByClassName('jw-icon jw-icon-display jw-button-color jw-reset')[0].click();}");
-                        //
-                        for (var i = 0; i < 8; i++) {
-                          await webViewController.runJavaScriptReturningResult(
-                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                        }
-                        await Future.delayed(const Duration(seconds: 1));
-                        for (var i = 0; i < 10; i++) {
-                          await webViewController.runJavaScriptReturningResult(
-                              "document.getElementsByTagName('iframe')[$i].style.display='none';");
-                        }
-                      } catch (e) {
-                        print(
-                            'An error occurred while parsing data from webView:');
-                        print(e.toString());
-                        rethrow;
-                      }
-                    },
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            TakoPlayWebView(
+              initialUrl: mediaUrls.first,
+              fallbackUrls: mediaUrls.skip(1).toList(growable: false),
+              referrerUrl: _episodeUrl,
+              onControllerCreated: (controller) =>
+                  _webViewController = controller,
+              onLoadingChanged: (isLoading) {
+                if (mounted && _isLoading != isLoading) {
+                  setState(() => _isLoading = isLoading);
+                }
+              },
+            ),
+            if (_isLoading)
+              const IgnorePointer(
+                child: ColoredBox(
+                  color: Colors.black,
+                  child: Center(child: TakoLoadingIndicator()),
+                ),
+              ),
+            Positioned(
+              right: 10,
+              bottom: 8,
+              child: SafeArea(
+                child: Semantics(
+                  button: true,
+                  label: 'Toggle fullscreen orientation',
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: _toggleOrientation,
+                    child: const SizedBox(width: 56, height: 56),
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 10,
-                  child: SizedBox(
-                    height: 50,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            if (isLandScape.value) {
-                              SystemChrome.setPreferredOrientations([
-                                DeviceOrientation.portraitUp,
-                              ]);
-                            } else {
-                              SystemChrome.setPreferredOrientations([
-                                DeviceOrientation.landscapeRight,
-                                DeviceOrientation.landscapeLeft,
-                              ]);
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.zoom_out_map_outlined,
-                            color: Colors.transparent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              ],
+              ),
             ),
-          );
-        })),
+          ],
+        ),
       ),
     );
   }
+
+  Future<void> _toggleOrientation() async {
+    final isLandscape =
+        MediaQuery.orientationOf(context) == Orientation.landscape;
+    await SystemChrome.setPreferredOrientations(
+      isLandscape
+          ? [DeviceOrientation.portraitUp]
+          : [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+    );
+  }
+
+  Future<void> _releaseWebView() async {
+    if (_hasReleasedWebView) return;
+    _hasReleasedWebView = true;
+
+    final controller = _webViewController;
+    if (controller == null) return;
+    try {
+      // Replacing the document releases the embedded player before this route
+      // is removed, preventing background playback after navigating back.
+      await controller.loadHtmlString('<!doctype html><html></html>');
+      await controller.clearCache();
+    } catch (_) {
+      // The platform view may already be gone during disposal.
+    }
+  }
+
+  Future<void> _closePlayerAndPop() async {
+    if (_isClosing) return;
+    _isClosing = true;
+    await _releaseWebView();
+    if (!mounted) return;
+
+    setState(() => _allowPop = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  Widget _invalidEmbed() => Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.play_circle_outline_rounded,
+                    color: Colors.white70, size: 44),
+                const SizedBox(height: 14),
+                const Text(
+                  'This video link is unavailable.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: Get.back,
+                  child: const Text('Go back'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
 }

@@ -1,37 +1,37 @@
 import '../utils/constants.dart';
 
 class AnimeResults {
-  AnimeResults({
+  const AnimeResults({
     required this.animeList,
   });
 
-  final List<Anime>? animeList;
+  final List<Anime> animeList;
 }
 
 class Anime {
-  Anime({
-    this.id,
-    this.name,
-    this.imageUrl,
-    this.status,
-    this.summary,
-    this.genres,
-    this.episodes,
-    this.currentEp,
-    this.animeUrl,
-    this.releasedDate,
+  const Anime({
+    this.id = '',
+    this.name = '',
+    this.imageUrl = '',
+    this.status = '',
+    this.summary = '',
+    this.genres = const [],
+    this.episodes = const [],
+    this.currentEp = '',
+    this.animeUrl = '',
+    this.releasedDate = '',
   });
 
-  final String? id;
-  final String? name;
-  final String? imageUrl;
-  final String? summary;
-  final String? status;
-  final String? animeUrl;
-  final List<Genre>? genres;
-  final List<Episode>? episodes;
-  final String? currentEp;
-  final String? releasedDate;
+  final String id;
+  final String name;
+  final String imageUrl;
+  final String summary;
+  final String status;
+  final String animeUrl;
+  final List<Genre> genres;
+  final List<Episode> episodes;
+  final String currentEp;
+  final String releasedDate;
 }
 
 class Genre {

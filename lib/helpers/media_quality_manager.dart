@@ -7,9 +7,15 @@ class MediaQualityManager extends GetxController {
   String _defaultQuality = '720 P';
   String get defaultQuality => _defaultQuality;
 
-  void changeMediaQuality(String quality) {
+  @override
+  void onInit() {
+    super.onInit();
+    getVideoQuality();
+  }
+
+  Future<void> changeMediaQuality(String quality) async {
+    await _updateVideoQuality(quality);
     _defaultQuality = quality;
-    _updateVideoQuality(quality);
     update();
   }
 

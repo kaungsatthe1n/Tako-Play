@@ -4,70 +4,83 @@ import 'package:get/get.dart';
 
 import '../helpers/cache_manager.dart';
 import '../models/anime.dart';
+import '../utils/constants.dart';
 import '../utils/routes.dart';
 
 class MovieCard extends StatelessWidget {
-  const MovieCard({Key? key, required this.anime}) : super(key: key);
+  const MovieCard({super.key, required this.anime});
+
   final Anime anime;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Get.toNamed(Routes.videoListScreen, arguments: {
-          'anime': anime,
-        });
-      },
+      onTap: () =>
+          Get.toNamed(Routes.videoListScreen, arguments: {'anime': anime}),
       child: Container(
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        height: 126,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: Colors.black26,
+          borderRadius: BorderRadius.circular(20),
+          color: tkDarkBlue,
+          border: Border.all(color: Colors.white10),
         ),
-        height: 160,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                key: UniqueKey(),
-                cacheManager: CustomCacheManager.instance,
-                width: 110,
-                imageUrl: anime.imageUrl.toString(),
-              ),
+              borderRadius:
+                  const BorderRadius.horizontal(left: Radius.circular(20)),
+              child: anime.imageUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      key: ValueKey(anime.imageUrl),
+                      cacheManager: CustomCacheManager.instance,
+                      width: 94,
+                      height: 126,
+                      fit: BoxFit.cover,
+                      imageUrl: anime.imageUrl,
+                    )
+                  : Container(
+                      width: 94,
+                      height: 126,
+                      color: tkGrey,
+                      child: const Icon(Icons.movie_outlined,
+                          color: Colors.white54),
+                    ),
             ),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      child: Text(
-                        anime.name.toString(),
-                        softWrap: true,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 17, 14, 15),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      anime.name.toString(),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        height: 1.2,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const Spacer(),
+                    const Row(
+                      children: [
+                        Icon(Icons.play_circle_outline_rounded,
+                            color: tkCoral, size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          'Watch movie',
+                          style: TextStyle(
+                            color: tkMutedText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      )),
-                  Container(
-                      padding:
-                          EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-                      child: Text(
-                        anime.releasedDate.toString(),
-                        softWrap: true,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      )),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

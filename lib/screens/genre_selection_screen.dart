@@ -7,7 +7,7 @@ import '../widgets/tako_animation.dart';
 import '../widgets/tako_scaffold.dart';
 
 class GenreSelectionScreen extends StatefulWidget {
-  const GenreSelectionScreen({Key? key}) : super(key: key);
+  const GenreSelectionScreen({super.key});
 
   @override
   State<GenreSelectionScreen> createState() => _GenreSelectionScreenState();

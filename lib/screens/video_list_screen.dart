@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -9,34 +8,31 @@ import '../models/anime.dart';
 import '../models/bookmark.dart';
 import '../models/recent_anime.dart';
 import '../services/anime_service.dart';
+import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
-import '../utils/tako_helper.dart';
 import '../widgets/anime_detail_header.dart';
 import '../widgets/cache_image_with_cachemanager.dart';
 import '../widgets/plot_summary.dart';
-import '../widgets/tako_animation.dart';
+import '../widgets/tako_loading_indicator.dart';
 import '../widgets/tako_scaffold.dart';
 
 class VideoListScreen extends StatefulWidget {
-  const VideoListScreen({Key? key}) : super(key: key);
+  const VideoListScreen({super.key});
 
   @override
-  _VideoListScreenState createState() => _VideoListScreenState();
+  State<VideoListScreen> createState() => _VideoListScreenState();
 }
 
-class _VideoListScreenState extends State<VideoListScreen>
-    with SingleTickerProviderStateMixin {
+class _VideoListScreenState extends State<VideoListScreen> {
   final RecentWatchManager recentWatchManager = Get.find();
   final BookMarkManager bookMarkManager = Get.find();
   var selectedIndex = 9999999.obs;
-  var isExpanded = false.obs;
   final name = Get.arguments['anime'].name.toString();
   final imageUrl = Get.arguments['anime'].imageUrl.toString();
   final animeUrl = Get.arguments['anime'].animeUrl.toString();
-  late AnimationController animationController;
-  late Animation<double> fadeAnimation;
+  late Future<Anime> _animeDetails;
   bool hasRemainingEp = false;
   int remainingEp = 0;
   int totalChipCount = 0;
@@ -49,18 +45,39 @@ class _VideoListScreenState extends State<VideoListScreen>
   @override
   void initState() {
     super.initState();
-    animationController = AnimationController(
-        duration: Duration(milliseconds: takoAnimationDuration), vsync: this);
-    fadeAnimation =
-        Tween<double>(begin: 0, end: 1).animate(animationController);
+    _animeDetails = _loadAnimeDetails();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
     ]);
   }
 
+  Future<Anime> _loadAnimeDetails() async {
+    final anime = await AnimeService(
+      requestService: Get.find<RequestService>(),
+    ).fetchAnimeDetails(animeUrl);
+    _prepareEpisodeState(anime);
+    return anime;
+  }
+
+  void _prepareEpisodeState(Anime anime) {
+    final episodes = anime.episodes;
+    final episodeCount = episodes.length;
+    hasRemainingEp = episodeCount % 50 != 0;
+    remainingEp = episodeCount % 50;
+    totalChipCount = (episodeCount / 50).ceil();
+    finalChipCount = totalChipCount;
+    epChunkList.value = episodes.take(50).toList(growable: false);
+  }
+
+  void _retryAnimeDetails() {
+    final animeDetails = _loadAnimeDetails();
+    setState(() {
+      _animeDetails = animeDetails;
+    });
+  }
+
   @override
   void dispose() {
-    animationController.dispose();
     super.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: SystemUiOverlay.values);
@@ -76,28 +93,15 @@ class _VideoListScreenState extends State<VideoListScreen>
       tag: Get.arguments['anime'].id.toString(),
       child: TakoScaffoldWithBackButton(
         appBarTitle: 'Player',
+        extendBodyBehindAppBar: true,
         body: FutureBuilder<Anime>(
-            future: AnimeService().fetchAnimeDetails(animeUrl),
+            future: _animeDetails,
             builder: (context, snapshot) {
               if (snapshot.hasError) {
                 return buildErrorWidget();
               }
               if (snapshot.connectionState == ConnectionState.done) {
-                final anime = snapshot.data;
-                if ((anime!.episodes!.length % 50).floor() < 50) {
-                  hasRemainingEp = true;
-                  remainingEp = (anime.episodes!.length % 50).floor();
-                }
-                totalChipCount = (anime.episodes!.length / 50).floor();
-                epChunkList.value = anime.episodes!.sublist(
-                    0,
-                    (hasRemainingEp == true && anime.episodes!.length < 50)
-                        ? remainingEp
-                        : 50);
-                finalChipCount = totalChipCount + (hasRemainingEp ? 1 : 0);
-
-                print('Ep Chunk List ${epChunkList.length}+ $remainingEp');
-                // print(epChunkList[1].link.toString());
+                final anime = snapshot.data!;
                 return Stack(
                   fit: StackFit.expand,
                   children: [
@@ -120,22 +124,23 @@ class _VideoListScreenState extends State<VideoListScreen>
       left: 0,
       right: 0,
       bottom: 0,
-      child: NetworkImageWithCacheManager(
-        imageUrl: imageUrl,
+      child: RepaintBoundary(
+        child: NetworkImageWithCacheManager(imageUrl: imageUrl),
       ),
     );
   }
 
   Widget buildBackdropFilter() {
-    return BackdropFilter(
-      filter: ImageFilter.blur(
-        sigmaX: 8,
-        sigmaY: 8,
-      ),
-      child: Container(
-        color: Colors.black87,
-        width: double.infinity,
-        height: double.infinity,
+    return const Positioned.fill(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xCA090A12), Color(0xEF090A12), Color(0xFF090A12)],
+            stops: [0, .35, 1],
+          ),
+        ),
       ),
     );
   }
@@ -146,55 +151,59 @@ class _VideoListScreenState extends State<VideoListScreen>
       left: 0,
       right: 0,
       bottom: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: ListView(
-          children: [
-            AnimeDetailHeader(
-              anime: anime,
-              name: name,
-              imageUrl: imageUrl,
-            ),
-            SizedBox(height: 40),
-            PlotSummary(
-              summary: anime.summary.toString(),
-            ),
-            buildEpisodeInfoRow(anime, name),
-            Padding(
-              padding: EdgeInsets.only(bottom: 5),
-              child: const Divider(),
-            ),
-            buildEpisodeChipListView(anime),
-            buildEpisodesGridView(anime),
-          ],
+      child: ListView(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          MediaQuery.of(context).padding.top + kToolbarHeight + 14,
+          16,
+          32,
         ),
+        children: [
+          AnimeDetailHeader(
+            anime: anime,
+            name: name,
+            imageUrl: imageUrl,
+          ),
+          const SizedBox(height: 18),
+          PlotSummary(
+            summary: anime.summary,
+          ),
+          buildEpisodeInfoRow(anime, name),
+          const SizedBox(height: 14),
+          buildEpisodeChipListView(anime),
+          if (anime.episodes.length > 50) const SizedBox(height: 8),
+          buildEpisodesGridView(anime),
+        ],
       ),
     );
   }
 
   Widget buildEpisodeInfoRow(Anime anime, String name) {
     return Container(
-      margin: EdgeInsets.only(top: 40, left: 10, right: 10),
+      margin: const EdgeInsets.only(top: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'Episodes',
-            style: TakoTheme.darkTextTheme.headlineSmall,
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Episodes',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              SizedBox(height: 3),
+              Text('Choose where to start',
+                  style: TextStyle(color: tkMutedText, fontSize: 12)),
+            ],
           ),
           GetBuilder<BookMarkManager>(
             builder: (_) => TextButton.icon(
-              onPressed: () => onBookmarkButtonPressed(anime, name),
+              onPressed: () async => await onBookmarkButtonPressed(anime, name),
               icon: Icon(
                 bookMarkManager.ids.contains(anime.id)
                     ? Icons.bookmark
                     : Icons.bookmark_border_outlined,
                 color: Colors.white,
               ),
-              label: Text(
-                'BookMark',
-                style: TakoTheme.darkTextTheme.bodyLarge,
-              ),
+              label: const Text('Save'),
             ),
           ),
         ],
@@ -202,15 +211,15 @@ class _VideoListScreenState extends State<VideoListScreen>
     );
   }
 
-  void onBookmarkButtonPressed(Anime anime, String name) {
+  Future<void> onBookmarkButtonPressed(Anime anime, String name) async {
     final item = BookMark(
-      id: anime.id!,
+      id: anime.id,
       imageUrl: imageUrl,
       name: name,
       animeUrl: animeUrl,
     );
     if (bookMarkManager.ids.contains(anime.id.toString())) {
-      bookMarkManager.removeFromBookMarks(item);
+      await bookMarkManager.removeFromBookMarks(item);
       Get.snackbar(
         name,
         'Removed from bookmark successfully!',
@@ -219,7 +228,7 @@ class _VideoListScreenState extends State<VideoListScreen>
         snackPosition: SnackPosition.BOTTOM,
       );
     } else {
-      bookMarkManager.addToBookMarks(item);
+      await bookMarkManager.addToBookMarks(item);
       Get.snackbar(
         name,
         'Added to bookmark successfully!',
@@ -231,40 +240,42 @@ class _VideoListScreenState extends State<VideoListScreen>
   }
 
   Widget buildEpisodeChipListView(Anime anime) {
-    return anime.episodes!.length > 50
+    return anime.episodes.length > 50
         ? SizedBox(
-            height: 70,
+            height: 46,
             child: ListView.builder(
+              physics: const BouncingScrollPhysics(),
               itemCount: finalChipCount,
-              itemBuilder: (context, index) {
-                return buildEpisodeChip(anime, index);
-              },
+              itemBuilder: (context, index) => buildEpisodeChip(anime, index),
               scrollDirection: Axis.horizontal,
             ),
           )
-        : SizedBox();
+        : const SizedBox.shrink();
   }
 
   Widget buildEpisodeChip(Anime anime, int index) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20, left: 8, right: 8),
+      padding: const EdgeInsets.only(bottom: 4, right: 8),
       child: InkWell(
         onTap: () => onEpisodeChipTapped(anime, index),
         child: Obx(
           () => Chip(
             shadowColor: tkGradientBlack,
-            backgroundColor: selectedChipIndex.value == index
-                ? tkGradientBlue
-                : Colors.white,
-            padding: EdgeInsets.symmetric(horizontal: 10),
+            backgroundColor:
+                selectedChipIndex.value == index ? tkGradientBlue : tkDarkBlue,
+            side: BorderSide(
+                color: selectedChipIndex.value == index
+                    ? Colors.transparent
+                    : Colors.white10),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             label: Text(
               getEpisodeRange(index),
               style: TextStyle(
                 color: selectedChipIndex.value == index
                     ? Colors.white
-                    : tkGradientBlue,
-                fontSize: 17,
-                fontWeight: FontWeight.bold,
+                    : tkMutedText,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
@@ -276,73 +287,63 @@ class _VideoListScreenState extends State<VideoListScreen>
   void onEpisodeChipTapped(Anime anime, int index) {
     selectedChipIndex.value = index;
     selectedIndex.value = 99999999;
-    animationController.reset();
     getEpisodeRange(index);
     if (finalChipCount == (index + 1)) {
-      takoDebugPrint('last chip');
-      epChunkList.value = anime.episodes!.sublist(int.parse(start) - 1);
+      epChunkList.value = anime.episodes.sublist(int.parse(start) - 1);
     } else {
       epChunkList.value =
-          anime.episodes!.sublist(int.parse(start) - 1, int.parse(end));
+          anime.episodes.sublist(int.parse(start) - 1, int.parse(end));
     }
   }
 
   Widget buildEpisodesGridView(Anime anime) {
-    return anime.episodes!.isNotEmpty
+    return anime.episodes.isNotEmpty
         ? Obx(
             () => GridView.builder(
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
+              padding: EdgeInsets.zero,
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                mainAxisSpacing: 20,
-                crossAxisSpacing: 20,
-                maxCrossAxisExtent: 50,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                maxCrossAxisExtent: 58,
               ),
               itemCount: epChunkList.length,
-              itemBuilder: (BuildContext context, int index) {
-                animationController.forward();
-                return buildAnimatedEpisodeTile(anime, index);
-              },
+              itemBuilder: (BuildContext context, int index) =>
+                  buildAnimatedEpisodeTile(anime, index),
             ),
           )
         : Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10,vertical: 20),
-            child: Text('Coming Soon ..',
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+            child: Text('Episodes coming soon',
                 style: TakoTheme.darkTextTheme.titleSmall),
           );
   }
 
   Widget buildAnimatedEpisodeTile(Anime anime, int index) {
-    return Obx(
-      () => AnimatedBuilder(
-        animation: animationController,
-        child: buildEpisodeTile(anime, index),
-        builder: (context, child) {
-          return Transform(
-            transform: Matrix4.translationValues(
-              0,
-              100 *
-                  (1.0 -
-                      TakoCurveAnimation(
-                              animationController, index, epChunkList.length)
-                          .value),
-              0,
-            ),
-            child: child,
-          );
-        },
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(epChunkList[index].link),
+      duration: Duration(milliseconds: 180 + (index.clamp(0, 12).toInt() * 22)),
+      curve: Curves.easeOutCubic,
+      tween: Tween(begin: 0, end: 1),
+      child: Obx(() => buildEpisodeTile(anime, index)),
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 12 * (1 - value)),
+          child: child,
+        ),
       ),
     );
   }
 
   Widget buildEpisodeTile(Anime anime, int index) {
     return Material(
-      borderRadius: BorderRadius.circular(10),
-      color: selectedIndex.value == index ? tkGradientBlue : tkGrey,
+      borderRadius: BorderRadius.circular(14),
+      color: selectedIndex.value == index ? tkGradientBlue : tkDarkBlue,
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         onTap: () async {
-          print(epChunkList[index].link.toString());
           selectedIndex.value = index;
           final recentAnime = RecentAnime(
             id: anime.id.toString(),
@@ -353,7 +354,7 @@ class _VideoListScreenState extends State<VideoListScreen>
             // animeUrl: animeUrl,
           );
           // Add to Recent Anime List
-          recentWatchManager.addAnimeToRecent(recentAnime);
+          await recentWatchManager.addAnimeToRecent(recentAnime);
           await Get.toNamed(Routes.mediaFetchScreen,
               arguments: {'animeUrl': epChunkList[index].link.toString()});
         },
@@ -361,19 +362,15 @@ class _VideoListScreenState extends State<VideoListScreen>
         child: Container(
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                spreadRadius: 2,
-                blurRadius: 7,
-                offset: Offset(0, 5),
-              ),
-            ],
-            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: Colors.white10),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Text(
             epChunkList[index].number,
-            style: TakoTheme.darkTextTheme.displayMedium
+            style: TakoTheme.darkTextTheme.bodyMedium!.copyWith(
+              fontWeight: FontWeight.w800,
+              color: selectedIndex.value == index ? Colors.white : tkMutedText,
+            ),
           ),
         ),
       ),
@@ -382,13 +379,24 @@ class _VideoListScreenState extends State<VideoListScreen>
 
   Widget buildErrorWidget() {
     return Center(
-      child: Text(
-        'An Error Occurred',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'We could not load the episode list.',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: _retryAnimeDetails,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Try again'),
+          ),
+        ],
       ),
     );
   }
@@ -406,17 +414,16 @@ class _VideoListScreenState extends State<VideoListScreen>
             imageUrl: imageUrl,
           ),
         ),
-        BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: 8,
-            sigmaY: 8,
-          ),
-          child: Container(
-            color: Colors.black87,
-            width: double.infinity,
-            height: double.infinity,
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xD6090A12), Color(0xFF090A12)],
+            ),
           ),
         ),
+        const Center(child: TakoLoadingIndicator()),
       ],
     );
   }
@@ -424,7 +431,7 @@ class _VideoListScreenState extends State<VideoListScreen>
   String getEpisodeRange(int index) {
     start = ((index * 50) + 1).toString();
     end = ((50 * (index + 1))).toString();
-    if (index == totalChipCount && hasRemainingEp) {
+    if (index == finalChipCount - 1 && hasRemainingEp) {
       end = ((50 * index) + remainingEp).toString();
     }
     // startVal = start;

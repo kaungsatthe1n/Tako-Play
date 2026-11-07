@@ -1,150 +1,189 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 
+/// A release prompt styled consistently with TakoPlay's dark interface.
 class UpdateAlertDialog extends StatelessWidget {
   const UpdateAlertDialog({
-    Key? key,
+    super.key,
     required this.downloadLink,
-  }) : super(key: key);
+  });
+
   final String downloadLink;
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      elevation: 10,
-      backgroundColor: tkGradientBlue,
-      contentPadding: EdgeInsets.only(top: 0.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      content: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          color: tkDarkBlue,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.0),
-                    topRight: Radius.circular(20.0)),
-              ),
-              child: Row(
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Semantics(
+        namesRoute: true,
+        label: 'Update available',
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: tkDarkBlue,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: Colors.white10),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x99000000),
+                  blurRadius: 32,
+                  offset: Offset(0, 18),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    child: Icon(
-                      Icons.update,
-                      color: tkDarkBlue,
-                      size: 35,
+                  Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [tkGradientBlue, Color(0xFF9D8FFF)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(17),
+                        ),
+                        child: const Icon(
+                          Icons.system_update_alt_rounded,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Update available',
+                              style: TakoTheme.darkTextTheme.headlineSmall,
+                            ),
+                            const SizedBox(height: 3),
+                            const Text(
+                              'A newer TakoPlay build is ready.',
+                              style: TextStyle(
+                                color: tkMutedText,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Not now',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: tkMutedText,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 22),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: tkDarkerBlue,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.auto_awesome_rounded,
+                          color: tkCoral,
+                          size: 18,
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'NEW RELEASE',
+                                style: TextStyle(
+                                  color: tkCoral,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              SizedBox(height: 5),
+                              Text(
+                                'Update now to get the latest improvements and fixes.',
+                                style: TextStyle(
+                                  color: tkMutedText,
+                                  fontSize: 13,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  Text(
-                    'Version Update',
-                    style: TakoTheme.darkTextTheme.displaySmall!
-                        .copyWith(color: tkDarkBlue),
+                  const SizedBox(height: 22),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white24),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text('Not now'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: () => _launchUrl(downloadLink),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: tkGradientBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: const Icon(Icons.download_rounded, size: 18),
+                          label: const Text('Update now'),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-              child: Text('New Version is Available'),
-            ),
-            SizedBox(
-              height: 20.0,
-            ),
-            Divider(
-              color: Colors.grey,
-              height: 4.0,
-            ),
-            Row(children: <Widget>[
-              Expanded(
-                  child: MaterialButton(
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.only(bottomLeft: Radius.circular(20))),
-                height: 50,
-                minWidth: double.infinity,
-                onPressed: () {
-                  Get.back();
-                },
-                child: Text(
-                  'Cancel',
-                  style: TakoTheme.darkTextTheme.titleMedium,
-                ),
-              )),
-              Container(
-                height: 50,
-                color: Colors.white,
-                width: 0.4,
-              ),
-              Expanded(
-                  child: MaterialButton(
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.only(bottomRight: Radius.circular(20))),
-                height: 50,
-                minWidth: double.infinity,
-                onPressed: () => _launchUrl(downloadLink),
-                child: Text(
-                  'Update',
-                  style: TakoTheme.darkTextTheme.titleMedium,
-                ),
-              )),
-            ])
-          ],
+          ),
         ),
       ),
-      // child: Column(
-      //   mainAxisSize: MainAxisSize.min,
-      //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      //   crossAxisAlignment: CrossAxisAlignment.start,
-      //   children: [
-      //     Container(
-      //       margin: EdgeInsets.symmetric(vertical: 10.h),
-      //       child:
-      //           Text('Tako-Play', style: TakoTheme.darkTextTheme.headline3),
-      //     ),
-      //     Container(
-      //       margin:
-      //           const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-      //       child: Text('New Update is available',
-      //           style: TakoTheme.darkTextTheme.bodyText1),
-      //     ),
-      //     Row(
-      //       mainAxisAlignment: MainAxisAlignment.end,
-      //       children: [
-      //         MaterialButton(
-      //           elevation: 5,
-      //           color: tkGradientBlue.withAlpha(200),
-      //           child: Text(
-      //             'Update',
-      //             style: TakoTheme.darkTextTheme.subtitle2!
-      //                 .copyWith(fontWeight: FontWeight.w600),
-      //           ),
-      //           onPressed: () => launch(downloadLink),
-      //         ),
-      //       ],
-      //     ),
-      //   ],
-      // ),
     );
   }
 }
 
-Future<void> _launchUrl(url) async {
+Future<void> _launchUrl(String url) async {
   if (!await launchUrl(Uri.parse(url))) {
     throw Exception('Could not launch $url');
   }

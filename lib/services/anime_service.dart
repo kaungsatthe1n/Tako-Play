@@ -1,234 +1,340 @@
+import 'dart:convert';
+
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart';
+import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 import '../models/anime.dart';
 import '../services/request_service.dart';
 import '../utils/constants.dart';
 
-/// [AnimeService] contains a lot of convenience methods that allow easier
-/// access, management and data handling from remote APIs with the goal of
-/// providing the user with the best anime experience.
+/// Parses the public catalog served by gogoanime9.ro.
+///
+/// The source is a WordPress site: catalogue pages are normal HTML, while an
+/// anime's episode list is returned by its WordPress AJAX endpoint.
 class AnimeService {
+  AnimeService({required RequestService requestService})
+      : _requestService = requestService;
+
+  static const _moviePosterConcurrency = 6;
+  static const _episodeRangeConcurrency = 4;
+  static const _legacyCatalogHosts = <String>{
+    'gogoanime.wiki',
+    'www.gogoanime.wiki',
+  };
+
+  final RequestService _requestService;
   final _uuid = const Uuid();
 
-  Future<AnimeResults> getAnimes(request) async {
-    List<Anime> animeList = [];
+  Future<AnimeResults> getAnimes(Future<http.Response> request) async {
     final response = await request;
-    dom.Document document = parse(response.body);
-
-    var list = document.getElementsByClassName('items').first.children;
-
-    for (var element in list) {
-      var img = element
-          .getElementsByClassName('img')
-          .first
-          .getElementsByTagName('a')
-          .first
-          .getElementsByTagName('img')
-          .first
-          .attributes
-          .values
-          .first;
-
-      var animeUrl = element
-          .getElementsByClassName('name')
-          .first
-          .getElementsByTagName('a')
-          .first
-          .attributes
-          .values
-          .first;
-      var name = element
-          .getElementsByClassName('name')
-          .first
-          .getElementsByTagName('a')
-          .first
-          .attributes
-          .values
-          .last;
-      var releasedDate =
-          element.getElementsByClassName('released').first.text.trim();
-
-      Anime animeInfo = Anime(
-        id: _uuid.v4(),
-        name: name,
-        animeUrl: animeUrl,
-        imageUrl: img,
-        releasedDate: releasedDate,
-      );
-      animeList.add(animeInfo);
-    }
-    return AnimeResults(animeList: animeList);
+    return _parseImageCards(parse(response.body));
   }
 
-  Future<Anime> fetchAnimeDetails(String path) async {
-    List<Genre> genres0 = [];
-    List<Episode>? episodes = [];
-    final detailResponse =
-        await RequestService.create().requestAnimeDetailResponse(path);
-    dom.Document detailDoc = parse(detailResponse.body);
-    final info = detailDoc.getElementsByClassName('anime_info_body_bg').first;
+  Future<AnimeResults> getRecentlyAddedAnimes() =>
+      getAnimes(_requestService.requestRecentlyAddedResponse());
 
-    final summary = info
-        .getElementsByClassName('type')[1]
-        .text
-        .trim()
-        .split('Plot Summary:')
-        .last;
-    final genres =
-        info.getElementsByClassName('type')[2].getElementsByTagName('a');
-    for (var gen in genres) {
-      final genreName = gen.text.split(',').last;
-      final genreLink = gen.attributes.values.first.toString();
-      final genre = Genre(name: genreName, link: genreLink);
-      genres0.add(genre);
+  Future<AnimeResults> getMovies(Future<http.Response> request) async {
+    final response = await request;
+    final document = parse(response.body);
+    final movieLinks = <({String name, String url})>[];
+
+    for (final item in document.querySelectorAll('ul.listing > li')) {
+      final link = item.querySelector('a[href]');
+      if (link == null) continue;
+
+      final name = link.text.trim();
+      if (name.isEmpty) continue;
+      movieLinks.add((
+        name: name,
+        url: _absoluteUrl(link.attributes['href']),
+      ));
     }
 
-    final released = info
-        .getElementsByClassName('type')[3]
-        .text
-        .trim()
-        .split('Released:')
-        .last;
-    final status = info
-        .getElementsByClassName('type')[4]
-        .getElementsByTagName('a')
-        .first
-        .text
-        .trim();
-    final id = detailDoc
-        .getElementsByClassName('anime_info_episodes_next')
-        .first
-        .getElementsByTagName('input')
-        .first
-        .attributes
-        .values
-        .elementAt(1);
+    // The movie index is text-only. Detail pages include a real poster in
+    // `.anime_info_body_bg`, so enrich each card before returning the list.
+    final movies = await _mapConcurrent(movieLinks, (movie) async {
+      final imageUrl = await _fetchMoviePoster(movie.url);
+      return Anime(
+        id: _uuid.v4(),
+        name: movie.name,
+        animeUrl: movie.url,
+        imageUrl: imageUrl,
+        releasedDate: 'Movie',
+      );
+    }, maxConcurrent: _moviePosterConcurrency);
 
-    final episodesResponse =
-        await RequestService.create().requestEpisodesResponse(id);
-    dom.Document epDoc = parse(episodesResponse.body);
-    final list =
-        epDoc.getElementById('episode_related')?.getElementsByTagName('li');
+    return AnimeResults(animeList: movies);
+  }
 
-    if (list != null) {
-      for (var element in list) {
-        final href = element
-            .getElementsByTagName('a')
-            .first
-            .attributes
-            .values
-            .first
-            .trim();
-        final epNumber = element
-            .getElementsByTagName('a')
-            .first
-            .getElementsByClassName('name')
-            .first
-            .text
-            .trim()
-            .split('EP ')[1];
+  Future<Anime> fetchAnimeDetails(String url) async {
+    final detailDoc = await _fetchDocument(url);
+    final info = detailDoc.querySelector('.anime_info_body_bg');
+    if (info == null) {
+      throw StateError('The anime details were not found in the source page.');
+    }
 
-        final episode = Episode(link: href, number: epNumber);
-        episodes.add(episode);
+    final genres = <Genre>[];
+    var summary = info.querySelector('.description')?.text.trim() ?? '';
+    var released = '';
+    var status = '';
+
+    for (final type in info.querySelectorAll('p.type')) {
+      final label = type.text.trim();
+      if (label.startsWith('Genres:')) {
+        for (final link in type.querySelectorAll('a[href]')) {
+          final name = link.text.trim();
+          if (name.isNotEmpty) {
+            genres.add(Genre(
+              name: name,
+              link: _absoluteUrl(link.attributes['href']),
+            ));
+          }
+        }
+      } else if (label.startsWith('Released:')) {
+        released = label.replaceFirst('Released:', '').trim();
+      } else if (label.startsWith('Status:')) {
+        status = label.replaceFirst('Status:', '').trim();
       }
-    } else {
-      episodes = [];
     }
 
-    Anime anime = Anime(
-      id: id,
+    // Some pages put synopsis in a labelled paragraph instead of description.
+    if (summary.isEmpty) {
+      final synopsis = info.querySelectorAll('p.type').where(
+            (element) => element.text.trim().startsWith('Synopsis:'),
+          );
+      if (synopsis.isNotEmpty) {
+        summary = synopsis.first.text.replaceFirst('Synopsis:', '').trim();
+      }
+    }
+
+    final seriesId = detailDoc.querySelector('#movie_id')?.attributes['value'];
+    final episodes = seriesId == null
+        ? <Episode>[]
+        : await _loadEpisodes(detailDoc, seriesId);
+
+    return Anime(
+      id: seriesId ?? _uuid.v4(),
       summary: summary,
-      genres: genres0,
+      genres: genres,
       releasedDate: released,
       status: status,
-      episodes: episodes.reversed.toList(),
+      episodes: episodes,
     );
-
-    return anime;
   }
 
-  Future<String> fetchIframeEmbedded(url) async {
-    final response =
-        await RequestService.create().requestAnimeDetailResponse(url);
-    dom.Document document = parse(response.body);
-    var embededIframeUrl = document
-        .getElementsByClassName('play-video')
-        .first
-        .getElementsByTagName('iframe')
-        .first
-        .attributes
-        .values
-        .first;
-    return embededIframeUrl;
-  }
-
-  Future<Map<String, String>> fetchCdnStreamLink(url) async {
-    final response = await RequestService.create().requestCdnVideoLink(
-        url.toString().replaceFirst('streaming.php', 'download'));
-    Map<String, String> streamingDatas = {};
-    dom.Document doc = parse(response.body);
-    final streamingInfo = doc
-        .getElementsByClassName('mirror_link')
-        .first
-        .getElementsByClassName('dowload');
-
-    for (var link in streamingInfo) {
-      final url = link.getElementsByTagName('a').first.attributes.values.first;
-      final resolutionText = link.getElementsByTagName('a').first.text;
-      var resolution =
-          resolutionRegExp.firstMatch(resolutionText)!.group(0).toString();
-
-      streamingDatas.putIfAbsent(resolution, () => url);
+  /// Returns every distinct HTTPS player advertised by an episode page.
+  ///
+  /// gogoanime9 stores HTML iframes in `data-video`, unlike the retired
+  /// `.play-video` markup used by the old provider. A server can retire an
+  /// individual embed without the episode itself disappearing, so callers can
+  /// retry the next source-provided player after an HTTP 410 response.
+  Future<List<String>> fetchIframeEmbeds(String url) async {
+    final document = await _fetchDocument(url);
+    final players = <String>[];
+    for (final server
+        in document.querySelectorAll('.anime_muti_link a[data-video]')) {
+      final rawEmbed = server.attributes['data-video'];
+      if (rawEmbed == null || rawEmbed.isEmpty) continue;
+      final src = parseFragment(rawEmbed)
+          .querySelector('iframe[src]')
+          ?.attributes['src'];
+      if (src == null || src.isEmpty) continue;
+      final playerUrl = _absoluteUrl(src);
+      final playerUri = Uri.tryParse(playerUrl);
+      if (playerUri != null &&
+          playerUri.scheme == 'https' &&
+          playerUri.host.isNotEmpty &&
+          !players.contains(playerUrl)) {
+        players.add(playerUrl);
+      }
     }
-    return streamingDatas;
+    if (players.isNotEmpty) {
+      // Preserve the provider's order. It is the only reliable indication of
+      // its currently supported servers; do not hard-code player hosts here.
+      return players;
+    }
+
+    // Keep a small fallback for pages whose server markup is rendered inline.
+    final fallback = document.querySelector('.play-video iframe[src]');
+    final src = fallback?.attributes['src'];
+    if (src != null && src.isNotEmpty) {
+      final playerUrl = _absoluteUrl(src);
+      final playerUri = Uri.tryParse(playerUrl);
+      if (playerUri != null &&
+          playerUri.scheme == 'https' &&
+          playerUri.host.isNotEmpty) {
+        return [playerUrl];
+      }
+    }
+
+    throw StateError('No playable video embed was found for this episode.');
   }
 
-  Future<Map<String, String>> getVideoWithResolution(url) async {
+  /// Returns the first player offered on an episode page.
+  ///
+  /// Kept for existing callers. New playback code should use
+  /// [fetchIframeEmbeds] so it can recover when one advertised server returns
+  /// HTTP 410.
+  Future<String> fetchIframeEmbedded(String url) async =>
+      (await fetchIframeEmbeds(url)).first;
+
+  // Retained for source compatibility with callers using the previous CDN.
+  Future<Map<String, String>> fetchCdnStreamLink(String url) async {
+    final response = await _requestService.requestCdnVideoLink(url);
+    final doc = parse(response.body);
+    final streams = <String, String>{};
+    for (final link in doc.querySelectorAll('.mirror_link .dowload a[href]')) {
+      final match = resolutionRegExp.firstMatch(link.text);
+      final href = link.attributes['href'];
+      if (match != null && href != null) streams[match.group(0)!] = href;
+    }
+    return streams;
+  }
+
+  Future<Map<String, String>> getVideoWithResolution(String url) async {
     final iframeEmbedded = await fetchIframeEmbedded(url);
-    final resolutions = await fetchCdnStreamLink(iframeEmbedded);
-    return resolutions;
+    return fetchCdnStreamLink(iframeEmbedded);
   }
 
-  Future<AnimeResults> getRecentlyAddedAnimes() async {
-    List<Anime> animeList = [];
-    final response =
-        await RequestService.create().requestRecentlyAddedResponse();
-    dom.Document document = parse(response.body);
-    var list = document.getElementsByClassName('items').first.children;
+  Future<AnimeResults> _parseImageCards(dom.Document document) async {
+    final animeList = <Anime>[];
 
-    for (var element in list) {
-      var info = element
-          .getElementsByClassName('name')
-          .first
-          .getElementsByTagName('a')
-          .first
-          .attributes
-          .values;
-      var img = element
-          .getElementsByClassName('img')
-          .first
-          .getElementsByTagName('a')
-          .first
-          .getElementsByTagName('img')
-          .first
-          .attributes
-          .values
-          .first;
+    for (final item in document.querySelectorAll('ul.items > li')) {
+      final nameLink = item.querySelector('.name a[href]');
+      if (nameLink == null) continue;
+      final name = nameLink.text.trim();
+      if (name.isEmpty) continue;
 
-      var name = info.last;
-      var animeUrl = info.first;
-      var currentEp = element.getElementsByClassName('episode').first.text;
-      Anime animeInfo = Anime(
-        id: name,
+      final image = item.querySelector('.img img');
+      animeList.add(Anime(
+        id: _uuid.v4(),
         name: name,
-        animeUrl: animeUrl,
-        currentEp: currentEp,
-        imageUrl: img,
-      );
-      animeList.add(animeInfo);
+        animeUrl: _absoluteUrl(nameLink.attributes['href']),
+        imageUrl: _absoluteUrl(
+          image?.attributes['data-src'] ?? image?.attributes['src'],
+        ),
+        currentEp: item.querySelector('.episode')?.text.trim() ?? '',
+        releasedDate: item.querySelector('.released')?.text.trim() ??
+            item.querySelector('.episode')?.text.trim() ??
+            '',
+      ));
     }
     return AnimeResults(animeList: animeList);
+  }
+
+  Future<dom.Document> _fetchDocument(String url) async {
+    final response = await _requestService.getSource(
+      Uri.parse(_absoluteUrl(url)),
+    );
+    return parse(response.body);
+  }
+
+  Future<String> _fetchMoviePoster(String url) async {
+    try {
+      final document = await _fetchDocument(url);
+      final image = document.querySelector('.anime_info_body_bg img');
+      return _absoluteUrl(
+          image?.attributes['data-src'] ?? image?.attributes['src']);
+    } catch (_) {
+      // One removed title must not prevent the movie rail from rendering.
+      return '';
+    }
+  }
+
+  Future<List<Episode>> _loadEpisodes(
+    dom.Document detailDoc,
+    String seriesId,
+  ) async {
+    final script = detailDoc
+        .querySelectorAll('script')
+        .map((element) => element.text)
+        .join();
+    final nonce =
+        RegExp(r'''nonce\s*:\s*['"]([^'"]+)''').firstMatch(script)?.group(1);
+    final ranges =
+        detailDoc.querySelectorAll('a[data-range-start][data-range-end]');
+    if (nonce == null || ranges.isEmpty) return <Episode>[];
+
+    final chunks = await _mapConcurrent(ranges, (range) async {
+      final response = await _requestService.postSource(
+        Uri.parse('$sourceBaseUrl/wp-admin/admin-ajax.php'),
+        body: {
+          'action': 'load_episode_range',
+          'range_start': range.attributes['data-range-start']!,
+          'range_end': range.attributes['data-range-end']!,
+          'seri_id': seriesId,
+          'nonce': nonce,
+        },
+      );
+      final payload = jsonDecode(response.body);
+      if (payload is! Map ||
+          payload['success'] != true ||
+          payload['data'] is! String) {
+        return <Episode>[];
+      }
+
+      final episodeDoc = parseFragment(payload['data'] as String);
+      return episodeDoc.querySelectorAll('li a[href]').map((link) {
+        final text =
+            link.querySelector('.name')?.text.trim() ?? link.text.trim();
+        final number =
+            RegExp(r'(\d+(?:\.\d+)?)\s*$').firstMatch(text)?.group(1) ??
+                text
+                    .replaceFirst(RegExp(r'^EP\s*', caseSensitive: false), '')
+                    .trim();
+        return Episode(
+          link: _absoluteUrl(link.attributes['href']),
+          number: number,
+        );
+      }).toList();
+    }, maxConcurrent: _episodeRangeConcurrency);
+
+    final byLink = <String, Episode>{};
+    for (final chunk in chunks) {
+      for (final episode in chunk) {
+        byLink[episode.link] = episode;
+      }
+    }
+    final episodes = byLink.values.toList()
+      ..sort((a, b) => (double.tryParse(a.number) ?? 0)
+          .compareTo(double.tryParse(b.number) ?? 0));
+    return episodes;
+  }
+
+  String _absoluteUrl(String? value) {
+    if (value == null || value.isEmpty) return '';
+    final resolved = Uri.parse(baseUrl).resolve(value);
+    if (!_legacyCatalogHosts.contains(resolved.host.toLowerCase())) {
+      return resolved.toString();
+    }
+
+    final source = Uri.parse(sourceBaseUrl);
+    return source
+        .replace(
+          path: resolved.path,
+          query: resolved.hasQuery ? resolved.query : null,
+          fragment: resolved.hasFragment ? resolved.fragment : null,
+        )
+        .toString();
+  }
+
+  Future<List<T>> _mapConcurrent<S, T>(
+    Iterable<S> values,
+    Future<T> Function(S value) mapper, {
+    required int maxConcurrent,
+  }) async {
+    final items = values.toList(growable: false);
+    final results = <T>[];
+    for (var index = 0; index < items.length; index += maxConcurrent) {
+      final end = index + maxConcurrent > items.length
+          ? items.length
+          : index + maxConcurrent;
+      results.addAll(await Future.wait(
+        items.sublist(index, end).map(mapper),
+      ));
+    }
+    return results;
   }
 }

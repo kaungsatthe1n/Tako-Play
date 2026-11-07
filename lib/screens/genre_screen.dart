@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
 import '../models/anime.dart';
 import '../services/anime_service.dart';
@@ -9,10 +8,11 @@ import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/searched_result_anime_card.dart';
 import '../widgets/tako_animation.dart';
+import '../widgets/tako_loading_indicator.dart';
 import '../widgets/tako_scaffold.dart';
 
 class GenreScreen extends StatefulWidget {
-  const GenreScreen({Key? key}) : super(key: key);
+  const GenreScreen({super.key});
 
   @override
   State<GenreScreen> createState() => _GenreScreenState();
@@ -21,47 +21,83 @@ class GenreScreen extends StatefulWidget {
 class _GenreScreenState extends State<GenreScreen>
     with SingleTickerProviderStateMixin {
   int _pageIndex = 1;
-  bool hasNoMoreResult = false;
+  final ValueNotifier<bool> _hasNoMoreResults = ValueNotifier(false);
   late AnimationController animationController;
+  late final Genre _genre;
+  late Future<AnimeResults> _pageFuture;
 
   @override
   void initState() {
     super.initState();
     animationController = AnimationController(
         duration: Duration(milliseconds: takoAnimationDuration), vsync: this);
+    _genre = Get.arguments as Genre;
+    _pageFuture = _loadPage();
   }
 
   @override
   void dispose() {
     animationController.dispose();
+    _hasNoMoreResults.dispose();
     super.dispose();
+  }
+
+  Future<AnimeResults> _loadPage() async {
+    final provider = Get.find<RequestService>();
+    final results = await AnimeService(requestService: provider)
+        .getAnimes(provider.requestAnimeGenre(_genre.link, _pageIndex));
+    _hasNoMoreResults.value = results.animeList.isEmpty;
+    return results;
+  }
+
+  void _reloadPage() {
+    final pageFuture = _loadPage();
+    setState(() {
+      _pageFuture = pageFuture;
+    });
+    animationController.forward(from: 0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<RequestService>(context);
-    final Genre genre = Get.arguments;
-
     return TakoScaffoldWithBackButton(
-      appBarTitle: genre.name,
+      appBarTitle: _genre.name,
       body: Column(
         children: [
           Expanded(
               child: FutureBuilder<AnimeResults>(
-                  future: AnimeService().getAnimes(
-                      provider.requestAnimeGenre(genre.link, _pageIndex)),
+                  future: _pageFuture,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      hasNoMoreResult = true;
                       return Center(
-                        child: Text(
-                          'No Results Found !',
-                          style: TakoTheme.darkTextTheme.displaySmall,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'We could not load this page.',
+                              style: TakoTheme.darkTextTheme.displaySmall,
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: _reloadPage,
+                              icon: const Icon(Icons.refresh_rounded),
+                              label: const Text('Try again'),
+                            ),
+                          ],
                         ),
                       );
                     }
                     if (snapshot.connectionState == ConnectionState.done) {
                       final list = snapshot.data!.animeList;
+
+                      if (list.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No more titles in this genre.',
+                            style: TextStyle(color: tkMutedText),
+                          ),
+                        );
+                      }
 
                       return GridView.builder(
                         padding:
@@ -72,9 +108,8 @@ class _GenreScreenState extends State<GenreScreen>
                           mainAxisSpacing: 40,
                           maxCrossAxisExtent: 220,
                         ),
-                        itemCount: list!.length,
+                        itemCount: list.length,
                         itemBuilder: (BuildContext context, int index) {
-                          animationController.forward();
                           return AnimatedBuilder(
                             animation: animationController,
                             child: SearchedResultAnimeCard(
@@ -99,9 +134,7 @@ class _GenreScreenState extends State<GenreScreen>
                         },
                       );
                     } else {
-                      return const Center(
-                        child: loadingIndicator,
-                      );
+                      return const Center(child: TakoLoadingIndicator());
                     }
                   })),
           Align(
@@ -128,8 +161,7 @@ class _GenreScreenState extends State<GenreScreen>
                       onTap: () {
                         if (_pageIndex != 1 && _pageIndex > 1) {
                           _pageIndex--;
-                          animationController.reset();
-                          setState(() {});
+                          _reloadPage();
                         }
                       },
                       child: Container(
@@ -165,40 +197,42 @@ class _GenreScreenState extends State<GenreScreen>
                       ),
                     ),
                   ),
-                  Material(
-                    color: Colors.transparent,
-                    borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
-                    ),
-                    child: InkWell(
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _hasNoMoreResults,
+                    builder: (context, hasNoMoreResults, _) => Material(
+                      color: Colors.transparent,
                       borderRadius: BorderRadius.only(
                         topRight: Radius.circular(20),
                         bottomRight: Radius.circular(20),
                       ),
-                      onTap: () {
-                        if (!hasNoMoreResult) {
-                          _pageIndex++;
-                          animationController.reset();
-                          setState(() {});
-                        }
-                      },
-                      child: Container(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                        decoration: BoxDecoration(
-                            // color: tkLightGreen,
-                            borderRadius: BorderRadius.only(
+                      child: InkWell(
+                        borderRadius: BorderRadius.only(
                           topRight: Radius.circular(20),
                           bottomRight: Radius.circular(20),
-                        )),
-                        child: Row(
-                          children: const [
-                            Text('Next'),
-                            Icon(
-                              Icons.arrow_forward_ios_rounded,
-                            ),
-                          ],
+                        ),
+                        onTap: hasNoMoreResults
+                            ? null
+                            : () {
+                                _pageIndex++;
+                                _reloadPage();
+                              },
+                        child: Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                          decoration: BoxDecoration(
+                              // color: tkLightGreen,
+                              borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(20),
+                            bottomRight: Radius.circular(20),
+                          )),
+                          child: Row(
+                            children: const [
+                              Text('Next'),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

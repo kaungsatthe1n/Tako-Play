@@ -5,7 +5,7 @@ import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 
 class NoInternetScreen extends StatelessWidget {
-  const NoInternetScreen({Key? key}) : super(key: key);
+  const NoInternetScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -1,46 +1,132 @@
-import 'package:chopper/chopper.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 import '../utils/constants.dart';
 
-part 'request_service.chopper.dart';
+/// The single HTTP boundary for catalog and metadata requests.
+///
+/// Keeping timeouts, source headers, status validation, and error messages in
+/// one place prevents individual screens from hanging or interpreting failed
+/// HTML responses as valid content.
+class RequestService extends GetxService {
+  RequestService({http.Client? client, Duration? timeout})
+      : _client = client ?? http.Client(),
+        _timeout = timeout ?? const Duration(seconds: 15);
 
-/// [RequestService] is a data source consuming remote APIs for fetching and
-/// managing data about the actual anime. The implementation of those requests
-/// can be found in the auto-generated file `request_service.chopper.dart` , since any changes will be overridden after
-/// running the build command.
-@ChopperApi(baseUrl: baseUrl)
-abstract class RequestService extends ChopperService {
-  Future<Response> requestRecentlyAddedResponse();
+  factory RequestService.create() => RequestService();
 
-  @Get(path: '$search{title}')
-  Future<Response> requestSearchResponse(@Path('title') String name);
+  final http.Client _client;
+  final Duration _timeout;
 
-  @Get(path: '{path}')
-  Future<Response> requestAnimeDetailResponse(@Path('path') String path);
+  Future<http.Response> requestRecentlyAddedResponse() =>
+      getSource(Uri.parse(baseUrl));
 
-  @Get(path: 'popular.html')
-  Future<Response> requestPopularResponse();
-
-  @Get(path: 'anime-movies.html')
-  Future<Response> requestMoviesResponse();
-
-  Future<Response> requestAnimeGenre(String url, [int index]);
-
-  Future<Response> requestEpisodesResponse(String id);
-
-  Future<Response> requestGitHubUpdate(String url);
-
-  Future<Response> requestCdnVideoLink(String url);
-
-  Future<Response> requestAnimeCdn(String url);
-
-  Future<Response> requestAnimeData(
-      String host, String encryptedId, String encryptAjaxParams, String id);
-
-  static RequestService create() {
-    final client = ChopperClient(
-        interceptors: [HttpLoggingInterceptor()],
-        services: [_$RequestService()]);
-    return _$RequestService(client);
+  Future<http.Response> requestSearchResponse(String name) {
+    final uri = Uri.parse(baseUrl).replace(queryParameters: {'s': name});
+    return getSource(uri);
   }
+
+  Future<http.Response> requestAnimeDetailResponse(String path) =>
+      getSource(Uri.parse(baseUrl).resolve(path));
+
+  Future<http.Response> requestPopularResponse() =>
+      getSource(Uri.parse('$sourceBaseUrl/popular/'));
+
+  Future<http.Response> requestMoviesResponse() =>
+      getSource(Uri.parse('$sourceBaseUrl/movies/'));
+
+  Future<http.Response> requestAnimeGenre(String url, [int index = 1]) {
+    final page =
+        index == 1 ? url : '${url.endsWith('/') ? url : '$url/'}page/$index/';
+    return getSource(Uri.parse(page));
+  }
+
+  Future<http.Response> requestGitHubUpdate(String url) => _get(
+        Uri.parse(url),
+        headers: const {'Accept': 'application/vnd.github+json'},
+      );
+
+  Future<http.Response> requestCdnVideoLink(String url) => _get(Uri.parse(url));
+
+  Future<http.Response> getSource(Uri uri) => _get(uri, sourceRequest: true);
+
+  Future<http.Response> postSource(
+    Uri uri, {
+    required Map<String, String> body,
+  }) =>
+      _send(
+        () => _client.post(uri, headers: _sourceHeaders, body: body),
+        uri,
+      );
+
+  Future<http.Response> _get(
+    Uri uri, {
+    Map<String, String>? headers,
+    bool sourceRequest = false,
+  }) =>
+      _send(
+        () => _client.get(
+          uri,
+          headers: {
+            if (sourceRequest) ..._sourceHeaders,
+            ...?headers,
+          },
+        ),
+        uri,
+      );
+
+  Future<http.Response> _send(
+    Future<http.Response> Function() request,
+    Uri uri,
+  ) async {
+    try {
+      final response = await request().timeout(_timeout);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw RequestException.httpStatus(uri, response.statusCode);
+      }
+      return response;
+    } on TimeoutException {
+      throw RequestException.timeout(uri, _timeout);
+    } on SocketException catch (error) {
+      throw RequestException.network(uri, error.message);
+    } on http.ClientException catch (error) {
+      throw RequestException.network(uri, error.message);
+    }
+  }
+
+  Map<String, String> get _sourceHeaders => {
+        ...header,
+        'Accept':
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      };
+
+  @override
+  void onClose() {
+    close();
+    super.onClose();
+  }
+
+  void close() => _client.close();
+}
+
+class RequestException implements Exception {
+  const RequestException._(this.message);
+
+  factory RequestException.timeout(Uri uri, Duration timeout) =>
+      RequestException._(
+          'Request to ${uri.host} timed out after ${timeout.inSeconds}s.');
+
+  factory RequestException.network(Uri uri, String message) =>
+      RequestException._('Could not reach ${uri.host}: $message');
+
+  factory RequestException.httpStatus(Uri uri, int statusCode) =>
+      RequestException._('${uri.host} returned HTTP $statusCode.');
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

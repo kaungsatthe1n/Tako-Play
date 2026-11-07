@@ -1,54 +1,57 @@
-# Tako Play
+# TakoPlay
 
-<p align="center"><a href="https://github.com/kaungsatthe1n/Tako-Play"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/logo.jpg?raw=true" width="150" height="auto" style="border-radius:60%"></a></p>
+TakoPlay is an educational Flutter app for browsing an anime catalog, finding
+titles, saving favourites, tracking recently opened episodes, and handing an
+episode to an external web player. It does not host or provide video content.
 
-<h2 align="center" ><img src="https://pngimage.net/wp-content/uploads/2018/06/funny-anime-png-2.png" width="80"/><span style="font-size:100%"> A Mobile App to Watch Anime With No ADS !! .  </span><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/images/rem_show.png?raw=true"  width="70"/><h3/>
+## Screenshots
 
-<h3 align ="center"> Please Do not put Tako-Play to Google PlayStore or Any other Store !! <h3/>
+Current iPhone simulator captures of the redesigned interface.
 
-## Download App
+| Discover | Update prompt |
+| :---: | :---: |
+| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay update available prompt](assets/screenshots/update-current.jpg) |
 
-- #### Android : [Download TakoPlay.apk](https://github.com/kaungsatthe1n/Tako-Play/releases/download/v1.5.1/TakoPlay-v1.5.1.apk)
+## Features
 
-- #### IOS : _Coming soon ..._
+- Popular, recently added, and movie catalog sections
+- Search with recent-query history
+- Episode lists, saved titles, and watchlist progress
+- Genre browsing and pagination
+- External WebView player handoff with source-provided fallback URLs
+- Player-type and preferred-quality settings
+- Release update checks
 
-## ScreenShots
+## Requirements
 
-<img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(1).jpg?raw=true" width ="33%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(2).jpg?raw=true" width ="33%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(6).jpg?raw=true" width ="33%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(7).jpg?raw=true" width ="48%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(3).jpg?raw=true" width ="48%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(4).jpg?raw=true" width ="95%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(5).jpg?raw=true" width ="95%">
+- Flutter SDK 3.32 or later
+- Xcode for iOS simulator builds
+- Android Studio and an Android SDK for Android builds
 
-## Brief About App
-
-Parsing require data from website and serve anime with Ads FREE :bangbang:
-
-### Features
-
-- Popular Animes
-- Recently Added Animes
-- Movies
-- Search Anime
-- Bookmark Animes
-- Webview Player Support
-- No Annoying Ads
-- Auto Video Quality Detect
-- Update Support
-
-## Clone Repository
-
-Open Your `Terminal` and `Paste`
+## Get started
 
 ```bash
-$ git clone https://github.com/kaungsatthe1n/Tako-Play.git
+git clone https://github.com/kaungsatthe1n/Tako-Play.git
+cd Tako-Play
+flutter pub get
+flutter run
 ```
 
-## Build Setup
+The default catalog source can be changed for an owned deployment:
 
 ```bash
-
-# install dependencies
-
-$ flutter pub get
+flutter run --dart-define=SOURCE_BASE_URL=https://catalog.example.com
 ```
 
-## Found This Project Useful ?
+## Testing
 
-You can leave a star :star: at the top-right corner of this repository.
+Run the unit and widget suite:
+
+```bash
+flutter analyze
+flutter test
+```
+
+## License
+
+Released under the [MIT License](LICENSE).

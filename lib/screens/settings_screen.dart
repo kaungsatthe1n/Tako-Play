@@ -4,19 +4,17 @@ import 'package:get/get.dart';
 import '../helpers/media_quality_manager.dart';
 import '../helpers/webview_manager.dart';
 import '../utils/constants.dart';
-import '../utils/tako_helper.dart';
 import '../widgets/tako_scaffold.dart';
 
 class SettingScreen extends StatelessWidget {
   const SettingScreen({
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     final webViewManagerController = Get.find<WebViewManager>();
     final mediaQualityController = Get.find<MediaQualityManager>();
-    mediaQualityController.getVideoQuality();
     final List<String> videoQualities = [
       '1080 P',
       '720 P',
@@ -29,11 +27,8 @@ class SettingScreen extends StatelessWidget {
         children: [
           GetBuilder(
             init: webViewManagerController,
-            initState: (_) {
-              webViewManagerController.getVideoPlayerType();
-            },
             builder: (_) => SwitchListTile(
-              activeColor: tkGradientBlue,
+              activeThumbColor: tkGradientBlue,
               value: webViewManagerController.isWebView,
               onChanged: webViewManagerController.changeWebViewType,
               title: const Text('Video Player Type'),
@@ -66,10 +61,9 @@ class SettingScreen extends StatelessWidget {
       title: Text(quality),
       hoverColor: Colors.white,
       leading: manager.defaultQuality == quality ? Icon(Icons.check) : null,
-      onTap: () {
-        manager.changeMediaQuality(quality);
+      onTap: () async {
+        await manager.changeMediaQuality(quality);
         Get.close(1);
-        takoDebugPrint(manager.defaultQuality);
       },
     );
   }

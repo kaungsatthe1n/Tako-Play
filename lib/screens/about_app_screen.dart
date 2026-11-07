@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../helpers/update_manager.dart';
 import '../utils/constants.dart';
 import '../widgets/tako_scaffold.dart';
 import '../widgets/update_alert_dialog.dart';
 
 class AboutAppScreen extends StatelessWidget {
-  const AboutAppScreen({Key? key}) : super(key: key);
+  const AboutAppScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +37,18 @@ class AboutAppScreen extends StatelessWidget {
             subtitle: Text(license),
           ),
           ListTile(
-            onTap: () {
-              if (isSameVersion) {
-                Get.dialog(const AlertDialog(
-                  backgroundColor: tkDarkBlue,
-                  content: Text('No Update Available'),
+            onTap: () async {
+              final updateManager = Get.find<UpdateManager>();
+              await updateManager.checkForUpdate();
+              if (updateManager.isUpdateAvailable) {
+                await Get.dialog(UpdateAlertDialog(
+                  downloadLink: updateManager.downloadLink!,
                 ));
               } else {
-                Get.dialog(
-                    UpdateAlertDialog(downloadLink: updateLink.toString()));
+                await Get.dialog(const AlertDialog(
+                  backgroundColor: tkDarkBlue,
+                  content: Text('No update is available right now.'),
+                ));
               }
             },
             title: const Text('Check For Update '),
@@ -59,7 +63,7 @@ class AboutAppScreen extends StatelessWidget {
   }
 }
 
-Future<void> _launchUrl(url) async {
+Future<void> _launchUrl(String url) async {
   if (!await launchUrl(Uri.parse(url))) {
     throw Exception('Could not launch $url');
   }
