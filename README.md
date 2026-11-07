@@ -49,6 +49,16 @@ $ git clone https://github.com/kaungsatthe1n/Tako-Play.git
 $ flutter pub get
 ```
 
+## Testing
+
+```bash
+# Unit and widget tests
+$ flutter test
+
+# End-to-end smoke test on a connected simulator or device
+$ flutter test integration_test/app_smoke_test.dart -d <device-id>
+```
+
 ## Found This Project Useful ?
 
 You can leave a star :star: at the top-right corner of this repository.
