@@ -12,9 +12,14 @@
 
 - #### IOS : _Coming soon ..._
 
-## ScreenShots
+## Screenshots
 
-<img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(1).jpg?raw=true" width ="33%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(2).jpg?raw=true" width ="33%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(6).jpg?raw=true" width ="33%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(7).jpg?raw=true" width ="48%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(3).jpg?raw=true" width ="48%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(4).jpg?raw=true" width ="95%"><img src="https://github.com/kaungsatthe1n/Tako-Play/blob/main/assets/screenshots/screenshot(5).jpg?raw=true" width ="95%">
+<p align="center">
+  <img src="assets/screenshots/discover-current.jpg" alt="TakoPlay Discover screen" width="32%">
+  <img src="assets/screenshots/update-current.jpg" alt="TakoPlay update available prompt" width="32%">
+</p>
+
+<p align="center"><em>Current Discover and update-prompt designs on iPhone.</em></p>
 
 ## Brief About App
 
