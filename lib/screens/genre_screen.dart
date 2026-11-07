@@ -51,7 +51,10 @@ class _GenreScreenState extends State<GenreScreen>
   }
 
   void _reloadPage() {
-    setState(() => _pageFuture = _loadPage());
+    final pageFuture = _loadPage();
+    setState(() {
+      _pageFuture = pageFuture;
+    });
     animationController.forward(from: 0);
   }
 

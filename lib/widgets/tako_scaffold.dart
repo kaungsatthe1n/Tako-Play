@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class TakoScaffoldWithBackButton extends StatelessWidget {
   const TakoScaffoldWithBackButton({
@@ -23,7 +22,9 @@ class TakoScaffoldWithBackButton extends StatelessWidget {
               )
             : null,
         leading: IconButton(
-          onPressed: Get.back,
+          // Pop the route directly so a visible GetX snackbar does not
+          // consume the first back tap and leave the user on this screen.
+          onPressed: () => Navigator.of(context).maybePop(),
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(

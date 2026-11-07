@@ -45,14 +45,16 @@ class PopularAnimeCard extends StatelessWidget {
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      CachedNetworkImage(
-                        key: ValueKey(anime.imageUrl),
-                        cacheManager: CustomCacheManager.instance,
-                        fit: BoxFit.cover,
-                        imageUrl: anime.imageUrl.toString(),
-                        errorWidget: (_, __, ___) =>
-                            const ColoredBox(color: tkGrey),
-                      ),
+                      anime.imageUrl.isEmpty
+                          ? const ColoredBox(color: tkGrey)
+                          : CachedNetworkImage(
+                              key: ValueKey(anime.imageUrl),
+                              cacheManager: CustomCacheManager.instance,
+                              fit: BoxFit.cover,
+                              imageUrl: anime.imageUrl,
+                              errorWidget: (_, __, ___) =>
+                                  const ColoredBox(color: tkGrey),
+                            ),
                       const DecoratedBox(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(

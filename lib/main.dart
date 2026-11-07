@@ -22,7 +22,11 @@ void _configureApp() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.initialBinding});
+
+  /// Allows integration tests to run the complete app with deterministic
+  /// local dependencies instead of external catalog services.
+  final Bindings? initialBinding;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +36,7 @@ class MyApp extends StatelessWidget {
       defaultTransition: Transition.cupertino,
       theme: TakoTheme.dark(),
       initialRoute: '/',
-      initialBinding: ManagerBinding(),
+      initialBinding: initialBinding ?? ManagerBinding(),
       getPages: TakoRoute.pages,
     );
   }

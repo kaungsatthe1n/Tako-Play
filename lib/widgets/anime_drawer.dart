@@ -135,9 +135,9 @@ class AnimeDrawer extends StatelessWidget {
               onTap: () => Get.toNamed(Routes.aboutAppScreen),
             ),
             const Spacer(),
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text('TAKOPLAY  •  v1.6.3',
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text('TAKOPLAY  •  $version',
                   style: TextStyle(
                       color: tkMutedText, fontSize: 10, letterSpacing: .8)),
             ),

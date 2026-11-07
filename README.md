@@ -55,9 +55,18 @@ $ flutter pub get
 # Unit and widget tests
 $ flutter test
 
-# End-to-end smoke test on a connected simulator or device
-$ flutter test integration_test/app_smoke_test.dart -d <device-id>
+# Named end-to-end flows on a connected simulator or device
+$ flutter test integration_test/home_catalog_detail_flow_test.dart -d <device-id>
+$ flutter test integration_test/search_flow_test.dart -d <device-id>
+$ flutter test integration_test/library_flow_test.dart -d <device-id>
+$ flutter test integration_test/watchlist_flow_test.dart -d <device-id>
+$ flutter test integration_test/episode_error_and_recent_flow_test.dart -d <device-id>
+$ flutter test integration_test/detail_error_recovery_flow_test.dart -d <device-id>
+$ flutter test integration_test/drawer_preferences_and_about_flow_test.dart -d <device-id>
 ```
+
+The E2E flows use local catalog fixtures, so they validate app behavior without
+depending on changing third-party catalog or player pages.
 
 ## Found This Project Useful ?
 

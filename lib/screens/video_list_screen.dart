@@ -70,7 +70,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
   }
 
   void _retryAnimeDetails() {
-    setState(() => _animeDetails = _loadAnimeDetails());
+    final animeDetails = _loadAnimeDetails();
+    setState(() {
+      _animeDetails = animeDetails;
+    });
   }
 
   @override
