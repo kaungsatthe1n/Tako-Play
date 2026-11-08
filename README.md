@@ -12,9 +12,9 @@ Current iPhone simulator captures of the redesigned interface.
 | :---: | :---: |
 | ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay Watchlist screen](assets/screenshots/watchlist-current.jpg) |
 
-| Bleach search | Title detail |
+| Search | Title detail |
 | :---: | :---: |
-| ![TakoPlay Bleach search results](assets/screenshots/search-bleach-current.jpg) | ![TakoPlay title detail screen](assets/screenshots/anime-detail-current.jpg) |
+| ![TakoPlay search screen](assets/screenshots/search-bleach-current.jpg) | ![TakoPlay title detail screen](assets/screenshots/anime-detail-current.jpg) |
 
 | Movie detail |
 | :---: |
