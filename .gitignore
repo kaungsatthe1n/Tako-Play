@@ -50,6 +50,9 @@ app.*.map.json
 android/app/build/
 android/build/
 android/gradle
+android/key.properties
+android/app/*.jks
+android/app/*.keystore
 
 # Flutter and Xcode generated iOS integration files
 ios/Flutter/ephemeral/
