@@ -8,9 +8,17 @@ episode to an external web player. It does not host or provide video content.
 
 Current iPhone simulator captures of the redesigned interface.
 
-| Discover | Update prompt |
+| Discover | Watchlist |
 | :---: | :---: |
-| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay update available prompt](assets/screenshots/update-current.jpg) |
+| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay Watchlist screen](assets/screenshots/watchlist-current.jpg) |
+
+| Bleach search | Title detail |
+| :---: | :---: |
+| ![TakoPlay Bleach search results](assets/screenshots/search-bleach-current.jpg) | ![TakoPlay title detail screen](assets/screenshots/anime-detail-current.jpg) |
+
+| Movie detail |
+| :---: |
+| ![TakoPlay movie detail screen](assets/screenshots/movie-detail-current.jpg) |
 
 ## Features
 
@@ -35,21 +43,6 @@ git clone https://github.com/kaungsatthe1n/Tako-Play.git
 cd Tako-Play
 flutter pub get
 flutter run
-```
-
-The default catalog source can be changed for an owned deployment:
-
-```bash
-flutter run --dart-define=SOURCE_BASE_URL=https://catalog.example.com
-```
-
-## Testing
-
-Run the unit and widget suite:
-
-```bash
-flutter analyze
-flutter test
 ```
 
 ## License
