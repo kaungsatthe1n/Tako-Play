@@ -110,36 +110,48 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         child: Obx(
-          () => ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: NavigationBar(
-              height: 68,
-              selectedIndex: currentIndex.value,
-              onDestinationSelected: (index) {
-                currentIndex.value = index;
-                _pageController.animateToPage(
-                  index,
-                  duration: const Duration(milliseconds: 420),
-                  curve: Curves.easeOutCubic,
-                );
-              },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home_rounded),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.play_circle_outline_rounded),
-                  selectedIcon: Icon(Icons.play_circle_fill_rounded),
-                  label: 'Watchlist',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.bookmark_outline_rounded),
-                  selectedIcon: Icon(Icons.bookmark_rounded),
-                  label: 'Saved',
+          () => DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 18,
+                  offset: Offset(0, 9),
                 ),
               ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: NavigationBar(
+                height: 68,
+                selectedIndex: currentIndex.value,
+                onDestinationSelected: (index) {
+                  currentIndex.value = index;
+                  _pageController.animateToPage(
+                    index,
+                    duration: const Duration(milliseconds: 420),
+                    curve: Curves.easeOutCubic,
+                  );
+                },
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.home_outlined),
+                    selectedIcon: Icon(Icons.home_rounded),
+                    label: 'Home',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.play_circle_outline_rounded),
+                    selectedIcon: Icon(Icons.play_circle_fill_rounded),
+                    label: 'Watchlist',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.bookmark_outline_rounded),
+                    selectedIcon: Icon(Icons.bookmark_rounded),
+                    label: 'Saved',
+                  ),
+                ],
+              ),
             ),
           ),
         ),

@@ -6,6 +6,7 @@ import '../helpers/cache_manager.dart';
 import '../models/anime.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
+import 'tako_pressable_card.dart';
 
 class PopularAnimeCard extends StatelessWidget {
   const PopularAnimeCard({super.key, required this.anime});
@@ -22,26 +23,27 @@ class PopularAnimeCard extends StatelessWidget {
           tag: anime.id.toString(),
           child: Material(
             color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(22),
+            child: TakoPressableCard(
+              borderRadius: BorderRadius.circular(14),
               onTap: () => Get.toNamed(
                 Routes.videoListScreen,
                 arguments: {'anime': anime},
               ),
               child: Ink(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  border: Border.all(color: Colors.white12),
+                  color: tkDarkBlue,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF383E68)),
                   boxShadow: const [
                     BoxShadow(
-                      color: Colors.black38,
-                      blurRadius: 15,
-                      offset: Offset(0, 8),
+                      color: Color(0x52000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 9),
                     ),
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(21),
+                  borderRadius: BorderRadius.circular(13),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -75,7 +77,7 @@ class PopularAnimeCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: tkCoral,
-                            borderRadius: BorderRadius.circular(9),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'TRENDING',

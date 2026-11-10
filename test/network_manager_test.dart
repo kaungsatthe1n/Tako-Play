@@ -1,4 +1,6 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
+
+import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -43,4 +45,41 @@ void main() {
 
     expect(manager.isOnline, isFalse);
   });
+
+  test('starts from the platform check and responds to connectivity events',
+      () async {
+    final previous = ConnectivityPlatform.instance;
+    final platform = _ConnectivityPlatform();
+    ConnectivityPlatform.instance = platform;
+    addTearDown(() {
+      ConnectivityPlatform.instance = previous;
+      platform.close();
+    });
+    final manager = NetworkManager(
+      client: MockClient((_) async => http.Response('', 200)),
+    );
+
+    manager.onInit();
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.isOnline, isTrue);
+
+    platform.add([ConnectivityResult.none]);
+    await Future<void>.delayed(Duration.zero);
+    expect(manager.isOnline, isFalse);
+    manager.onClose();
+  });
+}
+
+class _ConnectivityPlatform extends ConnectivityPlatform {
+  final _events = StreamController<List<ConnectivityResult>>.broadcast();
+
+  @override
+  Future<List<ConnectivityResult>> checkConnectivity() async =>
+      [ConnectivityResult.wifi];
+
+  @override
+  Stream<List<ConnectivityResult>> get onConnectivityChanged => _events.stream;
+
+  void add(List<ConnectivityResult> results) => _events.add(results);
+  Future<void> close() => _events.close();
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Collection of all app related constants go here
 
-const String version = 'v1.7.1';
+const String version = 'v1.8.0';
 const license = 'MIT License';
 const String latestRelease =
     'https://api.github.com/repos/kaungsatthe1n/Tako-Play/releases/latest';

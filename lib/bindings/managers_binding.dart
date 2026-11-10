@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 
 import '../helpers/bookmark_manager.dart';
-import '../helpers/media_quality_manager.dart';
 import '../helpers/network_manager.dart';
 import '../helpers/recent_watch_manager.dart';
 import '../helpers/update_manager.dart';
@@ -17,8 +16,9 @@ class ManagerBinding extends Bindings {
     Get.put(RequestService.create(), permanent: true);
     Get.put(RecentWatchManager(), permanent: true);
     Get.put(WebViewManager(), permanent: true);
-    Get.put(MediaQualityManager(), permanent: true);
-    Get.put(NetworkManager(), permanent: true);
+    // Connectivity changes must not replace the initial home UI with an
+    // offline screen. Individual requests handle their own failures.
+    Get.put(NetworkManager(autoStart: false), permanent: true);
     Get.put(BookMarkManager(), permanent: true);
     Get.put(UpdateManager(), permanent: true);
   }

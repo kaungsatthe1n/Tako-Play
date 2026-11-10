@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:cryptography/cryptography.dart';
+import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
+
+import '../utils/constants.dart';
 
 /// Resolves an episode to a short-lived HLS URL issued by the app owner's API.
 ///
@@ -13,7 +17,15 @@ import 'package:http/http.dart' as http;
 /// ```
 ///
 /// The endpoint receives `episodeUrl` and should return:
-/// `{ "url": "https://cdn.example.com/.../master.m3u8", "headers": {} }`.
+/// ```json
+/// {
+///   "url": "https://cdn.example.com/.../master.m3u8",
+///   "headers": {},
+///   "subtitles": [
+///     {"url": "https://cdn.example.com/.../en.vtt", "name": "English"}
+///   ]
+/// }
+/// ```
 class PlaybackService {
   PlaybackService({http.Client? client, String? resolverUrl})
       : _client = client ?? http.Client(),
@@ -91,13 +103,423 @@ class PlaybackService {
               (key, value) => MapEntry(key.toString(), value.toString()),
             )
           : <String, String>{};
-      return PlaybackSource(url: streamUrl, headers: headers);
+      return PlaybackSource(
+        url: streamUrl,
+        headers: headers,
+        subtitles: _subtitlesFromResolverResponse(decoded, headers),
+      );
     } on TimeoutException {
       throw const PlaybackResolutionException('Playback API timed out.');
     } finally {
       if (_ownsClient) _client.close();
     }
   }
+
+  /// Resolves an HLS source advertised by an external player page.
+  ///
+  /// Besides ordinary `<source>` tags and JSON player configuration, this
+  /// supports the catalog's current fragment-based player handoff. That page
+  /// supplies its own key and public API response for locating the real embed;
+  /// no media DRM is handled here. The final player referrer is forwarded to
+  /// Better Player because CDNs can validate it for manifests and segments.
+  Future<PlaybackSource> resolveEmbeddedPlayers(
+    Iterable<String> playerUrls, {
+    required String episodeUrl,
+  }) async {
+    final episodeUri = Uri.tryParse(episodeUrl);
+    if (episodeUri == null ||
+        episodeUri.scheme != 'https' ||
+        episodeUri.host.isEmpty) {
+      throw const PlaybackResolutionException('Episode URL is invalid.');
+    }
+
+    try {
+      PlaybackResolutionException? lastError;
+      for (final playerUrl in playerUrls) {
+        try {
+          return await _resolveEmbeddedPlayer(playerUrl, episodeUri);
+        } on PlaybackResolutionException catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError ??
+          const PlaybackResolutionException(
+            'No playable HLS source was found in the embedded players.',
+          );
+    } finally {
+      if (_ownsClient) _client.close();
+    }
+  }
+
+  Future<PlaybackSource> _resolveEmbeddedPlayer(
+    String playerUrl,
+    Uri referrerUri, {
+    bool resolveGogoHandoff = true,
+  }) async {
+    final playerUri = Uri.tryParse(playerUrl);
+    if (playerUri == null ||
+        playerUri.scheme != 'https' ||
+        playerUri.host.isEmpty) {
+      throw const PlaybackResolutionException(
+          'Embedded player URL is invalid.');
+    }
+
+    try {
+      // URL fragments are browser-only state. Keep the original fragment for
+      // the player API, but never include it in the HTTP request or referrer.
+      final requestUri = playerUri.removeFragment();
+      final response = await _client.get(
+        requestUri,
+        headers: {
+          'Accept': 'text/html,application/xhtml+xml,*/*;q=0.8',
+          'Referer': referrerUri.removeFragment().toString(),
+          'User-Agent': userAgent,
+          'X-Client-Platform': 'flutter',
+        },
+      ).timeout(const Duration(seconds: 12));
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw PlaybackResolutionException(
+          'Embedded player returned ${response.statusCode}.',
+        );
+      }
+
+      // `http` follows redirects, so use the final request URL when resolving
+      // relative manifest links and constructing the media referrer.
+      final resolvedPlayerUri = response.request?.url ?? requestUri;
+      if (resolveGogoHandoff &&
+          _isGogoPlayer(resolvedPlayerUri) &&
+          playerUri.fragment.isNotEmpty) {
+        final embedUri = await _resolveGogoHandoff(
+          response,
+          resolvedPlayerUri,
+          playerUri.fragment,
+        );
+        return await _resolveEmbeddedPlayer(
+          embedUri.toString(),
+          resolvedPlayerUri,
+          resolveGogoHandoff: false,
+        );
+      }
+
+      final streamUri = _streamUriFromResponse(response, resolvedPlayerUri);
+      if (streamUri == null || !_isHlsUrl(streamUri.toString())) {
+        throw const PlaybackResolutionException(
+          'Embedded player did not expose an HTTPS HLS URL.',
+        );
+      }
+
+      return PlaybackSource(
+        url: streamUri.toString(),
+        headers: {
+          'Referer': resolvedPlayerUri.removeFragment().toString(),
+          'User-Agent': userAgent,
+        },
+        subtitles: _subtitlesFromPlayerResponse(
+          response,
+          resolvedPlayerUri,
+          headers: {
+            'Referer': resolvedPlayerUri.removeFragment().toString(),
+            'User-Agent': userAgent,
+          },
+        ),
+      );
+    } on TimeoutException {
+      throw const PlaybackResolutionException('Embedded player timed out.');
+    }
+  }
+
+  bool _isGogoPlayer(Uri uri) =>
+      uri.scheme == 'https' &&
+      uri.host.toLowerCase() == 'play.gogoanimes.org' &&
+      uri.path == '/watch';
+
+  Future<Uri> _resolveGogoHandoff(
+    http.Response playerResponse,
+    Uri playerUri,
+    String fragment,
+  ) async {
+    if (!_gogoFragmentPattern.hasMatch(fragment)) {
+      throw const PlaybackResolutionException(
+        'Embedded player episode data is invalid.',
+      );
+    }
+    final pageKey =
+        _gogoPageKeyPattern.firstMatch(playerResponse.body)?.group(1);
+    if (pageKey == null) {
+      throw const PlaybackResolutionException(
+        'Embedded player did not expose its handoff key.',
+      );
+    }
+
+    // The browser player calls this same public endpoint after reading the
+    // fragment. Dots separate token, episode, server, and language.
+    final handoffUri = Uri(
+      scheme: 'https',
+      host: playerUri.host,
+      port: playerUri.port,
+      path: '/get/$fragment',
+    );
+    final response = await _client.get(
+      handoffUri,
+      headers: {
+        'Accept': 'application/json',
+        'Referer': playerUri.removeFragment().toString(),
+        'User-Agent': userAgent,
+        'X-Client-Platform': 'flutter',
+      },
+    ).timeout(const Duration(seconds: 12));
+    if (response.statusCode != 200) {
+      throw PlaybackResolutionException(
+        'Embedded player handoff returned ${response.statusCode}.',
+      );
+    }
+
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } on FormatException {
+      throw const PlaybackResolutionException(
+        'Embedded player handoff returned invalid JSON.',
+      );
+    }
+    if (decoded is! Map<String, dynamic>) {
+      throw const PlaybackResolutionException(
+        'Embedded player handoff returned invalid JSON.',
+      );
+    }
+    if (decoded['mode'] != 'embed' || decoded['info'] is! String) {
+      throw const PlaybackResolutionException(
+        'Embedded player did not return a playable embed.',
+      );
+    }
+
+    final encrypted = _decodeBase64Url(decoded['info'] as String);
+    final key = _decodeBase64Url(pageKey);
+    // Browser AES-GCM data is nonce || ciphertext || 16-byte auth tag.
+    if (encrypted.length < 29) {
+      throw const PlaybackResolutionException(
+        'Embedded player handoff payload is invalid.',
+      );
+    }
+
+    late final String embedUrl;
+    try {
+      final plaintext = await AesGcm.with256bits().decrypt(
+        SecretBox(
+          encrypted.sublist(12, encrypted.length - 16),
+          nonce: encrypted.sublist(0, 12),
+          mac: Mac(encrypted.sublist(encrypted.length - 16)),
+        ),
+        secretKey: SecretKey(key),
+      );
+      embedUrl = utf8.decode(plaintext);
+    } on Exception {
+      throw const PlaybackResolutionException(
+        'Embedded player handoff could not be decoded.',
+      );
+    }
+
+    final embedUri = Uri.tryParse(embedUrl);
+    if (embedUri == null ||
+        embedUri.scheme != 'https' ||
+        embedUri.host.isEmpty) {
+      throw const PlaybackResolutionException(
+        'Embedded player returned an invalid embed URL.',
+      );
+    }
+    return embedUri;
+  }
+
+  List<int> _decodeBase64Url(String value) {
+    try {
+      return base64Url.decode(base64Url.normalize(value));
+    } on FormatException {
+      throw const PlaybackResolutionException(
+        'Embedded player handoff payload is invalid.',
+      );
+    }
+  }
+
+  Uri? _streamUriFromResponse(http.Response response, Uri playerUri) {
+    if (_isHlsUrl(playerUri.toString())) return playerUri;
+
+    final normalizedBody = _decodeEscapedUrls(response.body);
+    for (final match in _hlsUrlPattern.allMatches(normalizedBody)) {
+      final candidate = match.group(0);
+      final streamUri = candidate == null ? null : playerUri.resolve(candidate);
+      if (streamUri != null && _isHlsUrl(streamUri.toString())) {
+        return streamUri;
+      }
+    }
+
+    for (final match in _quotedHlsPathPattern.allMatches(normalizedBody)) {
+      final candidate = match.group(1);
+      final streamUri = candidate == null ? null : playerUri.resolve(candidate);
+      if (streamUri != null && _isHlsUrl(streamUri.toString())) {
+        return streamUri;
+      }
+    }
+    return null;
+  }
+
+  List<PlaybackSubtitle> _subtitlesFromResolverResponse(
+    Map<String, dynamic> response,
+    Map<String, String> streamHeaders,
+  ) {
+    final rawSubtitles = response['subtitles'] ?? response['tracks'];
+    final values = rawSubtitles is List ? rawSubtitles : [rawSubtitles];
+    return _subtitleSourcesFromValues(
+      values,
+      baseUri: null,
+      defaultHeaders: streamHeaders,
+    );
+  }
+
+  List<PlaybackSubtitle> _subtitlesFromPlayerResponse(
+    http.Response response,
+    Uri playerUri, {
+    required Map<String, String> headers,
+  }) {
+    final subtitles = <PlaybackSubtitle>[];
+    final document = html_parser.parse(response.body);
+
+    // Standard HTML tracks are the most reliable source because their
+    // language, label, and default state are explicitly declared.
+    for (final track in document.querySelectorAll('track')) {
+      final kind = track.attributes['kind']?.toLowerCase();
+      if (kind != 'subtitles' && kind != 'captions') continue;
+      final subtitle = _subtitleFromValue(
+        {
+          'url': track.attributes['src'],
+          'name': track.attributes['label'] ?? track.attributes['srclang'],
+          'default': track.attributes.containsKey('default'),
+        },
+        baseUri: playerUri,
+        defaultHeaders: headers,
+      );
+      if (subtitle != null) subtitles.add(subtitle);
+    }
+
+    // Some hosted players keep the subtitle list in JavaScript rather than in
+    // <track> tags. Collect only direct VTT/SRT/TTML URLs; this avoids treating
+    // arbitrary script URLs as captions.
+    final normalizedBody = _decodeEscapedUrls(response.body);
+    for (final match in _subtitleUrlPattern.allMatches(normalizedBody)) {
+      final subtitle = _subtitleFromValue(
+        match.group(1),
+        baseUri: playerUri,
+        defaultHeaders: headers,
+      );
+      if (subtitle != null) subtitles.add(subtitle);
+    }
+
+    return _deduplicateSubtitles(subtitles);
+  }
+
+  List<PlaybackSubtitle> _subtitleSourcesFromValues(
+    Iterable<dynamic> values, {
+    required Uri? baseUri,
+    required Map<String, String> defaultHeaders,
+  }) =>
+      _deduplicateSubtitles(
+        values
+            .map(
+              (value) => _subtitleFromValue(
+                value,
+                baseUri: baseUri,
+                defaultHeaders: defaultHeaders,
+              ),
+            )
+            .whereType<PlaybackSubtitle>(),
+      );
+
+  PlaybackSubtitle? _subtitleFromValue(
+    dynamic value, {
+    required Uri? baseUri,
+    required Map<String, String> defaultHeaders,
+  }) {
+    final metadata = value is Map ? value : null;
+    final rawUrl = value is String
+        ? value
+        : metadata?['url'] ?? metadata?['file'] ?? metadata?['src'];
+    if (rawUrl is! String) return null;
+
+    final subtitleUri = baseUri?.resolve(rawUrl) ?? Uri.tryParse(rawUrl);
+    if (subtitleUri == null ||
+        subtitleUri.scheme != 'https' ||
+        subtitleUri.host.isEmpty ||
+        !_isSubtitleUrl(subtitleUri)) {
+      return null;
+    }
+
+    final rawHeaders = metadata?['headers'];
+    final subtitleHeaders = <String, String>{
+      ...defaultHeaders,
+      if (rawHeaders is Map)
+        ...rawHeaders.map(
+          (key, value) => MapEntry(key.toString(), value.toString()),
+        ),
+    };
+    final rawName =
+        metadata?['name'] ?? metadata?['label'] ?? metadata?['language'];
+    return PlaybackSubtitle(
+      url: subtitleUri.toString(),
+      name: rawName is String && rawName.trim().isNotEmpty
+          ? rawName.trim()
+          : 'Subtitles',
+      headers: subtitleHeaders,
+      selectedByDefault: metadata?['default'] == true ||
+          metadata?['selectedByDefault'] == true,
+    );
+  }
+
+  List<PlaybackSubtitle> _deduplicateSubtitles(
+    Iterable<PlaybackSubtitle> subtitles,
+  ) {
+    final urls = <String>{};
+    var unnamedTrackNumber = 0;
+    return subtitles
+        .where((subtitle) => urls.add(subtitle.url))
+        .map((subtitle) {
+      if (subtitle.name != 'Subtitles') return subtitle;
+      unnamedTrackNumber += 1;
+      return PlaybackSubtitle(
+        url: subtitle.url,
+        name: 'Subtitle $unnamedTrackNumber',
+        headers: subtitle.headers,
+        selectedByDefault: subtitle.selectedByDefault,
+      );
+    }).toList();
+  }
+
+  String _decodeEscapedUrls(String value) => value
+          .replaceAll(r'\/', '/')
+          .replaceAll('&amp;', '&')
+          .replaceAllMapped(_unicodeEscapePattern, (match) {
+        return String.fromCharCode(int.parse(match.group(1)!, radix: 16));
+      });
+
+  static final _gogoFragmentPattern = RegExp(
+    r'^[A-Za-z0-9_-]{32,}\.\d+(?:\.\d+)?\.\d+\.(?:sub|dub)$',
+  );
+  static final _gogoPageKeyPattern = RegExp(
+    r'''PAGE_KEY\s*=\s*["']([A-Za-z0-9_-]{32,})["']''',
+  );
+  static final _hlsUrlPattern = RegExp(
+    r'''(?:https?:)?//[^\s"'<>]+?\.m3u8(?:\?[^\s"'<>]*)?''',
+    caseSensitive: false,
+  );
+  static final _quotedHlsPathPattern = RegExp(
+    r'''["']([^"']+\.m3u8(?:\?[^"']*)?)["']''',
+    caseSensitive: false,
+  );
+  static final _unicodeEscapePattern = RegExp(r'\\u([0-9a-fA-F]{4})');
+  static final _subtitleUrlPattern = RegExp(
+    r'''["']([^"']+\.(?:vtt|srt|ttml)(?:\?[^"']*)?)["']''',
+    caseSensitive: false,
+  );
 
   bool _isHlsUrl(String value) {
     final uri = Uri.tryParse(value);
@@ -106,13 +528,39 @@ class PlaybackService {
         uri.scheme == 'https' &&
         uri.path.toLowerCase().endsWith('.m3u8');
   }
+
+  bool _isSubtitleUrl(Uri uri) {
+    final path = uri.path.toLowerCase();
+    return path.endsWith('.vtt') ||
+        path.endsWith('.srt') ||
+        path.endsWith('.ttml');
+  }
 }
 
 class PlaybackSource {
-  const PlaybackSource({required this.url, required this.headers});
+  const PlaybackSource({
+    required this.url,
+    required this.headers,
+    this.subtitles = const [],
+  });
 
   final String url;
   final Map<String, String> headers;
+  final List<PlaybackSubtitle> subtitles;
+}
+
+class PlaybackSubtitle {
+  const PlaybackSubtitle({
+    required this.url,
+    required this.name,
+    required this.headers,
+    this.selectedByDefault = false,
+  });
+
+  final String url;
+  final String name;
+  final Map<String, String> headers;
+  final bool selectedByDefault;
 }
 
 class PlaybackResolutionException implements Exception {

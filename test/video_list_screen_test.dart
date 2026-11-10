@@ -12,6 +12,7 @@ import 'package:tako_play/models/bookmark.dart';
 import 'package:tako_play/models/recent_anime.dart';
 import 'package:tako_play/screens/video_list_screen.dart';
 import 'package:tako_play/services/request_service.dart';
+import 'package:tako_play/utils/routes.dart';
 
 void main() {
   setUp(() => Get.testMode = true);
@@ -81,6 +82,69 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('pages a long episode list, saves, and records playback',
+      (tester) async {
+    final bookmarks = BookMarkManager(database: _BookmarkStore());
+    final recents = RecentWatchManager(database: _RecentStore());
+    Get.put(bookmarks);
+    Get.put(recents);
+    Get.put(RequestService(
+      client: MockClient((_) async => http.Response(_sourceDetailsMarkup, 200)),
+    ));
+    await tester.pumpWidget(GetMaterialApp(
+      home: const _OpenDetails(),
+      getPages: [
+        GetPage(
+          name: Routes.mediaFetchScreen,
+          page: () => const Scaffold(body: Text('Media fetch')),
+        ),
+      ],
+    ));
+
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 - 50'), findsOneWidget);
+    expect(find.text('51 - 51'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Save'));
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    expect(bookmarks.ids, ['test-title']);
+    Get.closeAllSnackbars();
+    await tester.pump(const Duration(seconds: 2));
+
+    await tester.tap(find.text('1 - 50'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('51 - 51'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('51'));
+    await tester.pumpAndSettle();
+    expect(find.text('Media fetch'), findsOneWidget);
+    expect(recents.animeList.single.currentEp, 'Episode 51');
+  });
+
+  testWidgets('retries a failed detail request', (tester) async {
+    _registerManagers();
+    var requests = 0;
+    Get.put(RequestService(
+      client: MockClient((_) async {
+        requests++;
+        return http.Response(
+          requests == 1 ? 'gone' : _detailsMarkup,
+          requests == 1 ? 410 : 200,
+        );
+      }),
+    ));
+    await tester.pumpWidget(const GetMaterialApp(home: _OpenDetails()));
+
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+    expect(find.text('Episodes coming soon'), findsOneWidget);
+    expect(requests, 2);
+  });
 }
 
 void _registerManagers() {
@@ -143,4 +207,11 @@ const _detailsMarkup = '''
     <p class="type">Released: 2026</p>
     <p class="type">Status: Completed</p>
   </div>
+''';
+
+final _sourceDetailsMarkup = '''
+  <section id="info"><p><span class="text-note">Plot Summary:</span> Long test.</p></section>
+  <section id="w-episodes">
+    ${List.generate(51, (index) => '<button data-n="${index + 1}">EP ${index + 1}</button>').join()}
+  </section>
 ''';

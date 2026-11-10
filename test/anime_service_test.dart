@@ -259,4 +259,224 @@ void main() {
     expect(requestedUri.path, '/category/legacy-title');
     service.close();
   });
+
+  test('parses legacy detail metadata, synopsis, genres, and no-episode id',
+      () async {
+    const markup = '''
+      <div class="anime_info_body_bg">
+        <p class="type">Genres: <a href="/genre/action/">Action</a><a href="/genre/drama/">Drama</a></p>
+        <p class="type">Released: 2024</p>
+        <p class="type">Status: Finished</p>
+        <p class="type">Synopsis: A legacy synopsis.</p>
+      </div>
+    ''';
+    final service = RequestService(
+      client: MockClient((_) async => http.Response(markup, 200)),
+    );
+    final details = await AnimeService(requestService: service)
+        .fetchAnimeDetails('/legacy');
+
+    expect(details.summary, 'A legacy synopsis.');
+    expect(details.genres.map((genre) => genre.name), ['Action', 'Drama']);
+    expect(details.releasedDate, '2024');
+    expect(details.status, 'Finished');
+    expect(details.episodes, isEmpty);
+    service.close();
+  });
+
+  test('reports missing details and falls back to an inline HTTPS player',
+      () async {
+    var call = 0;
+    final service = RequestService(
+      client: MockClient((_) async {
+        call++;
+        return http.Response(
+          call == 1
+              ? '<main>missing</main>'
+              : '<div class="play-video"><iframe src="https://player.example/embed"></iframe></div>',
+          200,
+        );
+      }),
+    );
+    final animeService = AnimeService(requestService: service);
+    await expectLater(
+      animeService.fetchAnimeDetails('/missing'),
+      throwsA(isA<StateError>()),
+    );
+    expect(
+      await animeService.fetchIframeEmbedded('/episode/fallback'),
+      'https://player.example/embed',
+    );
+    service.close();
+  });
+
+  test('rejects unusable embeds and parses CDN resolution links', () async {
+    var call = 0;
+    final service = RequestService(
+      client: MockClient((_) async {
+        call++;
+        return http.Response(
+          call == 1
+              ? "<div class=\"anime_muti_link\"><a data-video=\"<iframe src='http://unsafe.example/x'></iframe>\">Bad</a></div>"
+              : '<div class="mirror_link"><div class="dowload"><a href="https://cdn.example/720">720P</a><a href="https://cdn.example/no-label">Source</a></div></div>',
+          200,
+        );
+      }),
+    );
+    final animeService = AnimeService(requestService: service);
+    await expectLater(
+      animeService.fetchIframeEmbeds('/episode/no-player'),
+      throwsA(isA<StateError>()),
+    );
+    expect(
+      await animeService.fetchCdnStreamLink('https://cdn.example/page'),
+      {'720P': 'https://cdn.example/720'},
+    );
+    service.close();
+  });
+
+  test('handles empty, malformed, and retryable search indexes', () async {
+    var calls = 0;
+    final service = RequestService(
+      client: MockClient((_) async {
+        calls++;
+        return http.Response(
+            calls == 1
+                ? '{}'
+                : '[{"i": 1, "s": "movie-1", "n": "Movie", "m": true}]',
+            200);
+      }),
+    );
+    final animeService = AnimeService(requestService: service);
+    expect((await animeService.searchAnimes('   !!! ')).animeList, isEmpty);
+    await expectLater(
+        animeService.searchAnimes('movie'), throwsA(isA<FormatException>()));
+    final results = await animeService.searchAnimes('movie');
+    expect(results.animeList.single.releasedDate, 'Movie');
+    service.close();
+  });
+
+  test('covers source-card fallbacks, tie ranking, and legacy episode label',
+      () async {
+    const listing = '''
+      <main><section><ul class="grid">
+        <li><a href="/watch/no-episode-1/"><img src="/poster.webp"></a><p><a href="/watch/no-episode-1/">No episode</a></p></li>
+      </ul></section></main>
+      <ul class="items"><li><p class="name"><a href="/watch/legacy">Legacy</a></p><p class="episode">EP 5</p></li></ul>
+    ''';
+    const index = '''[
+      {"i": 1, "s": "a-1", "n": "Show Alpha"},
+      {"i": 2, "s": "b-2", "n": "Show Beta"},
+      {"s": "ignored", "n": "Missing id"},
+      {"i": 3, "s": "jp-3", "n": "Other", "j": "Show Japanese", "an": ["Alpha Show"]}
+    ]''';
+    var indexRequest = false;
+    final service = RequestService(
+      client: MockClient((request) async {
+        if (request.url.path.endsWith('filter-index.json')) {
+          indexRequest = true;
+          return http.Response(index, 200);
+        }
+        return http.Response(listing, 200);
+      }),
+    );
+    final animeService = AnimeService(requestService: service);
+    final cards = await animeService.getAnimes(
+      service.requestRecentlyAddedResponse(),
+    );
+    expect(cards.animeList.single.currentEp, isEmpty);
+    final ranked = await animeService.searchAnimes('show');
+    expect(indexRequest, isTrue);
+    expect(ranked.animeList.first.name, 'Show Beta');
+    expect(ranked.animeList.map((item) => item.name), contains('Other'));
+    service.close();
+  });
+
+  test('gets a video resolution through the first fallback player', () async {
+    var calls = 0;
+    final service = RequestService(
+      client: MockClient((_) async {
+        calls++;
+        return http.Response(
+          calls == 1
+              ? '<div class="play-video"><iframe src="https://player.example/embed"></iframe></div>'
+              : '<div class="mirror_link"><div class="dowload"><a href="https://cdn.example/1080">1080P</a></div></div>',
+          200,
+        );
+      }),
+    );
+    expect(
+      await AnimeService(requestService: service)
+          .getVideoWithResolution('/episode/1'),
+      {'1080P': 'https://cdn.example/1080'},
+    );
+    service.close();
+  });
+
+  test('uses source-control defaults and legacy fallback player markup',
+      () async {
+    const sourceMarkup = '''
+      <section id="w-episodes"><button data-n="7">EP 7</button></section>
+      <button class="w-server" data-sv="4">Server 4</button>
+      <button class="w-lang" data-lang="dub">Dub</button>
+      <script>const host = "https://play.gogoanimes.org", token = "abcdefghijklmnopqrstuvwxyz_1234567890-abcdef";</script>
+    ''';
+    const fallbackMarkup = '''
+      <section id="w-episodes"><button data-n="1">EP 1</button></section>
+      <div class="play-video"><iframe src="https://player.example/fallback"></iframe></div>
+    ''';
+    var calls = 0;
+    final service = RequestService(
+      client: MockClient((_) async {
+        calls++;
+        return http.Response(calls == 1 ? sourceMarkup : fallbackMarkup, 200);
+      }),
+    );
+    final animeService = AnimeService(requestService: service);
+
+    expect(
+      await animeService.fetchIframeEmbeds('/episode/source-defaults'),
+      [
+        'https://play.gogoanimes.org/watch#abcdefghijklmnopqrstuvwxyz_1234567890-abcdef.7.4.dub',
+      ],
+    );
+    expect(
+      await animeService.fetchIframeEmbeds('/episode/no-source-script'),
+      ['https://player.example/fallback'],
+    );
+    service.close();
+  });
+
+  test('keeps loading legacy ranges when one response is unusable', () async {
+    const detailMarkup = '''
+      <div class="anime_info_body_bg"></div>
+      <input id="movie_id" value="series-ranges">
+      <script>const episodeData = { nonce: 'range-token' };</script>
+      <a data-range-start="1" data-range-end="1"></a>
+      <a data-range-start="2" data-range-end="2"></a>
+      <a data-range-start="3" data-range-end="3"></a>
+      <a data-range-start="4" data-range-end="4"></a>
+      <a data-range-start="5" data-range-end="5"></a>
+    ''';
+    final service = RequestService(
+      client: MockClient((request) async {
+        if (request.method == 'GET') return http.Response(detailMarkup, 200);
+        if (request.body.contains('range_start=1')) {
+          return http.Response(jsonEncode({'success': false}), 200);
+        }
+        return http.Response(
+          jsonEncode({
+            'success': true,
+            'data': '<li><a href="/watch/finale">EP Finale</a></li>',
+          }),
+          200,
+        );
+      }),
+    );
+
+    final anime = await AnimeService(requestService: service)
+        .fetchAnimeDetails('/legacy');
+    expect(anime.episodes.single.number, 'Finale');
+    service.close();
+  });
 }

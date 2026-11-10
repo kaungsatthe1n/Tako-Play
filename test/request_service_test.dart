@@ -101,5 +101,43 @@ void main() {
       );
       service.close();
     });
+
+    test('builds every catalogue endpoint with its expected path', () async {
+      final requested = <Uri>[];
+      final service = RequestService(
+        client: MockClient((request) async {
+          requested.add(request.url);
+          return http.Response('', 200);
+        }),
+      );
+
+      await service.requestSearchResponse('my show');
+      await service.requestAnimeDetailResponse('/watch/show-1/');
+      await service.requestAnimeGenre(
+          'https://gogoanimes.org/genres/action/', 2);
+      await service
+          .requestGitHubUpdate('https://api.github.com/repos/example/app');
+      await service.requestCdnVideoLink('https://cdn.example/video');
+
+      expect(requested[0].queryParameters['keyword'], 'my show');
+      expect(requested[1].path, '/watch/show-1/');
+      expect(requested[2].path, '/genre/action/page/2/');
+      expect(requested[3].host, 'api.github.com');
+      expect(requested[4].host, 'cdn.example');
+      service.onClose();
+    });
+
+    test('formats request exceptions for logs', () {
+      final exception = RequestException.httpStatus(
+        Uri.parse('https://example.com/path'),
+        404,
+      );
+      expect(exception.toString(), 'example.com returned HTTP 404.');
+    });
+
+    test('creates and closes its default client through the GetX lifecycle', () {
+      final service = RequestService.create();
+      service.onClose();
+    });
   });
 }

@@ -11,7 +11,7 @@ void main() {
 
   test('marks an equal release version as current', () async {
     final service = serviceFor(
-      () => http.Response('{"tag_name":"v1.7.1","assets":[]}', 200),
+      () => http.Response('{"tag_name":"v1.8.0","assets":[]}', 200),
     );
     final manager = UpdateManager(requestService: service);
 
@@ -25,7 +25,7 @@ void main() {
   test('publishes an update only when a usable download link exists', () async {
     final service = serviceFor(
       () => http.Response(
-        '''{"tag_name":"v1.7.2","assets":[{"browser_download_url":"https://example.com/app.apk"}]}''',
+        '''{"tag_name":"v1.8.1","assets":[{"browser_download_url":"https://example.com/app.apk"}]}''',
         200,
       ),
     );

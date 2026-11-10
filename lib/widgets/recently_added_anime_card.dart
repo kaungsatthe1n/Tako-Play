@@ -6,6 +6,7 @@ import '../helpers/cache_manager.dart';
 import '../models/anime.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
+import 'tako_pressable_card.dart';
 
 class RecentlyAddedAnimeCard extends StatelessWidget {
   const RecentlyAddedAnimeCard({super.key, required this.anime});
@@ -16,17 +17,29 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 178,
-      child: GestureDetector(
+      child: TakoPressableCard(
         onTap: () => Get.toNamed(
           Routes.videoListScreen,
           arguments: {'anime': anime},
         ),
+        borderRadius: BorderRadius.circular(16),
         child: Container(
           margin: const EdgeInsets.only(right: 12),
           decoration: BoxDecoration(
-            color: tkDarkBlue,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.white10),
+            borderRadius: BorderRadius.circular(16),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF222743), tkDarkBlue],
+            ),
+            border: Border.all(color: Colors.white12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x45000000),
+                blurRadius: 14,
+                offset: Offset(0, 7),
+              ),
+            ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(8),
@@ -35,7 +48,7 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -54,7 +67,35 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Colors.transparent, Colors.black87],
+                              colors: [
+                                Colors.transparent,
+                                Color(0x22090A12),
+                                Color(0xE8090A12),
+                              ],
+                              stops: [0, .42, 1],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 9,
+                          left: 9,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: .45),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.white24),
+                            ),
+                            child: const Text(
+                              'NEW',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: .5,
+                              ),
                             ),
                           ),
                         ),
@@ -63,9 +104,15 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                           bottom: 9,
                           child: Container(
                             padding: const EdgeInsets.all(7),
-                            decoration: const BoxDecoration(
-                              color: tkGradientBlue,
+                            decoration: BoxDecoration(
+                              color: tkGradientBlue.withValues(alpha: .94),
                               shape: BoxShape.circle,
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x907867F7),
+                                  blurRadius: 10,
+                                ),
+                              ],
                             ),
                             child:
                                 const Icon(Icons.play_arrow_rounded, size: 18),

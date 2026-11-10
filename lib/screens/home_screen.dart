@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../helpers/network_manager.dart';
 import '../helpers/update_manager.dart';
 import '../models/anime.dart';
-import '../screens/no_internet_screen.dart';
 import '../services/anime_service.dart';
 import '../services/request_service.dart';
 import '../utils/constants.dart';
@@ -25,7 +23,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
-  final networkManager = Get.find<NetworkManager>();
   late AnimationController animationController;
   late Future<AnimeResults> _popularFuture;
   late Future<AnimeResults> _recentlyAddedFuture;
@@ -94,33 +91,29 @@ class _HomeScreenState extends State<HomeScreen>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return GetBuilder<NetworkManager>(
-      builder: (_) => networkManager.isOnline
-          ? SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 92),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
-                    child: Text(
-                      'Find your next\nobsession.',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 31,
-                        height: 1.04,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -1.2,
-                      ),
-                    ),
-                  ),
-                  _buildPopularSection(),
-                  _buildRecentlyAddedSection(),
-                  _buildMoviesSection(),
-                ],
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 92),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 4),
+            child: Text(
+              'Find your next\nobsession.',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 31,
+                height: 1.04,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -1.2,
               ),
-            )
-          : const NoInternetScreen(),
+            ),
+          ),
+          _buildPopularSection(),
+          _buildRecentlyAddedSection(),
+          _buildMoviesSection(),
+        ],
+      ),
     );
   }
 
