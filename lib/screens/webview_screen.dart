@@ -19,7 +19,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
   var _isLoading = true;
   WebViewController? _webViewController;
   var _hasReleasedWebView = false;
-  var _allowPop = false;
   var _isClosing = false;
 
   List<String> get _mediaUrls {
@@ -77,9 +76,12 @@ class _WebViewScreenState extends State<WebViewScreen> {
     if (mediaUrls.isEmpty) return _invalidEmbed();
 
     return PopScope(
-      canPop: _allowPop,
+      // Let Android's system back button and iOS's edge-swipe gesture remove
+      // this route immediately. Waiting for an embedded player to unload
+      // first can leave the user stuck on this screen when that page hangs.
+      canPop: true,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) unawaited(_closePlayerAndPop());
+        if (didPop) _releasePlayerInBackground();
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -105,6 +107,28 @@ class _WebViewScreenState extends State<WebViewScreen> {
                   child: Center(child: TakoLoadingIndicator()),
                 ),
               ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: SafeArea(
+                child: Semantics(
+                  button: true,
+                  label: 'Back to episode details',
+                  child: Material(
+                    color: Colors.black.withValues(alpha: 0.62),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      tooltip: 'Back',
+                      onPressed: _closePlayerAndPop,
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               right: 10,
               bottom: 8,
@@ -155,16 +179,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
     }
   }
 
-  Future<void> _closePlayerAndPop() async {
+  void _releasePlayerInBackground() {
     if (_isClosing) return;
     _isClosing = true;
-    await _releaseWebView();
-    if (!mounted) return;
+    unawaited(_releaseWebView());
+  }
 
-    setState(() => _allowPop = true);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
-    });
+  void _closePlayerAndPop() {
+    _releasePlayerInBackground();
+    Navigator.of(context).maybePop();
   }
 
   Widget _invalidEmbed() => Scaffold(
