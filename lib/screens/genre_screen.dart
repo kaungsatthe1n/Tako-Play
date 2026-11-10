@@ -7,7 +7,6 @@ import '../services/request_service.dart';
 import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 import '../widgets/searched_result_anime_card.dart';
-import '../widgets/tako_animation.dart';
 import '../widgets/tako_loading_indicator.dart';
 import '../widgets/tako_scaffold.dart';
 
@@ -18,26 +17,21 @@ class GenreScreen extends StatefulWidget {
   State<GenreScreen> createState() => _GenreScreenState();
 }
 
-class _GenreScreenState extends State<GenreScreen>
-    with SingleTickerProviderStateMixin {
+class _GenreScreenState extends State<GenreScreen> {
   int _pageIndex = 1;
   final ValueNotifier<bool> _hasNoMoreResults = ValueNotifier(false);
-  late AnimationController animationController;
   late final Genre _genre;
   late Future<AnimeResults> _pageFuture;
 
   @override
   void initState() {
     super.initState();
-    animationController = AnimationController(
-        duration: Duration(milliseconds: takoAnimationDuration), vsync: this);
     _genre = Get.arguments as Genre;
     _pageFuture = _loadPage();
   }
 
   @override
   void dispose() {
-    animationController.dispose();
     _hasNoMoreResults.dispose();
     super.dispose();
   }
@@ -55,7 +49,6 @@ class _GenreScreenState extends State<GenreScreen>
     setState(() {
       _pageFuture = pageFuture;
     });
-    animationController.forward(from: 0);
   }
 
   @override
@@ -110,24 +103,30 @@ class _GenreScreenState extends State<GenreScreen>
                         ),
                         itemCount: list.length,
                         itemBuilder: (BuildContext context, int index) {
-                          return AnimatedBuilder(
-                            animation: animationController,
+                          return TweenAnimationBuilder<double>(
+                            key:
+                                ValueKey('genre-$_pageIndex-${list[index].id}'),
+                            duration: Duration(
+                              milliseconds: 160 + (index.clamp(0, 8) * 24),
+                            ),
+                            curve: Curves.easeOutCubic,
+                            tween: Tween(begin: .96, end: 1),
                             child: SearchedResultAnimeCard(
                               anime: list[index],
                             ),
-                            builder: (BuildContext context, Widget? child) {
-                              return Transform(
-                                transform: Matrix4.translationValues(
-                                    0,
-                                    100 *
-                                        (1.0 -
-                                            TakoCurveAnimation(
-                                                    animationController,
-                                                    index,
-                                                    list.length)
-                                                .value),
-                                    0),
-                                child: child,
+                            builder: (context, scale, child) {
+                              final constrainedScale =
+                                  scale.clamp(.96, 1.0).toDouble();
+                              final progress = ((constrainedScale - .96) / .04)
+                                  .clamp(0.0, 1.0)
+                                  .toDouble();
+                              return Opacity(
+                                opacity: .72 + (.28 * progress),
+                                child: Transform.scale(
+                                  alignment: Alignment.topCenter,
+                                  scale: constrainedScale,
+                                  child: child,
+                                ),
                               );
                             },
                           );
