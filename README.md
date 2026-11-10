@@ -13,8 +13,8 @@ episode to an external web player. It does not host or provide video content.
 | Platform | File | Requirement |
 | :--- | :--- | :--- |
 | Android | `TakoPlay-release.apk` | Android phone or tablet |
-| iOS (AltStore) | AltStore source (button above) | iPhone/iPad, iOS 15.0 or later |
-| iOS (Sideloadly) | `TakoPlay-release.ipa` | iPhone/iPad, iOS 15.0 or later, plus a PC/Mac |
+| iOS (AltStore) | AltStore source | iPhone/iPad, iOS 15+ |
+| iOS (Sideloadly) | `TakoPlay-release.ipa` | iPhone/iPad, iOS 15+, PC/Mac |
 
 > [!WARNING]
 > **Only download TakoPlay from this GitHub repository.**
@@ -120,11 +120,11 @@ expire after 7 days.
 
 | Topic | What to expect |
 | :--- | :--- |
-| 7-day expiry | Free Apple ID signing lasts 7 days. AltStore refreshes automatically; with Sideloadly, reconnect and install again (your data stays). |
+| 7-day expiry | Lasts 7 days. AltStore auto-refreshes; Sideloadly: reinstall. |
 | App limit | A free Apple ID can keep at most 3 sideloaded apps active. |
-| "Untrusted Developer" | Trust your Apple ID under **Settings > General > VPN & Device Management**. |
-| App won't open after a week | The signature expired. Refresh in AltStore, or re-install with Sideloadly. |
-| Updates | AltStore shows updates from the source above. Sideloadly users download the new IPA and install it again. |
+| Untrusted Developer | Trust it in **Settings > General > VPN & Device Mgmt.** |
+| Won't open after a week | Signature expired: refresh or reinstall to fix it. |
+| Updates | AltStore: in-app. Sideloadly: download and reinstall. |
 
 ## License
 
