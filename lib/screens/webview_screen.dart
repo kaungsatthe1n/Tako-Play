@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import '../widgets/tako_loading_indicator.dart';
 import '../widgets/tako_play_web_view.dart';
@@ -17,10 +16,7 @@ class WebViewScreen extends StatefulWidget {
 
 class _WebViewScreenState extends State<WebViewScreen> {
   var _isLoading = true;
-  WebViewController? _webViewController;
-  var _hasReleasedWebView = false;
-  var _allowPop = false;
-  var _isClosing = false;
+  var _isLandscape = false;
 
   List<String> get _mediaUrls {
     final arguments = Get.arguments;
@@ -56,14 +52,11 @@ class _WebViewScreenState extends State<WebViewScreen> {
     super.initState();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
     ]);
   }
 
   @override
   void dispose() {
-    unawaited(_releaseWebView());
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
@@ -76,61 +69,75 @@ class _WebViewScreenState extends State<WebViewScreen> {
     final mediaUrls = _mediaUrls;
     if (mediaUrls.isEmpty) return _invalidEmbed();
 
-    return PopScope(
-      canPop: _allowPop,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) unawaited(_closePlayerAndPop());
-      },
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            TakoPlayWebView(
-              initialUrl: mediaUrls.first,
-              fallbackUrls: mediaUrls.skip(1).toList(growable: false),
-              referrerUrl: _episodeUrl,
-              onControllerCreated: (controller) =>
-                  _webViewController = controller,
-              onLoadingChanged: (isLoading) {
-                if (mounted && _isLoading != isLoading) {
-                  setState(() => _isLoading = isLoading);
-                }
-              },
-            ),
-            if (_isLoading)
-              const IgnorePointer(
-                child: ColoredBox(
-                  color: Colors.black,
-                  child: Center(child: TakoLoadingIndicator()),
-                ),
-              ),
-            Positioned(
-              right: 10,
-              bottom: 8,
-              child: SafeArea(
-                child: Semantics(
-                  button: true,
-                  label: 'Toggle fullscreen orientation',
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _toggleOrientation,
-                    child: const SizedBox(width: 56, height: 56),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            _updatePlayerOrientation(orientation);
+
+            // Keep the compact portrait player from the v1.6.3 design.
+            // Landscape expands to a familiar 16:9 viewing surface.
+            final aspectRatio =
+                orientation == Orientation.landscape ? 16 / 9 : 4 / 2.885;
+
+            return AspectRatio(
+              aspectRatio: aspectRatio,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  TakoPlayWebView(
+                    initialUrl: mediaUrls.first,
+                    fallbackUrls: mediaUrls.skip(1).toList(growable: false),
+                    referrerUrl: _episodeUrl,
+                    onLoadingChanged: (isLoading) {
+                      if (mounted && _isLoading != isLoading) {
+                        setState(() => _isLoading = isLoading);
+                      }
+                    },
                   ),
-                ),
+                  if (_isLoading)
+                    const IgnorePointer(
+                      child: ColoredBox(
+                        color: Colors.black,
+                        child: Center(child: TakoLoadingIndicator()),
+                      ),
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 10,
+                    child: SizedBox(
+                      height: 50,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Semantics(
+                          button: true,
+                          label: 'Toggle fullscreen orientation',
+                          child: IconButton(
+                            tooltip: 'Toggle fullscreen orientation',
+                            onPressed: _toggleOrientation,
+                            icon: const Icon(
+                              Icons.zoom_out_map_outlined,
+                              color: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
     );
   }
 
   Future<void> _toggleOrientation() async {
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
     await SystemChrome.setPreferredOrientations(
-      isLandscape
+      _isLandscape
           ? [DeviceOrientation.portraitUp]
           : [
               DeviceOrientation.landscapeLeft,
@@ -139,31 +146,18 @@ class _WebViewScreenState extends State<WebViewScreen> {
     );
   }
 
-  Future<void> _releaseWebView() async {
-    if (_hasReleasedWebView) return;
-    _hasReleasedWebView = true;
+  void _updatePlayerOrientation(Orientation orientation) {
+    final isLandscape = orientation == Orientation.landscape;
+    if (_isLandscape == isLandscape) return;
 
-    final controller = _webViewController;
-    if (controller == null) return;
-    try {
-      // Replacing the document releases the embedded player before this route
-      // is removed, preventing background playback after navigating back.
-      await controller.loadHtmlString('<!doctype html><html></html>');
-      await controller.clearCache();
-    } catch (_) {
-      // The platform view may already be gone during disposal.
-    }
-  }
-
-  Future<void> _closePlayerAndPop() async {
-    if (_isClosing) return;
-    _isClosing = true;
-    await _releaseWebView();
-    if (!mounted) return;
-
-    setState(() => _allowPop = true);
+    _isLandscape = isLandscape;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) Navigator.of(context).pop();
+      if (!mounted) return;
+      unawaited(
+        SystemChrome.setEnabledSystemUIMode(
+          isLandscape ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+        ),
+      );
     });
   }
 

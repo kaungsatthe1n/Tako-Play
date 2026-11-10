@@ -39,8 +39,8 @@ void main() {
     expect(results.animeList, hasLength(1));
     final anime = results.animeList.single;
     expect(anime.name, 'Hero Show');
-    expect(anime.animeUrl, 'https://gogoanime9.ro/category/hero');
-    expect(anime.imageUrl, 'https://gogoanime9.ro/images/hero.jpg');
+    expect(anime.animeUrl, 'https://gogoanimes.org/category/hero');
+    expect(anime.imageUrl, 'https://gogoanimes.org/images/hero.jpg');
     expect(anime.currentEp, 'EP 8');
   });
 
@@ -101,9 +101,9 @@ void main() {
     expect(anime.id, 'series-1');
     expect(anime.episodes.map((episode) => episode.number), ['1', '2', '10']);
     expect(anime.episodes.map((episode) => episode.link), [
-      'https://gogoanime9.ro/watch/episode-1',
-      'https://gogoanime9.ro/watch/episode-2',
-      'https://gogoanime9.ro/watch/episode-10',
+      'https://gogoanimes.org/watch/episode-1',
+      'https://gogoanimes.org/watch/episode-2',
+      'https://gogoanimes.org/watch/episode-10',
     ]);
     service.close();
   });
@@ -147,23 +147,25 @@ void main() {
     service.close();
   });
 
-  test('enriches movie cards without letting one poster failure stop the rail',
-      () async {
+  test('parses source movie cards with their supplied artwork', () async {
     const listing = '''
-      <ul class="listing">
-        <li><a href="/movie/one">Movie One</a></li>
-        <li><a href="/movie/two">Movie Two</a></li>
-      </ul>
+      <main><section><ul class="grid">
+        <li class="group">
+          <a href="/watch/movie-one-1/"><img src="https://img.example/movie-one.webp"></a>
+          <span>Movie</span><span>Ep 1</span>
+          <p><a href="/watch/movie-one-1/">Movie One</a></p>
+        </li>
+        <li class="group">
+          <a href="/watch/movie-two-2/"><img src="https://img.example/movie-two.webp"></a>
+          <span>Movie</span><span>Ep 1</span>
+          <p><a href="/watch/movie-two-2/">Movie Two</a></p>
+        </li>
+      </ul></section></main>
     ''';
     final service = RequestService(
       client: MockClient((request) async {
-        if (request.url.path == '/movies/') return http.Response(listing, 200);
-        if (request.url.path == '/movie/one') {
-          return http.Response(
-              '<div class="anime_info_body_bg"><img src="/one.jpg"></div>',
-              200);
-        }
-        return http.Response('gone', 410);
+        expect(request.url.path, '/movies/');
+        return http.Response(listing, 200);
       }),
     );
 
@@ -171,8 +173,72 @@ void main() {
         .getMovies(service.requestMoviesResponse());
 
     expect(movies.animeList, hasLength(2));
-    expect(movies.animeList.first.imageUrl, 'https://gogoanime9.ro/one.jpg');
-    expect(movies.animeList.last.imageUrl, isEmpty);
+    expect(
+        movies.animeList.first.imageUrl, 'https://img.example/movie-one.webp');
+    expect(movies.animeList.last.releasedDate, 'Movie');
+    service.close();
+  });
+
+  test('parses source title details, episode controls, and embed handoff',
+      () async {
+    const markup = '''
+      <section id="w-episodes">
+        <button data-n="2" class="active">EP 2</button>
+        <button data-n="1">EP 1</button>
+      </section>
+      <section id="info">
+        <p><span class="text-note">Plot Summary:</span> A source synopsis.</p>
+        <p><span class="text-note">Genre:</span><a href="/genre/action/">Action</a></p>
+        <p><span class="text-note">Released:</span> 2026</p>
+        <p><span class="text-note">Status:</span> Airing</p>
+      </section>
+      <button class="w-server" data-sv="2" aria-pressed="true">Server 2</button>
+      <button class="w-lang" data-lang="sub" aria-pressed="true">Sub</button>
+      <script>const playerHost = "https://play.gogoanimes.org", token = "abcdefghijklmnopqrstuvwxyz_1234567890-abcdef";</script>
+    ''';
+    final service = RequestService(
+      client: MockClient((_) async => http.Response(markup, 200)),
+    );
+    final animeService = AnimeService(requestService: service);
+
+    final anime =
+        await animeService.fetchAnimeDetails('/watch/source-show-42/');
+    final players = await animeService.fetchIframeEmbeds(
+      'https://gogoanimes.org/watch/source-show-42/#episode=1',
+    );
+
+    expect(anime.id, '42');
+    expect(anime.summary, 'A source synopsis.');
+    expect(anime.genres.single.name, 'Action');
+    expect(anime.episodes.map((episode) => episode.number), ['1', '2']);
+    expect(anime.episodes.first.link, endsWith('#episode=1'));
+    expect(players, [
+      'https://play.gogoanimes.org/watch#abcdefghijklmnopqrstuvwxyz_1234567890-abcdef.1.2.sub',
+    ]);
+    service.close();
+  });
+
+  test('searches the source-published title index', () async {
+    const index = '''
+      [
+        {"i": 1, "s": "bleach-1", "n": "Bleach", "e": 366},
+        {"i": 2, "s": "other-2", "n": "Other title", "an": ["Bleach story"]}
+      ]
+    ''';
+    final service = RequestService(
+      client: MockClient((request) async {
+        expect(request.url.path, '/filter-index.json');
+        return http.Response(index, 200);
+      }),
+    );
+
+    final results =
+        await AnimeService(requestService: service).searchAnimes('bleach');
+
+    expect(results.animeList.map((anime) => anime.name),
+        ['Bleach', 'Other title']);
+    expect(results.animeList.first.imageUrl,
+        'https://img.gogoanimes.org/poster-sm/w_200/h_267/bleach-1.webp');
     service.close();
   });
 
@@ -189,7 +255,7 @@ void main() {
       'https://gogoanime.wiki/category/legacy-title',
     );
 
-    expect(requestedUri.host, 'gogoanime9.ro');
+    expect(requestedUri.host, 'gogoanimes.org');
     expect(requestedUri.path, '/category/legacy-title');
     service.close();
   });

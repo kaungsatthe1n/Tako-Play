@@ -1,9 +1,9 @@
 name: tako_play
-description: A new Flutter project.
+description: A modern anime catalogue and watchlist app built with Flutter.
 
 publish_to: "none"
 
-version: 1.7.0+2
+version: 1.7.1+3
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

@@ -9,23 +9,26 @@ import '../models/anime.dart';
 import '../services/request_service.dart';
 import '../utils/constants.dart';
 
-/// Parses the public catalog served by gogoanime9.ro.
+/// Parses the public catalogue served by gogoanimes.org.
 ///
-/// The source is a WordPress site: catalogue pages are normal HTML, while an
-/// anime's episode list is returned by its WordPress AJAX endpoint.
+/// Catalogue pages are static HTML card grids. Its search index is published
+/// separately as JSON, while title metadata and episode controls are embedded
+/// in each `/watch/` page.
 class AnimeService {
   AnimeService({required RequestService requestService})
       : _requestService = requestService;
 
-  static const _moviePosterConcurrency = 6;
   static const _episodeRangeConcurrency = 4;
   static const _legacyCatalogHosts = <String>{
+    'gogoanime9.ro',
+    'www.gogoanime9.ro',
     'gogoanime.wiki',
     'www.gogoanime.wiki',
   };
 
   final RequestService _requestService;
   final _uuid = const Uuid();
+  Future<List<_SearchEntry>>? _searchIndex;
 
   Future<AnimeResults> getAnimes(Future<http.Response> request) async {
     final response = await request;
@@ -37,39 +40,78 @@ class AnimeService {
 
   Future<AnimeResults> getMovies(Future<http.Response> request) async {
     final response = await request;
-    final document = parse(response.body);
-    final movieLinks = <({String name, String url})>[];
+    return _parseImageCards(parse(response.body));
+  }
 
-    for (final item in document.querySelectorAll('ul.listing > li')) {
-      final link = item.querySelector('a[href]');
-      if (link == null) continue;
-
-      final name = link.text.trim();
-      if (name.isEmpty) continue;
-      movieLinks.add((
-        name: name,
-        url: _absoluteUrl(link.attributes['href']),
-      ));
+  Future<AnimeResults> searchAnimes(String query) async {
+    final normalizedQuery = _normalizeSearchText(query);
+    if (normalizedQuery.isEmpty) {
+      return const AnimeResults(animeList: <Anime>[]);
     }
 
-    // The movie index is text-only. Detail pages include a real poster in
-    // `.anime_info_body_bg`, so enrich each card before returning the list.
-    final movies = await _mapConcurrent(movieLinks, (movie) async {
-      final imageUrl = await _fetchMoviePoster(movie.url);
-      return Anime(
-        id: _uuid.v4(),
-        name: movie.name,
-        animeUrl: movie.url,
-        imageUrl: imageUrl,
-        releasedDate: 'Movie',
-      );
-    }, maxConcurrent: _moviePosterConcurrency);
+    final searchIndex = await _loadSearchIndex();
+    final terms = normalizedQuery.split(' ');
+    final matches = <_SearchEntry>[];
+    for (final entry in searchIndex) {
+      if (entry.searchRank(normalizedQuery, terms) >= 0) {
+        matches.add(entry);
+      }
+    }
+    matches.sort((left, right) {
+      final rank = left
+          .searchRank(normalizedQuery, terms)
+          .compareTo(right.searchRank(normalizedQuery, terms));
+      if (rank != 0) return rank;
+      return left.name.length.compareTo(right.name.length);
+    });
 
-    return AnimeResults(animeList: movies);
+    return AnimeResults(
+      animeList: matches
+          .take(60)
+          .map(
+            (entry) => Anime(
+              id: entry.id,
+              name: entry.name,
+              animeUrl: _watchUrl(entry.slug),
+              imageUrl: _posterUrl(entry.slug),
+              currentEp:
+                  entry.episodeCount == null ? '' : 'Ep ${entry.episodeCount}',
+              releasedDate: entry.isMovie ? 'Movie' : '',
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Future<List<_SearchEntry>> _loadSearchIndex() async {
+    try {
+      return await (_searchIndex ??= _fetchSearchIndex());
+    } catch (_) {
+      _searchIndex = null;
+      rethrow;
+    }
+  }
+
+  Future<List<_SearchEntry>> _fetchSearchIndex() async {
+    final response = await _requestService.requestSearchIndexResponse();
+    final decoded = jsonDecode(response.body);
+    if (decoded is! List) {
+      throw const FormatException('The source search index is invalid.');
+    }
+    return decoded
+        .whereType<Map>()
+        .map(_SearchEntry.fromJson)
+        .whereType<_SearchEntry>()
+        .toList(growable: false);
   }
 
   Future<Anime> fetchAnimeDetails(String url) async {
     final detailDoc = await _fetchDocument(url);
+    final sourceInfo = detailDoc.querySelector('#info');
+    if (sourceInfo != null) {
+      return _parseGogoAnimesDetails(detailDoc, sourceInfo, url);
+    }
+
     final info = detailDoc.querySelector('.anime_info_body_bg');
     if (info == null) {
       throw StateError('The anime details were not found in the source page.');
@@ -126,12 +168,17 @@ class AnimeService {
 
   /// Returns every distinct HTTPS player advertised by an episode page.
   ///
-  /// gogoanime9 stores HTML iframes in `data-video`, unlike the retired
-  /// `.play-video` markup used by the old provider. A server can retire an
-  /// individual embed without the episode itself disappearing, so callers can
-  /// retry the next source-provided player after an HTTP 410 response.
+  /// gogoanimes.org advertises the selected episode, language, and server in
+  /// its page controls and constructs an external player handoff in its page
+  /// script. Older catalog pages can instead expose pre-rendered iframes in
+  /// `data-video`, which remain supported as a compatibility fallback.
   Future<List<String>> fetchIframeEmbeds(String url) async {
     final document = await _fetchDocument(url);
+    if (document.querySelector('#w-episodes') != null) {
+      final embeds = _sourcePlayerEmbeds(document, url);
+      if (embeds.isNotEmpty) return embeds;
+    }
+
     final players = <String>[];
     for (final server
         in document.querySelectorAll('.anime_muti_link a[data-video]')) {
@@ -199,6 +246,13 @@ class AnimeService {
   }
 
   Future<AnimeResults> _parseImageCards(dom.Document document) async {
+    final sourceCards = _parseGogoAnimesCards(document);
+    if (sourceCards.isNotEmpty) {
+      return AnimeResults(animeList: sourceCards);
+    }
+
+    // Keep legacy parsing for saved staging fixtures and deployments that use
+    // the former WordPress-compatible markup.
     final animeList = <Anime>[];
 
     for (final item in document.querySelectorAll('ul.items > li')) {
@@ -224,6 +278,46 @@ class AnimeService {
     return AnimeResults(animeList: animeList);
   }
 
+  List<Anime> _parseGogoAnimesCards(dom.Document document) {
+    final cards = <Anime>[];
+    final seenUrls = <String>{};
+
+    for (final item in document.querySelectorAll('main section ul.grid > li')) {
+      final links = item
+          .querySelectorAll('a[href]')
+          .where((link) => link.text.trim().isNotEmpty)
+          .toList(growable: false);
+      if (links.isEmpty) continue;
+
+      final nameLink = links.last;
+      final url = _absoluteUrl(nameLink.attributes['href']);
+      final name = nameLink.text.trim();
+      if (name.isEmpty || url.isEmpty || !seenUrls.add(url)) continue;
+
+      final image = item.querySelector('img[src]');
+      final label = item
+          .querySelectorAll('span')
+          .map((element) => element.text.trim())
+          .firstWhere(
+            (text) => text.toLowerCase().startsWith('ep '),
+            orElse: () => '',
+          );
+      final isMovie = item.querySelectorAll('span').any(
+            (element) => element.text.trim().toLowerCase() == 'movie',
+          );
+
+      cards.add(Anime(
+        id: _sourceId(url),
+        name: name,
+        animeUrl: url,
+        imageUrl: _absoluteUrl(image?.attributes['src']),
+        currentEp: label,
+        releasedDate: isMovie ? 'Movie' : label,
+      ));
+    }
+    return cards;
+  }
+
   Future<dom.Document> _fetchDocument(String url) async {
     final response = await _requestService.getSource(
       Uri.parse(_absoluteUrl(url)),
@@ -231,17 +325,133 @@ class AnimeService {
     return parse(response.body);
   }
 
-  Future<String> _fetchMoviePoster(String url) async {
-    try {
-      final document = await _fetchDocument(url);
-      final image = document.querySelector('.anime_info_body_bg img');
-      return _absoluteUrl(
-          image?.attributes['data-src'] ?? image?.attributes['src']);
-    } catch (_) {
-      // One removed title must not prevent the movie rail from rendering.
-      return '';
+  Anime _parseGogoAnimesDetails(
+    dom.Document document,
+    dom.Element info,
+    String url,
+  ) {
+    final genres = <Genre>[];
+    var summary = '';
+    var released = '';
+    var status = '';
+
+    for (final paragraph in info.querySelectorAll('p')) {
+      final label = paragraph.querySelector('.text-note')?.text.trim() ?? '';
+      final value = paragraph.text.replaceFirst(label, '').trim();
+      switch (label.toLowerCase()) {
+        case 'plot summary:':
+          summary = value;
+          break;
+        case 'genre:':
+          for (final link in paragraph.querySelectorAll('a[href]')) {
+            final name = link.text.trim();
+            if (name.isNotEmpty) {
+              genres.add(Genre(
+                name: name,
+                link: _absoluteUrl(link.attributes['href']),
+              ));
+            }
+          }
+          break;
+        case 'released:':
+          released = value;
+          break;
+        case 'status:':
+          status = value;
+          break;
+      }
     }
+
+    final byNumber = <String, Episode>{};
+    for (final button
+        in document.querySelectorAll('#w-episodes button[data-n]')) {
+      final number = button.attributes['data-n']?.trim() ?? '';
+      if (number.isEmpty) continue;
+      byNumber[number] = Episode(
+        link: _episodeUrl(url, number),
+        number: number,
+      );
+    }
+    final episodes = byNumber.values.toList()
+      ..sort((a, b) => (double.tryParse(a.number) ?? 0)
+          .compareTo(double.tryParse(b.number) ?? 0));
+
+    return Anime(
+      id: _sourceId(url),
+      summary: summary,
+      genres: genres,
+      releasedDate: released,
+      status: status,
+      episodes: episodes,
+    );
   }
+
+  List<String> _sourcePlayerEmbeds(dom.Document document, String url) {
+    final script = document
+        .querySelectorAll('script')
+        .map((element) => element.text)
+        .firstWhere(
+          (value) => value.contains('play.gogoanimes.org'),
+          orElse: () => '',
+        );
+    final host =
+        RegExp(r'https://play\.gogoanimes\.org').firstMatch(script)?.group(0);
+    final token = RegExp(r'''['"]([A-Za-z0-9_-]{32,})['"]''')
+        .allMatches(script)
+        .map((match) => match.group(1))
+        .firstWhere((value) => value != null, orElse: () => null);
+    if (host == null || token == null) return const <String>[];
+
+    final requestedEpisode = RegExp(r'(?:^|[&;])episode=(\d+(?:\.\d+)?)')
+            .firstMatch(Uri.tryParse(url)?.fragment ?? '')
+            ?.group(1) ??
+        document
+            .querySelector('#w-episodes button.active[data-n]')
+            ?.attributes['data-n'] ??
+        document
+            .querySelector('#w-episodes button[data-n]')
+            ?.attributes['data-n'];
+    if (requestedEpisode == null || requestedEpisode.isEmpty) {
+      return const <String>[];
+    }
+
+    final server = document
+            .querySelector('.w-server[aria-pressed="true"][data-sv]')
+            ?.attributes['data-sv'] ??
+        document.querySelector('.w-server[data-sv]')?.attributes['data-sv'];
+    final language = document
+            .querySelector('.w-lang[aria-pressed="true"][data-lang]')
+            ?.attributes['data-lang'] ??
+        document.querySelector('.w-lang[data-lang]')?.attributes['data-lang'];
+    if (server == null || language == null) return const <String>[];
+
+    // This is the external player URL explicitly constructed by the source
+    // page for the selected episode. It remains an embed handoff; no media
+    // stream URL is read or constructed by the app.
+    return ['$host/watch#$token.$requestedEpisode.$server.$language'];
+  }
+
+  String _episodeUrl(String sourceUrl, String episodeNumber) {
+    final uri = Uri.parse(_absoluteUrl(sourceUrl));
+    return uri.replace(fragment: 'episode=$episodeNumber').toString();
+  }
+
+  String _watchUrl(String slug) => '$sourceBaseUrl/watch/$slug/';
+
+  String _posterUrl(String slug) =>
+      'https://img.gogoanimes.org/poster-sm/w_200/h_267/$slug.webp';
+
+  String _sourceId(String url) {
+    final segments = Uri.tryParse(url)?.pathSegments ?? const <String>[];
+    final segment = segments.lastWhere(
+      (value) => value.isNotEmpty,
+      orElse: () => url,
+    );
+    return RegExp(r'-(\d+)$').firstMatch(segment)?.group(1) ?? segment;
+  }
+
+  String _normalizeSearchText(String value) =>
+      value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim();
 
   Future<List<Episode>> _loadEpisodes(
     dom.Document detailDoc,
@@ -336,5 +546,77 @@ class AnimeService {
       ));
     }
     return results;
+  }
+}
+
+class _SearchEntry {
+  const _SearchEntry({
+    required this.id,
+    required this.slug,
+    required this.name,
+    required this.names,
+    required this.episodeCount,
+    required this.isMovie,
+  });
+
+  final String id;
+  final String slug;
+  final String name;
+  final List<String> names;
+  final int? episodeCount;
+  final bool isMovie;
+
+  static _SearchEntry? fromJson(Map<dynamic, dynamic> json) {
+    final id = json['i'];
+    final slug = json['s'];
+    final name = json['n'];
+    if (id == null || slug is! String || slug.isEmpty || name is! String) {
+      return null;
+    }
+
+    final names = <String>[name];
+    final japaneseName = json['j'];
+    if (japaneseName is String && japaneseName.isNotEmpty) {
+      names.add(japaneseName);
+    }
+    final aliases = json['an'];
+    if (aliases is List) {
+      names.addAll(
+          aliases.whereType<String>().where((alias) => alias.isNotEmpty));
+    }
+
+    return _SearchEntry(
+      id: id.toString(),
+      slug: slug,
+      name: name,
+      names: names,
+      episodeCount: (json['e'] as num?)?.toInt(),
+      isMovie: json['m'] == 1 || json['m'] == true,
+    );
+  }
+
+  int searchRank(String normalizedQuery, List<String> terms) {
+    final normalizedNames = names
+        .map(
+          (name) =>
+              name.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), ' ').trim(),
+        )
+        .where((name) => name.isNotEmpty)
+        .toList(growable: false);
+    if (normalizedNames.isEmpty) return -1;
+
+    final primary = normalizedNames.first;
+    if (primary.startsWith(normalizedQuery)) return 0;
+    if (primary.contains(' $normalizedQuery')) return 1;
+    if (primary.contains(normalizedQuery)) return 2;
+    if (normalizedNames.skip(1).any((name) => name.contains(normalizedQuery))) {
+      return 3;
+    }
+    if (normalizedNames.any(
+      (name) => terms.every((term) => name.contains(term)),
+    )) {
+      return 4;
+    }
+    return -1;
   }
 }

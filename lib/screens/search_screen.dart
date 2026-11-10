@@ -24,11 +24,13 @@ class _SearchScreenState extends State<SearchScreen> {
   final title = ''.obs;
   final _controller = TextEditingController();
   Timer? _debounceTimer;
+  late final AnimeService _animeService;
   var _requestRevision = 0;
 
   @override
   void initState() {
     super.initState();
+    _animeService = AnimeService(requestService: Get.find<RequestService>());
     _controller.addListener(_onTextChanged);
   }
 
@@ -53,7 +55,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final provider = Get.find<RequestService>();
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -120,9 +121,8 @@ class _SearchScreenState extends State<SearchScreen> {
               child: Obx(
                 () => AnimatedSwitcher(
                   duration: const Duration(milliseconds: 260),
-                  child: hasValue.value
-                      ? _buildResults(provider)
-                      : _buildRecentSearches(),
+                  child:
+                      hasValue.value ? _buildResults() : _buildRecentSearches(),
                 ),
               ),
             ),
@@ -132,11 +132,10 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget _buildResults(RequestService provider) {
+  Widget _buildResults() {
     return FutureBuilder<AnimeResults>(
       key: ValueKey('${title.value}:$_requestRevision'),
-      future: AnimeService(requestService: provider)
-          .getAnimes(provider.requestSearchResponse(title.value)),
+      future: _animeService.searchAnimes(title.value),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _emptyState(

@@ -48,6 +48,39 @@ void main() {
     expect(find.text('We could not load the episode list.'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
   });
+
+  testWidgets('keeps its hero data when route arguments clear during a pop',
+      (tester) async {
+    _registerManagers();
+    Get.put(RequestService(
+      client: MockClient((_) async => http.Response(_detailsMarkup, 200)),
+    ));
+    await tester.pumpWidget(const GetMaterialApp(home: _OpenDetails()));
+
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+
+    // GetX updates this global value while routes transition. Rebuild the
+    // detail page with no global arguments, as can happen during an iOS swipe
+    // back from the WebView player.
+    Get.routing.args = null;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(800, 1600);
+    addTearDown(() {
+      tester.view
+        ..resetDevicePixelRatio()
+        ..resetPhysicalSize();
+    });
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget is Hero && widget.tag == 'show-1',
+      ),
+      findsOneWidget,
+    );
+  });
 }
 
 void _registerManagers() {

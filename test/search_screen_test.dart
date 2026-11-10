@@ -18,7 +18,7 @@ void main() {
   testWidgets('shows catalog search results after the debounce interval',
       (tester) async {
     Get.put(RequestService(
-      client: MockClient((_) async => http.Response(_catalogMarkup, 200)),
+      client: MockClient((_) async => http.Response(_searchIndex, 200)),
     ));
     await tester.pumpWidget(const GetMaterialApp(home: SearchScreen()));
 
@@ -51,7 +51,7 @@ void main() {
       'takoRecentSearches': ['One Piece'],
     });
     Get.put(RequestService(
-      client: MockClient((_) async => http.Response(_catalogMarkup, 200)),
+      client: MockClient((_) async => http.Response(_searchIndex, 200)),
     ));
 
     await tester.pumpWidget(const GetMaterialApp(home: SearchScreen()));
@@ -62,12 +62,8 @@ void main() {
   });
 }
 
-const _catalogMarkup = '''
-  <ul class="items">
-    <li>
-      <div class="img"><img src="/hero.jpg"></div>
-      <p class="name"><a href="/hero">Hero Show</a></p>
-      <p class="episode">EP 1</p>
-    </li>
-  </ul>
+const _searchIndex = '''
+  [
+    {"i": 1, "s": "hero-show-1", "n": "Hero Show", "e": 1}
+  ]
 ''';

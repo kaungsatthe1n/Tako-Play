@@ -37,6 +37,7 @@ class _TakoPlayWebViewState extends State<TakoPlayWebView> {
   Uri? _activePageUri;
   var _playerIndex = 0;
   var _mainFrameNavigationLocked = false;
+  var _hasReleasedPlayer = false;
 
   @override
   void initState() {
@@ -148,6 +149,35 @@ class _TakoPlayWebViewState extends State<TakoPlayWebView> {
       _mainFrameNavigationLocked = true;
     }
     widget.onLoadingChanged(false);
+  }
+
+  @override
+  void deactivate() {
+    // Start unloading while the platform view is still attached. Calling this
+    // from the parent route's dispose is too late on iOS after an edge swipe,
+    // allowing an embedded player to continue its audio in the background.
+    _releasePlayer();
+    super.deactivate();
+  }
+
+  @override
+  void dispose() {
+    _releasePlayer();
+    super.dispose();
+  }
+
+  void _releasePlayer() {
+    if (_hasReleasedPlayer) return;
+    _hasReleasedPlayer = true;
+
+    unawaited(
+      _webViewController
+          .loadHtmlString('<!doctype html><html><body></body></html>')
+          .catchError((_) {
+        // The native view can already be gone if the route was removed
+        // without a transition. Either way, do not let cleanup throw.
+      }),
+    );
   }
 
   @override

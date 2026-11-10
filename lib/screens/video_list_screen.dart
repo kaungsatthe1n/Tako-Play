@@ -29,9 +29,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
   final RecentWatchManager recentWatchManager = Get.find();
   final BookMarkManager bookMarkManager = Get.find();
   var selectedIndex = 9999999.obs;
-  final name = Get.arguments['anime'].name.toString();
-  final imageUrl = Get.arguments['anime'].imageUrl.toString();
-  final animeUrl = Get.arguments['anime'].animeUrl.toString();
+  late final Anime _routeAnime;
+  late final String name;
+  late final String imageUrl;
+  late final String animeUrl;
   late Future<Anime> _animeDetails;
   bool hasRemainingEp = false;
   int remainingEp = 0;
@@ -45,6 +46,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
   @override
   void initState() {
     super.initState();
+    _routeAnime = Get.arguments['anime'] as Anime;
+    name = _routeAnime.name;
+    imageUrl = _routeAnime.imageUrl;
+    animeUrl = _routeAnime.animeUrl;
     _animeDetails = _loadAnimeDetails();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -90,7 +95,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
   @override
   Widget build(BuildContext context) {
     return Hero(
-      tag: Get.arguments['anime'].id.toString(),
+      // Get.arguments belongs to whichever route is currently transitioning.
+      // Keep the detail route's title locally so an iOS back-swipe cannot
+      // replace it with null while this Hero rebuilds.
+      tag: _routeAnime.id,
       child: TakoScaffoldWithBackButton(
         appBarTitle: 'Player',
         extendBodyBehindAppBar: true,
