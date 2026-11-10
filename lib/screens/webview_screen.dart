@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 import '../widgets/tako_loading_indicator.dart';
 import '../widgets/tako_play_web_view.dart';
@@ -17,9 +16,6 @@ class WebViewScreen extends StatefulWidget {
 
 class _WebViewScreenState extends State<WebViewScreen> {
   var _isLoading = true;
-  WebViewController? _webViewController;
-  var _hasReleasedWebView = false;
-  var _isClosing = false;
   var _isLandscape = false;
 
   List<String> get _mediaUrls {
@@ -61,7 +57,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
 
   @override
   void dispose() {
-    unawaited(_releaseWebView());
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
@@ -74,78 +69,67 @@ class _WebViewScreenState extends State<WebViewScreen> {
     final mediaUrls = _mediaUrls;
     if (mediaUrls.isEmpty) return _invalidEmbed();
 
-    return PopScope(
-      // Let Android's system back button and iOS's edge-swipe gesture remove
-      // this route immediately. Waiting for an embedded player to unload
-      // first can leave the user stuck on this screen when that page hangs.
-      canPop: true,
-      onPopInvokedWithResult: (didPop, _) {
-        if (didPop) _releasePlayerInBackground();
-      },
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(
-          child: OrientationBuilder(
-            builder: (context, orientation) {
-              _updatePlayerOrientation(orientation);
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Center(
+        child: OrientationBuilder(
+          builder: (context, orientation) {
+            _updatePlayerOrientation(orientation);
 
-              // Keep the compact portrait player from the v1.6.3 design.
-              // Landscape expands to a familiar 16:9 viewing surface.
-              final aspectRatio =
-                  orientation == Orientation.landscape ? 16 / 9 : 4 / 2.885;
+            // Keep the compact portrait player from the v1.6.3 design.
+            // Landscape expands to a familiar 16:9 viewing surface.
+            final aspectRatio =
+                orientation == Orientation.landscape ? 16 / 9 : 4 / 2.885;
 
-              return AspectRatio(
-                aspectRatio: aspectRatio,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    TakoPlayWebView(
-                      initialUrl: mediaUrls.first,
-                      fallbackUrls: mediaUrls.skip(1).toList(growable: false),
-                      referrerUrl: _episodeUrl,
-                      onControllerCreated: (controller) =>
-                          _webViewController = controller,
-                      onLoadingChanged: (isLoading) {
-                        if (mounted && _isLoading != isLoading) {
-                          setState(() => _isLoading = isLoading);
-                        }
-                      },
-                    ),
-                    if (_isLoading)
-                      const IgnorePointer(
-                        child: ColoredBox(
-                          color: Colors.black,
-                          child: Center(child: TakoLoadingIndicator()),
-                        ),
+            return AspectRatio(
+              aspectRatio: aspectRatio,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  TakoPlayWebView(
+                    initialUrl: mediaUrls.first,
+                    fallbackUrls: mediaUrls.skip(1).toList(growable: false),
+                    referrerUrl: _episodeUrl,
+                    onLoadingChanged: (isLoading) {
+                      if (mounted && _isLoading != isLoading) {
+                        setState(() => _isLoading = isLoading);
+                      }
+                    },
+                  ),
+                  if (_isLoading)
+                    const IgnorePointer(
+                      child: ColoredBox(
+                        color: Colors.black,
+                        child: Center(child: TakoLoadingIndicator()),
                       ),
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 10,
-                      child: SizedBox(
-                        height: 50,
-                        child: Align(
-                          alignment: Alignment.centerRight,
-                          child: Semantics(
-                            button: true,
-                            label: 'Toggle fullscreen orientation',
-                            child: IconButton(
-                              tooltip: 'Toggle fullscreen orientation',
-                              onPressed: _toggleOrientation,
-                              icon: const Icon(
-                                Icons.zoom_out_map_outlined,
-                                color: Colors.transparent,
-                              ),
+                    ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 10,
+                    child: SizedBox(
+                      height: 50,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Semantics(
+                          button: true,
+                          label: 'Toggle fullscreen orientation',
+                          child: IconButton(
+                            tooltip: 'Toggle fullscreen orientation',
+                            onPressed: _toggleOrientation,
+                            icon: const Icon(
+                              Icons.zoom_out_map_outlined,
+                              color: Colors.transparent,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -175,28 +159,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
         ),
       );
     });
-  }
-
-  Future<void> _releaseWebView() async {
-    if (_hasReleasedWebView) return;
-    _hasReleasedWebView = true;
-
-    final controller = _webViewController;
-    if (controller == null) return;
-    try {
-      // Replacing the document releases the embedded player before this route
-      // is removed, preventing background playback after navigating back.
-      await controller.loadHtmlString('<!doctype html><html></html>');
-      await controller.clearCache();
-    } catch (_) {
-      // The platform view may already be gone during disposal.
-    }
-  }
-
-  void _releasePlayerInBackground() {
-    if (_isClosing) return;
-    _isClosing = true;
-    unawaited(_releaseWebView());
   }
 
   Widget _invalidEmbed() => Scaffold(
