@@ -122,7 +122,7 @@ expire after 7 days.
 | :--- | :--- |
 | 7-day expiry | Lasts 7 days. AltStore auto-refreshes; Sideloadly: reinstall. |
 | App limit | A free Apple ID allows at most 3 sideloaded apps. |
-| Untrusted Developer | Trust it in **Settings > General > VPN & Device Mgmt.** |
+| Untrusted Developer | Trust it under **Settings > VPN & Device Mgmt.** |
 | Won't open after a week | Signature expired: refresh or reinstall to fix it. |
 | Updates | AltStore: in-app. Sideloadly: download and reinstall. |
 
