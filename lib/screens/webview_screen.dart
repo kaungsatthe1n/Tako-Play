@@ -55,8 +55,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
     super.initState();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
     ]);
   }
 
@@ -85,66 +83,80 @@ class _WebViewScreenState extends State<WebViewScreen> {
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            TakoPlayWebView(
-              initialUrl: mediaUrls.first,
-              fallbackUrls: mediaUrls.skip(1).toList(growable: false),
-              referrerUrl: _episodeUrl,
-              onControllerCreated: (controller) =>
-                  _webViewController = controller,
-              onLoadingChanged: (isLoading) {
-                if (mounted && _isLoading != isLoading) {
-                  setState(() => _isLoading = isLoading);
-                }
-              },
-            ),
-            if (_isLoading)
-              const IgnorePointer(
-                child: ColoredBox(
-                  color: Colors.black,
-                  child: Center(child: TakoLoadingIndicator()),
-                ),
-              ),
-            Positioned(
-              top: 8,
-              left: 8,
-              child: SafeArea(
-                child: Semantics(
-                  button: true,
-                  label: 'Back to episode details',
-                  child: Material(
-                    color: Colors.black.withValues(alpha: 0.62),
-                    shape: const CircleBorder(),
-                    child: IconButton(
-                      tooltip: 'Back',
-                      onPressed: _closePlayerAndPop,
-                      icon: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: Colors.white,
+        body: Center(
+          child: OrientationBuilder(
+            builder: (context, orientation) {
+              // Keep the compact portrait player from the v1.6.3 design.
+              // Landscape expands to a familiar 16:9 viewing surface.
+              final aspectRatio =
+                  orientation == Orientation.landscape ? 16 / 9 : 4 / 2.885;
+
+              return AspectRatio(
+                aspectRatio: aspectRatio,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    TakoPlayWebView(
+                      initialUrl: mediaUrls.first,
+                      fallbackUrls: mediaUrls.skip(1).toList(growable: false),
+                      referrerUrl: _episodeUrl,
+                      onControllerCreated: (controller) =>
+                          _webViewController = controller,
+                      onLoadingChanged: (isLoading) {
+                        if (mounted && _isLoading != isLoading) {
+                          setState(() => _isLoading = isLoading);
+                        }
+                      },
+                    ),
+                    if (_isLoading)
+                      const IgnorePointer(
+                        child: ColoredBox(
+                          color: Colors.black,
+                          child: Center(child: TakoLoadingIndicator()),
+                        ),
+                      ),
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: SafeArea(
+                        child: Semantics(
+                          button: true,
+                          label: 'Back to episode details',
+                          child: Material(
+                            color: Colors.black.withValues(alpha: 0.62),
+                            shape: const CircleBorder(),
+                            child: IconButton(
+                              tooltip: 'Back',
+                              onPressed: _closePlayerAndPop,
+                              icon: const Icon(
+                                Icons.arrow_back_rounded,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    Positioned(
+                      right: 10,
+                      bottom: 8,
+                      child: SafeArea(
+                        child: Semantics(
+                          button: true,
+                          label: 'Toggle fullscreen orientation',
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: _toggleOrientation,
+                            child: const SizedBox(width: 56, height: 56),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            Positioned(
-              right: 10,
-              bottom: 8,
-              child: SafeArea(
-                child: Semantics(
-                  button: true,
-                  label: 'Toggle fullscreen orientation',
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: _toggleOrientation,
-                    child: const SizedBox(width: 56, height: 56),
-                  ),
-                ),
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
