@@ -25,9 +25,13 @@ class RequestService extends GetxService {
       getSource(Uri.parse(baseUrl));
 
   Future<http.Response> requestSearchResponse(String name) {
-    final uri = Uri.parse(baseUrl).replace(queryParameters: {'s': name});
+    final uri = Uri.parse('$sourceBaseUrl/search/')
+        .replace(queryParameters: {'keyword': name});
     return getSource(uri);
   }
+
+  Future<http.Response> requestSearchIndexResponse() =>
+      getSource(Uri.parse('$sourceBaseUrl/filter-index.json'));
 
   Future<http.Response> requestAnimeDetailResponse(String path) =>
       getSource(Uri.parse(baseUrl).resolve(path));
@@ -39,8 +43,13 @@ class RequestService extends GetxService {
       getSource(Uri.parse('$sourceBaseUrl/movies/'));
 
   Future<http.Response> requestAnimeGenre(String url, [int index = 1]) {
-    final page =
-        index == 1 ? url : '${url.endsWith('/') ? url : '$url/'}page/$index/';
+    final genre = Uri.parse(url).replace(
+      path: Uri.parse(url).path.replaceFirst('/genres/', '/genre/'),
+    );
+    final normalizedUrl = genre.toString();
+    final page = index == 1
+        ? normalizedUrl
+        : '${normalizedUrl.endsWith('/') ? normalizedUrl : '$normalizedUrl/'}page/$index/';
     return getSource(Uri.parse(page));
   }
 
