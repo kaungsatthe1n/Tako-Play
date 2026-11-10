@@ -107,4 +107,54 @@ void main() {
     expect(saved.single.currentEp, 'Episode 3');
     await store.close();
   });
+
+  test('bookmark database creates, orders, and deletes fresh records',
+      () async {
+    final store = BookMarksDatabase.withDatabaseFactory(
+      databaseFactory: factory,
+      databasePath: '${directory.path}/fresh-bookmarks.db',
+    );
+    await store.insert(BookMark(
+      id: 'one',
+      name: 'One',
+      imageUrl: '',
+      animeUrl: '/one',
+    ));
+    await store.insert(BookMark(
+      id: 'two',
+      name: 'Two',
+      imageUrl: '',
+      animeUrl: '/two',
+    ));
+
+    expect(
+        (await store.getAllBookMarks()).map((item) => item.id), ['one', 'two']);
+    expect(await store.delete('one'), 1);
+    expect(await store.delete('missing'), 0);
+    expect((await store.getAllBookMarks()).single.id, 'two');
+    await store.close();
+  });
+
+  test('recent database creates, lists, removes, and clears fresh records',
+      () async {
+    final store = RecentWatchAnimeDatabase.withDatabaseFactory(
+      databaseFactory: factory,
+      databasePath: '${directory.path}/fresh-recent.db',
+    );
+    for (final id in ['one', 'two']) {
+      await store.insert(RecentAnime(
+        id: id,
+        name: id,
+        epUrl: '/$id',
+        currentEp: 'Episode 1',
+        imageUrl: '',
+      ));
+    }
+
+    expect(await store.remove('one'), 1);
+    expect((await store.getAllRecentAnime()).single.id, 'two');
+    expect(await store.removeAll(), 1);
+    expect(await store.getAllRecentAnime(), isEmpty);
+    await store.close();
+  });
 }

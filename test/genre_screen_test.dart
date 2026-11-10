@@ -27,6 +27,43 @@ void main() {
     expect(firstCard, findsOneWidget);
     expect(tester.getTopLeft(firstCard).dy, lessThan(130));
   });
+
+  testWidgets('retries failures and disables next on an empty final page',
+      (tester) async {
+    var requests = 0;
+    Get.put(RequestService(
+      client: MockClient((_) async {
+        requests++;
+        if (requests == 1) return http.Response('unavailable', 503);
+        if (requests == 3) return http.Response('<main></main>', 200);
+        return http.Response(_genreMarkup, 200);
+      }),
+    ));
+    await tester.pumpWidget(const GetMaterialApp(home: _OpenGenre()));
+
+    await tester.tap(find.text('Open genre'));
+    await tester.pumpAndSettle();
+    expect(find.text('We could not load this page.'), findsOneWidget);
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SearchedResultAnimeCard), findsOneWidget);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(find.text('No more titles in this genre.'), findsOneWidget);
+    expect(
+        tester
+            .widget<InkWell>(find.ancestor(
+              of: find.text('Next'),
+              matching: find.byType(InkWell),
+            ))
+            .onTap,
+        isNull);
+
+    await tester.tap(find.text('Prev'));
+    await tester.pumpAndSettle();
+    expect(find.byType(SearchedResultAnimeCard), findsOneWidget);
+  });
 }
 
 class _OpenGenre extends StatelessWidget {

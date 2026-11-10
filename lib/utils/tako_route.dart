@@ -18,8 +18,6 @@ import 'routes.dart';
 /// [TakoRoute] holds a list of all accessible app screens. In order for any new
 /// screen to be properly detected, it needs to be registered here first.
 class TakoRoute {
-  TakoRoute._();
-
   static final pages = [
     GetPage(
       name: Routes.mainScreen,

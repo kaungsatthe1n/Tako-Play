@@ -26,7 +26,7 @@ Current iPhone simulator captures of the redesigned interface.
 - Search with recent-query history
 - Episode lists, saved titles, and watchlist progress
 - Genre browsing and pagination
-- External WebView player handoff with source-provided fallback URLs
+- Native HLS playback in BetterPlayer, with source-provided player fallbacks
 - Player-type and preferred-quality settings
 - Release update checks
 

@@ -26,7 +26,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(14),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -53,7 +53,7 @@ class SearchedResultAnimeCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: isDub ? Colors.orange : tkGradientBlue,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             isDub ? 'DUB' : 'SUB',

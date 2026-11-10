@@ -95,6 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 autofocus: true,
                 controller: _controller,
                 textInputAction: TextInputAction.search,
+                onTapOutside: (_) => FocusScope.of(context).unfocus(),
                 onSubmitted: (value) {
                   final query = value.trim();
                   if (query.isEmpty) return;

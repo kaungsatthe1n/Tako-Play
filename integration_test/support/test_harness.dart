@@ -10,7 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tako_play/database/bookmark_database.dart';
 import 'package:tako_play/database/recent_watch_anime_database.dart';
 import 'package:tako_play/helpers/bookmark_manager.dart';
-import 'package:tako_play/helpers/media_quality_manager.dart';
 import 'package:tako_play/helpers/network_manager.dart';
 import 'package:tako_play/helpers/recent_watch_manager.dart';
 import 'package:tako_play/helpers/update_manager.dart';
@@ -110,7 +109,6 @@ class FixtureBinding extends Bindings {
       permanent: true,
     );
     Get.put<WebViewManager>(WebViewManager(), permanent: true);
-    Get.put<MediaQualityManager>(MediaQualityManager(), permanent: true);
     Get.put<NetworkManager>(_OnlineNetworkManager(), permanent: true);
     Get.put<BookMarkManager>(
       BookMarkManager(database: _MemoryBookmarkStore()),
@@ -189,7 +187,7 @@ class _FixtureCatalog {
   Future<http.Response> handle(http.BaseRequest request) async {
     final uri = request.url;
     if (uri.host == 'api.github.com') {
-      return http.Response('{"tag_name":"v1.7.0","assets":[]}', 200);
+      return http.Response('{"tag_name":"v1.8.0","assets":[]}', 200);
     }
 
     if (request.method == 'POST' && uri.path == '/wp-admin/admin-ajax.php') {

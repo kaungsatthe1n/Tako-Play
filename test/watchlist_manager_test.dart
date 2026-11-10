@@ -47,6 +47,27 @@ void main() {
     expect(manager.animeList, isEmpty);
     expect(store.removeAllCalls, 1);
   });
+
+  test('managers load their existing stores into UI state', () async {
+    final bookmarks = _BookmarkStore()
+      ..items.add(BookMark(
+        id: 'saved',
+        name: 'Saved',
+        animeUrl: '/saved',
+        imageUrl: '',
+      ));
+    final recents = _RecentStore()..items.add(_recent('recent', 'Episode 9'));
+
+    final bookmarkManager = BookMarkManager(database: bookmarks);
+    final recentManager = RecentWatchManager(database: recents);
+    await bookmarkManager.loadBookMarksFromDatabase();
+    await recentManager.loadRecentAnimeFromDatabase();
+
+    expect(bookmarkManager.ids, ['saved']);
+    expect(recentManager.animeList.single.currentEp, 'Episode 9');
+    await recentManager.removeAnime('recent');
+    expect(recentManager.animeList, isEmpty);
+  });
 }
 
 RecentAnime _recent(String id, String episode) => RecentAnime(
