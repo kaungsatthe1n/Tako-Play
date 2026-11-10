@@ -20,6 +20,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
   WebViewController? _webViewController;
   var _hasReleasedWebView = false;
   var _isClosing = false;
+  var _isLandscape = false;
 
   List<String> get _mediaUrls {
     final arguments = Get.arguments;
@@ -86,6 +87,8 @@ class _WebViewScreenState extends State<WebViewScreen> {
         body: Center(
           child: OrientationBuilder(
             builder: (context, orientation) {
+              _updatePlayerOrientation(orientation);
+
               // Keep the compact portrait player from the v1.6.3 design.
               // Landscape expands to a familiar 16:9 viewing surface.
               final aspectRatio =
@@ -116,38 +119,24 @@ class _WebViewScreenState extends State<WebViewScreen> {
                         ),
                       ),
                     Positioned(
-                      top: 8,
-                      left: 8,
-                      child: SafeArea(
-                        child: Semantics(
-                          button: true,
-                          label: 'Back to episode details',
-                          child: Material(
-                            color: Colors.black.withValues(alpha: 0.62),
-                            shape: const CircleBorder(),
+                      bottom: 0,
+                      left: 0,
+                      right: 10,
+                      child: SizedBox(
+                        height: 50,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Semantics(
+                            button: true,
+                            label: 'Toggle fullscreen orientation',
                             child: IconButton(
-                              tooltip: 'Back',
-                              onPressed: _closePlayerAndPop,
+                              tooltip: 'Toggle fullscreen orientation',
+                              onPressed: _toggleOrientation,
                               icon: const Icon(
-                                Icons.arrow_back_rounded,
-                                color: Colors.white,
+                                Icons.zoom_out_map_outlined,
+                                color: Colors.transparent,
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      right: 10,
-                      bottom: 8,
-                      child: SafeArea(
-                        child: Semantics(
-                          button: true,
-                          label: 'Toggle fullscreen orientation',
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: _toggleOrientation,
-                            child: const SizedBox(width: 56, height: 56),
                           ),
                         ),
                       ),
@@ -163,16 +152,29 @@ class _WebViewScreenState extends State<WebViewScreen> {
   }
 
   Future<void> _toggleOrientation() async {
-    final isLandscape =
-        MediaQuery.orientationOf(context) == Orientation.landscape;
     await SystemChrome.setPreferredOrientations(
-      isLandscape
+      _isLandscape
           ? [DeviceOrientation.portraitUp]
           : [
               DeviceOrientation.landscapeLeft,
               DeviceOrientation.landscapeRight,
             ],
     );
+  }
+
+  void _updatePlayerOrientation(Orientation orientation) {
+    final isLandscape = orientation == Orientation.landscape;
+    if (_isLandscape == isLandscape) return;
+
+    _isLandscape = isLandscape;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        SystemChrome.setEnabledSystemUIMode(
+          isLandscape ? SystemUiMode.immersiveSticky : SystemUiMode.edgeToEdge,
+        ),
+      );
+    });
   }
 
   Future<void> _releaseWebView() async {
@@ -195,11 +197,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
     if (_isClosing) return;
     _isClosing = true;
     unawaited(_releaseWebView());
-  }
-
-  void _closePlayerAndPop() {
-    _releasePlayerInBackground();
-    Navigator.of(context).maybePop();
   }
 
   Widget _invalidEmbed() => Scaffold(
