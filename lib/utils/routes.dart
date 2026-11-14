@@ -4,6 +4,7 @@ class Routes {
   static const String mainScreen = '/';
   static const String homeScreen = '/home';
   static const String searchScreen = '/search';
+  static const String catalogGridScreen = '/catalog-grid';
   static const String videoListScreen = '/video-list';
   static const String aboutAppScreen = '/about-app';
   static const String mediaFetchScreen = '/media-fetch';
@@ -14,5 +15,5 @@ class Routes {
   static const String videoPlayerScreen = '/video-player';
   static const String settingsScreen = '/settings';
   static const String genreScreen = '/genre';
-  static const String genreSelectionScreen = '/genreSelection'; 
+  static const String genreSelectionScreen = '/genreSelection';
 }

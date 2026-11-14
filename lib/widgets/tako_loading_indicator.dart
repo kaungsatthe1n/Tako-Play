@@ -20,7 +20,7 @@ class TakoLoadingIndicator extends StatelessWidget {
             child: CircularProgressIndicator(
               strokeWidth: size > 40 ? 4 : 3,
               strokeCap: StrokeCap.round,
-              color: tkCoral,
+              color: tkGradientBlue,
               backgroundColor: tkGradientBlue.withValues(alpha: .18),
             ),
           ),

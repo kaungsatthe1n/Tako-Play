@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
@@ -41,17 +42,17 @@ void main() {
     await tester.pump();
 
     expect(find.text('Discover'), findsOneWidget);
-    await tester.tap(find.text('Saved'));
+    await tester.tap(find.byIcon(Icons.bookmark_border_rounded));
     await tester.pumpAndSettle();
     expect(find.text('My library'), findsOneWidget);
     expect(find.text('Your Saved list is empty'), findsOneWidget);
 
-    await tester.tap(find.text('Watchlist'));
+    await tester.tap(find.byIcon(Icons.play_circle_outline_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Continue watching'), findsOneWidget);
     expect(find.text('Nothing in your watchlist yet'), findsOneWidget);
 
-    await tester.tap(find.text('Home'));
+    await tester.tap(find.byIcon(Icons.home_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Discover'), findsOneWidget);
   });

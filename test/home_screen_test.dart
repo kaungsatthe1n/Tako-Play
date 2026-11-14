@@ -1,8 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:tako_play/database/bookmark_database.dart';
+import 'package:tako_play/helpers/bookmark_manager.dart';
 import 'package:tako_play/helpers/update_manager.dart';
+import 'package:tako_play/models/bookmark.dart';
 import 'package:tako_play/screens/home_screen.dart';
 import 'package:tako_play/services/request_service.dart';
 
@@ -12,6 +16,7 @@ void main() {
 
   testWidgets('renders completed popular, new episode, and movie rails',
       (tester) async {
+    Get.put(BookMarkManager(database: _BookmarkStore()));
     final requestService = RequestService(
       client: MockClient((request) async {
         if (request.url.host.contains('github')) {
@@ -33,7 +38,9 @@ void main() {
     Get.put(requestService);
     Get.put(UpdateManager(requestService: requestService));
 
-    await tester.pumpWidget(const GetMaterialApp(home: HomeScreen()));
+    await tester.pumpWidget(
+      const GetMaterialApp(home: Scaffold(body: HomeScreen())),
+    );
     expect(find.text('Popular now'), findsOneWidget);
     expect(find.text('New episodes'), findsOneWidget);
     expect(find.text('Movies'), findsOneWidget);
@@ -42,4 +49,15 @@ void main() {
     expect(find.text('Featured show'), findsNWidgets(2));
     expect(find.text('Movie night'), findsOneWidget);
   });
+}
+
+class _BookmarkStore implements BookmarkStore {
+  @override
+  Future<int> delete(String id) async => 0;
+
+  @override
+  Future<List<BookMark>> getAllBookMarks() async => [];
+
+  @override
+  Future<void> insert(BookMark bookMark) async {}
 }

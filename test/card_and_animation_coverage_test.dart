@@ -36,7 +36,7 @@ void main() {
       (tester) async {
     await pumpCards(tester, const PopularAnimeCard(anime: _anime));
 
-    expect(find.text('TRENDING'), findsOneWidget);
+    expect(find.text('POPULAR'), findsOneWidget);
     expect(find.text('Coverage title'), findsOneWidget);
 
     await tester.tap(find.byType(PopularAnimeCard));
@@ -48,8 +48,8 @@ void main() {
       (tester) async {
     await pumpCards(tester, const MovieCard(anime: _anime));
 
-    expect(find.text('FEATURE FILM'), findsOneWidget);
-    expect(find.text('Play movie'), findsOneWidget);
+    expect(find.text('MOVIE'), findsOneWidget);
+    expect(find.text('Watch'), findsOneWidget);
 
     await tester.tap(find.byType(MovieCard));
     await tester.pumpAndSettle();

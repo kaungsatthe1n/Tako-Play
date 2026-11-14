@@ -53,6 +53,7 @@ class PopularAnimeCard extends StatelessWidget {
                               key: ValueKey(anime.imageUrl),
                               cacheManager: CustomCacheManager.instance,
                               fit: BoxFit.cover,
+                              filterQuality: FilterQuality.medium,
                               imageUrl: anime.imageUrl,
                               errorWidget: (_, __, ___) =>
                                   const ColoredBox(color: tkGrey),
@@ -80,7 +81,7 @@ class PopularAnimeCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
-                            'TRENDING',
+                            'POPULAR',
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w800,
@@ -94,7 +95,7 @@ class PopularAnimeCard extends StatelessWidget {
                         left: 12,
                         child: Text(
                           anime.name.toString(),
-                          maxLines: 2,
+                          maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white,

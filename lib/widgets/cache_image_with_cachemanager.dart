@@ -13,13 +13,18 @@ class NetworkImageWithCacheManager extends StatelessWidget {
     if (imageUrl.isEmpty) {
       return const ColoredBox(color: tkGrey);
     }
+    final displayUrl = imageUrl.replaceFirst(
+      RegExp(r'/poster-sm/w_\d+/h_\d+/'),
+      '/poster/w_360/h_480/',
+    );
     return CachedNetworkImage(
       cacheManager: CustomCacheManager.instance,
       errorWidget: (context, _, widget) {
         return const Icon(Icons.error_sharp);
       },
-      imageUrl: imageUrl,
+      imageUrl: displayUrl,
       fit: BoxFit.cover,
+      filterQuality: FilterQuality.medium,
     );
   }
 }

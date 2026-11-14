@@ -107,8 +107,9 @@ void main() {
     expect(find.text('1 - 50'), findsOneWidget);
     expect(find.text('51 - 51'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Save'));
-    await tester.tap(find.text('Save'));
+    final bookmarkButton = find.byIcon(Icons.bookmark_border_rounded);
+    await tester.ensureVisible(bookmarkButton);
+    await tester.tap(bookmarkButton);
     await tester.pump();
     expect(bookmarks.ids, ['test-title']);
     Get.closeAllSnackbars();
@@ -122,6 +123,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Media fetch'), findsOneWidget);
     expect(recents.animeList.single.currentEp, 'Episode 51');
+  });
+
+  testWidgets('animates episode tiles only after changing the range',
+      (tester) async {
+    _registerManagers();
+    Get.put(RequestService(
+      client: MockClient((_) async => http.Response(_sourceDetailsMarkup, 200)),
+    ));
+    await tester.pumpWidget(const GetMaterialApp(home: _OpenDetails()));
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+
+    final tileAnimations = find.byWidgetPredicate(
+      (widget) => widget is TweenAnimationBuilder<double>,
+    );
+    expect(tileAnimations, findsNothing);
+
+    await tester.tap(find.text('51 - 51'));
+    await tester.pump();
+    expect(tileAnimations, findsWidgets);
+
+    await tester.tap(find.text('1 - 50'));
+    await tester.pump();
+    expect(tileAnimations, findsWidgets);
+
+    await tester.pump(const Duration(milliseconds: 501));
+    expect(tileAnimations, findsNothing);
   });
 
   testWidgets('retries a failed detail request', (tester) async {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -6,6 +8,7 @@ import '../helpers/bookmark_manager.dart';
 import '../helpers/recent_watch_manager.dart';
 import '../models/anime.dart';
 import '../models/bookmark.dart';
+import '../models/playback_context.dart';
 import '../models/recent_anime.dart';
 import '../services/anime_service.dart';
 import '../services/request_service.dart';
@@ -28,16 +31,19 @@ class VideoListScreen extends StatefulWidget {
 class _VideoListScreenState extends State<VideoListScreen> {
   final RecentWatchManager recentWatchManager = Get.find();
   final BookMarkManager bookMarkManager = Get.find();
-  var selectedIndex = 9999999.obs;
   late final Anime _routeAnime;
   late final String name;
   late final String imageUrl;
   late final String animeUrl;
+  late final AnimeService _animeService;
+  Anime? _cachedAnimeDetails;
   late Future<Anime> _animeDetails;
   bool hasRemainingEp = false;
   int remainingEp = 0;
   int totalChipCount = 0;
   RxList<Episode> epChunkList = <Episode>[].obs;
+  Timer? _rangeAnimationTimer;
+  var _animateEpisodeTiles = false;
   String start = '';
   String end = '';
   int finalChipCount = 0;
@@ -46,10 +52,21 @@ class _VideoListScreenState extends State<VideoListScreen> {
   @override
   void initState() {
     super.initState();
-    _routeAnime = Get.arguments['anime'] as Anime;
+    final routeArguments = Map<String, dynamic>.from(Get.arguments as Map);
+    _routeAnime = routeArguments['anime'] as Anime;
     name = _routeAnime.name;
     imageUrl = _routeAnime.imageUrl;
     animeUrl = _routeAnime.animeUrl;
+    _animeService = AnimeService(
+      requestService: Get.find<RequestService>(),
+    );
+    _cachedAnimeDetails = _animeService.cachedAnimeDetails(animeUrl);
+    if (_cachedAnimeDetails != null) {
+      _prepareEpisodeState(_cachedAnimeDetails!);
+    }
+    // Episode selection is shared with playback history, including when the
+    // user opens this title before visiting the Watchlist tab.
+    recentWatchManager.loadRecentAnimeFromDatabase();
     _animeDetails = _loadAnimeDetails();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -57,21 +74,29 @@ class _VideoListScreenState extends State<VideoListScreen> {
   }
 
   Future<Anime> _loadAnimeDetails() async {
-    final anime = await AnimeService(
-      requestService: Get.find<RequestService>(),
-    ).fetchAnimeDetails(animeUrl);
+    final anime = await _animeService.fetchAnimeDetails(animeUrl);
     _prepareEpisodeState(anime);
     return anime;
   }
 
   void _prepareEpisodeState(Anime anime) {
+    unawaited(recentWatchManager.loadEpisodeProgressForAnime(anime.id));
     final episodes = anime.episodes;
     final episodeCount = episodes.length;
     hasRemainingEp = episodeCount % 50 != 0;
     remainingEp = episodeCount % 50;
     totalChipCount = (episodeCount / 50).ceil();
     finalChipCount = totalChipCount;
-    epChunkList.value = episodes.take(50).toList(growable: false);
+    final lastChipIndex = totalChipCount > 0 ? totalChipCount - 1 : 0;
+    final activeChipIndex =
+        selectedChipIndex.value.clamp(0, lastChipIndex).toInt();
+    if (activeChipIndex != selectedChipIndex.value) {
+      selectedChipIndex.value = activeChipIndex;
+    }
+    final rangeStart = activeChipIndex * 50;
+    final rangeEnd = (rangeStart + 50).clamp(0, episodeCount).toInt();
+    epChunkList.value =
+        episodes.sublist(rangeStart, rangeEnd).toList(growable: false);
   }
 
   void _retryAnimeDetails() {
@@ -83,6 +108,7 @@ class _VideoListScreenState extends State<VideoListScreen> {
 
   @override
   void dispose() {
+    _rangeAnimationTimer?.cancel();
     super.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: SystemUiOverlay.values);
@@ -104,12 +130,10 @@ class _VideoListScreenState extends State<VideoListScreen> {
         extendBodyBehindAppBar: true,
         body: FutureBuilder<Anime>(
             future: _animeDetails,
+            initialData: _cachedAnimeDetails,
             builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return buildErrorWidget();
-              }
-              if (snapshot.connectionState == ConnectionState.done) {
-                final anime = snapshot.data!;
+              final anime = snapshot.data;
+              if (anime != null) {
                 return Stack(
                   fit: StackFit.expand,
                   children: [
@@ -119,7 +143,9 @@ class _VideoListScreenState extends State<VideoListScreen> {
                   ],
                 );
               } else {
-                return buildLoadingWidget();
+                return snapshot.hasError
+                    ? buildErrorWidget()
+                    : buildLoadingWidget();
               }
             }),
       ),
@@ -173,10 +199,13 @@ class _VideoListScreenState extends State<VideoListScreen> {
             imageUrl: imageUrl,
           ),
           const SizedBox(height: 18),
+          _buildPlaybackActionRow(anime),
+          const SizedBox(height: 14),
           PlotSummary(
             summary: anime.summary,
           ),
-          buildEpisodeInfoRow(anime, name),
+          const SizedBox(height: 22),
+          buildEpisodeInfoRow(anime),
           const SizedBox(height: 14),
           buildEpisodeChipListView(anime),
           if (anime.episodes.length > 50) const SizedBox(height: 8),
@@ -186,37 +215,123 @@ class _VideoListScreenState extends State<VideoListScreen> {
     );
   }
 
-  Widget buildEpisodeInfoRow(Anime anime, String name) {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget buildEpisodeInfoRow(Anime anime) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('Episodes',
+            style: TakoTheme.darkTextTheme.headlineSmall?.copyWith(
+              fontSize: 21,
+              fontWeight: FontWeight.w800,
+            )),
+        const Text('Choose where to start',
+            style: TextStyle(color: tkMutedText, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildPlaybackActionRow(Anime anime) => Row(
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Episodes',
-                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
-              SizedBox(height: 3),
-              Text('Choose where to start',
-                  style: TextStyle(color: tkMutedText, fontSize: 12)),
-            ],
-          ),
-          GetBuilder<BookMarkManager>(
-            builder: (_) => TextButton.icon(
-              onPressed: () async => await onBookmarkButtonPressed(anime, name),
-              icon: Icon(
-                bookMarkManager.ids.contains(anime.id)
-                    ? Icons.bookmark
-                    : Icons.bookmark_border_outlined,
-                color: Colors.white,
-              ),
-              label: const Text('Save'),
+          Expanded(
+            child: GetBuilder<RecentWatchManager>(
+              builder: (manager) {
+                final recent = manager.currentEpisodeFor(anime.id);
+                final resumeIndex = recent == null
+                    ? -1
+                    : anime.episodes.indexWhere(
+                        (episode) => episode.link == recent.epUrl,
+                      );
+                final episode = anime.episodes.isEmpty
+                    ? null
+                    : anime.episodes[resumeIndex >= 0 ? resumeIndex : 0];
+                final label = episode == null
+                    ? 'Episodes unavailable'
+                    : resumeIndex >= 0
+                        ? 'Resume Episode ${episode.number}'
+                        : 'Play Episode ${episode.number}';
+                return FilledButton.icon(
+                  onPressed: episode == null
+                      ? null
+                      : () => _playEpisode(anime, episode),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: tkGradientBlue,
+                    foregroundColor: tkDarkerBlue,
+                    minimumSize: const Size(0, 56),
+                    shape: const StadiumBorder(),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 23),
+                  label: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TakoTheme.darkTextTheme.titleLarge?.copyWith(
+                      color: tkDarkerBlue,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
+          const SizedBox(width: 10),
+          GetBuilder<BookMarkManager>(
+            builder: (manager) {
+              final saved = manager.ids.contains(anime.id);
+              return Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: () => onBookmarkButtonPressed(anime, name),
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white30),
+                    ),
+                    child: Icon(
+                      saved
+                          ? Icons.bookmark_rounded
+                          : Icons.bookmark_border_rounded,
+                      size: 23,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ],
-      ),
+      );
+
+  Future<void> _playEpisode(Anime anime, Episode episode) async {
+    await recentWatchManager.loadEpisodeProgressForAnime(anime.id);
+    final progress = recentWatchManager.progressFor(anime.id, episode.link);
+    final resumePosition = progress == null || progress.percentage >= 100
+        ? null
+        : Duration(milliseconds: progress.positionMillis);
+    final recentAnime = RecentAnime(
+      id: anime.id,
+      name: name,
+      currentEp: 'Episode ${episode.number}',
+      imageUrl: imageUrl,
+      epUrl: episode.link,
+      animeUrl: animeUrl,
     );
+    await recentWatchManager.addAnimeToRecent(recentAnime);
+    await Get.toNamed(Routes.mediaFetchScreen, arguments: {
+      'animeUrl': episode.link,
+      'resumePosition': resumePosition,
+      'playbackContext': PlaybackContext(
+        id: anime.id,
+        name: name,
+        imageUrl: imageUrl,
+        animeUrl: animeUrl,
+        episodes: anime.episodes,
+        index: anime.episodes.indexOf(episode),
+      ),
+    });
   }
 
   Future<void> onBookmarkButtonPressed(Anime anime, String name) async {
@@ -293,8 +408,14 @@ class _VideoListScreenState extends State<VideoListScreen> {
   }
 
   void onEpisodeChipTapped(Anime anime, int index) {
+    if (selectedChipIndex.value == index) return;
+
     selectedChipIndex.value = index;
-    selectedIndex.value = 99999999;
+    _animateEpisodeTiles = true;
+    _rangeAnimationTimer?.cancel();
+    _rangeAnimationTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() => _animateEpisodeTiles = false);
+    });
     getEpisodeRange(index);
     if (finalChipCount == (index + 1)) {
       epChunkList.value = anime.episodes.sublist(int.parse(start) - 1);
@@ -307,18 +428,14 @@ class _VideoListScreenState extends State<VideoListScreen> {
   Widget buildEpisodesGridView(Anime anime) {
     return anime.episodes.isNotEmpty
         ? Obx(
-            () => GridView.builder(
+            () => ListView.separated(
               physics: const NeverScrollableScrollPhysics(),
               shrinkWrap: true,
               padding: EdgeInsets.zero,
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                maxCrossAxisExtent: 58,
-              ),
               itemCount: epChunkList.length,
               itemBuilder: (BuildContext context, int index) =>
-                  buildAnimatedEpisodeTile(anime, index),
+                  _buildEpisodeTileItem(anime, index),
+              separatorBuilder: (context, index) => const SizedBox(height: 9),
             ),
           )
         : Padding(
@@ -328,13 +445,19 @@ class _VideoListScreenState extends State<VideoListScreen> {
           );
   }
 
-  Widget buildAnimatedEpisodeTile(Anime anime, int index) {
+  Widget _buildEpisodeTileItem(Anime anime, int index) {
+    final tile = Obx(() => buildEpisodeTile(anime, index));
+    final key = ValueKey(epChunkList[index].link);
+    if (!_animateEpisodeTiles) {
+      return KeyedSubtree(key: key, child: tile);
+    }
+
     return TweenAnimationBuilder<double>(
-      key: ValueKey(epChunkList[index].link),
+      key: key,
       duration: Duration(milliseconds: 180 + (index.clamp(0, 12).toInt() * 22)),
       curve: Curves.easeOutCubic,
       tween: Tween(begin: 0, end: 1),
-      child: Obx(() => buildEpisodeTile(anime, index)),
+      child: tile,
       builder: (context, value, child) => Opacity(
         opacity: value,
         child: Transform.translate(
@@ -346,42 +469,141 @@ class _VideoListScreenState extends State<VideoListScreen> {
   }
 
   Widget buildEpisodeTile(Anime anime, int index) {
-    return Material(
-      borderRadius: BorderRadius.circular(14),
-      color: selectedIndex.value == index ? tkGradientBlue : tkDarkBlue,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () async {
-          selectedIndex.value = index;
-          final recentAnime = RecentAnime(
-            id: anime.id.toString(),
-            name: name,
-            currentEp: 'Episode ${epChunkList[index].number}',
-            imageUrl: imageUrl,
-            epUrl: epChunkList[index].link.toString(),
-            // animeUrl: animeUrl,
-          );
-          // Add to Recent Anime List
-          await recentWatchManager.addAnimeToRecent(recentAnime);
-          await Get.toNamed(Routes.mediaFetchScreen,
-              arguments: {'animeUrl': epChunkList[index].link.toString()});
-        },
-        splashColor: Colors.white,
-        child: Container(
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.white10),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Text(
-            epChunkList[index].number,
-            style: TakoTheme.darkTextTheme.bodyMedium!.copyWith(
-              fontWeight: FontWeight.w800,
-              color: selectedIndex.value == index ? Colors.white : tkMutedText,
+    final episode = epChunkList[index];
+    return GetBuilder<RecentWatchManager>(
+      builder: (manager) {
+        final isCurrentEpisode =
+            manager.currentEpisodeFor(anime.id)?.epUrl == episode.link;
+        final progress = manager.progressFor(anime.id, episode.link);
+        final percentage = progress?.percentage ?? 0;
+        final isComplete = percentage >= 100;
+        return Material(
+          borderRadius: BorderRadius.circular(18),
+          color: isCurrentEpisode
+              ? const Color(0xFF19172E)
+              : const Color(0xFF12121D),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => _playEpisode(anime, episode),
+            splashColor: Colors.white10,
+            child: Container(
+              constraints: const BoxConstraints(minHeight: 75),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isCurrentEpisode
+                      ? tkGradientBlue
+                      : const Color(0xFF29263F),
+                  width: isCurrentEpisode ? 1.4 : 1,
+                ),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isCurrentEpisode
+                          ? tkGradientBlue
+                          : isComplete
+                              ? tkGradientBlue.withValues(alpha: .2)
+                              : const Color(0xFF211F39),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: isComplete
+                        ? Icon(Icons.check_rounded,
+                            color: isCurrentEpisode
+                                ? tkDarkerBlue
+                                : tkGradientBlue,
+                            size: 21)
+                        : Text(
+                            episode.number,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TakoTheme.darkTextTheme.bodyMedium!.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color:
+                                  isCurrentEpisode ? tkDarkerBlue : tkMutedText,
+                            ),
+                          ),
+                  ),
+                  const SizedBox(width: 13),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Episode ${episode.number}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TakoTheme.darkTextTheme.bodyMedium!
+                                    .copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            if (isCurrentEpisode) ...[
+                              const SizedBox(width: 6),
+                              const Text('LAST PLAYED',
+                                  style: TextStyle(
+                                      color: Color(0xFFA89BFF),
+                                      fontSize: 12,
+                                      letterSpacing: .7,
+                                      fontWeight: FontWeight.w800)),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: LinearProgressIndicator(
+                            minHeight: 4,
+                            value: progress == null ? 0 : percentage / 100,
+                            backgroundColor: const Color(0xFF29263F),
+                            valueColor: AlwaysStoppedAnimation<Color>(isComplete
+                                ? const Color(0xFF68C9A0)
+                                : tkGradientBlue),
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          progress == null
+                              ? 'Not watched'
+                              : isComplete
+                                  ? 'Completed'
+                                  : '$percentage% watched',
+                          style: const TextStyle(
+                            color: tkMutedText,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Icon(
+                    isComplete
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.play_circle_outline_rounded,
+                    color: isCurrentEpisode
+                        ? const Color(0xFFA89BFF)
+                        : const Color(0xFFA6A3C4),
+                    size: 28,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

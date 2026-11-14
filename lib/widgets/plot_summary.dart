@@ -13,9 +13,9 @@ class PlotSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: tkDarkBlue.withValues(alpha: .78),
+        color: tkSurface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: tkSurfaceBorder),
       ),
       child: ExpansionTile(
         shape: const Border(),

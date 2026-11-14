@@ -28,7 +28,7 @@ void main() {
     await tapAndWait(tester, find.text('About TakoPlay'));
 
     expect(find.text('About'), findsOneWidget);
-    expect(find.text('v1.8.0'), findsOneWidget);
+    expect(find.text('v1.9.0'), findsOneWidget);
     await tapAndWait(tester, find.text('Check For Update '));
     expect(find.text('No update is available right now.'), findsOneWidget);
   });

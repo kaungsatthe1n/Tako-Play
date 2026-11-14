@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../helpers/webview_manager.dart';
+import '../models/playback_context.dart';
+import '../models/recent_anime.dart';
 import '../services/anime_service.dart';
 import '../services/playback_service.dart';
 import '../services/request_service.dart';
@@ -26,10 +28,14 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
   List<String> _embeddedMediaUrls = const <String>[];
   var _dynamicExtraction = false;
   var _handoffCompleted = false;
+  late final PlaybackContext? _playbackContext;
+  late final RecentAnime? _recentAnime;
 
   @override
   void initState() {
     super.initState();
+    _playbackContext = Get.arguments['playbackContext'] as PlaybackContext?;
+    _recentAnime = Get.arguments['recentAnime'] as RecentAnime?;
     _openEpisodePlayer();
   }
 
@@ -87,6 +93,11 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       'url': source.url,
       'headers': source.headers,
       'subtitles': source.subtitles,
+      'endingStart': source.endingStart,
+      'opening': source.opening,
+      'resumePosition': Get.arguments['resumePosition'],
+      'playbackContext': _playbackContext,
+      'recentAnime': _recentAnime,
     });
   }
 
@@ -137,11 +148,23 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
                   () => Text(
                     hasError.value
                         ? 'Episode can\'t be fetched'
-                        : 'Loading video…',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                        : 'Getting your episode ready…',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                Obx(
+                  () => Visibility(
+                    visible: !hasError.value,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Finding a stream and preparing playback',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: tkMutedText, fontSize: 12),
+                      ),
                     ),
                   ),
                 ),

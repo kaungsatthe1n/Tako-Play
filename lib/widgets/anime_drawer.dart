@@ -34,7 +34,7 @@ class AnimeDrawer extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'TakoPlay',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.dmSans(
                         fontSize: 23,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -.7,
@@ -106,24 +106,7 @@ class AnimeDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(24, 28, 24, 10),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text('EXPLORE',
-                    style: TextStyle(
-                      color: tkMutedText,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.1,
-                    )),
-              ),
-            ),
-            _DrawerItem(
-              icon: Icons.category_outlined,
-              label: 'Genres',
-              onTap: () => Get.toNamed(Routes.genreSelectionScreen),
-            ),
+            const SizedBox(height: 16),
             _DrawerItem(
               icon: Icons.tune_rounded,
               label: 'Settings',

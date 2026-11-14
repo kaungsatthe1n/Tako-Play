@@ -8,15 +8,11 @@ void main() {
   setUp(() => Get.testMode = true);
   tearDown(() async => Get.reset());
 
-  testWidgets('renders the navigation drawer and opens genres', (tester) async {
+  testWidgets('renders the drawer without a genres shortcut', (tester) async {
     await tester.pumpWidget(
       GetMaterialApp(
         home: const Scaffold(body: AnimeDrawer()),
         getPages: [
-          GetPage(
-            name: Routes.genreSelectionScreen,
-            page: () => const Scaffold(body: Text('Genres destination')),
-          ),
           GetPage(
             name: Routes.settingsScreen,
             page: () => const Scaffold(body: Text('Settings destination')),
@@ -32,12 +28,12 @@ void main() {
 
     expect(find.text('TakoPlay'), findsOneWidget);
     expect(find.text('Your anime space'), findsOneWidget);
-    expect(find.text('Genres'), findsOneWidget);
+    expect(find.text('Genres'), findsNothing);
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('About TakoPlay'), findsOneWidget);
 
-    await tester.tap(find.text('Genres'));
+    await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
-    expect(find.text('Genres destination'), findsOneWidget);
+    expect(find.text('Settings destination'), findsOneWidget);
   });
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Collection of all app related constants go here
 
-const String version = 'v1.8.0';
+const String version = 'v1.9.0';
 const license = 'MIT License';
 const String latestRelease =
     'https://api.github.com/repos/kaungsatthe1n/Tako-Play/releases/latest';
@@ -84,6 +84,8 @@ const String YURI = '$sourceBaseUrl/genres/yuri/';
 
 const Color tkDarkBlue = Color(0xFF15182B);
 const Color tkDarkerBlue = Color(0xFF090A12);
+const Color tkSurface = Color(0xFF12121D);
+const Color tkSurfaceBorder = Color(0xFF29263F);
 const Color tkDarkGreen = Color(0xFF1D4C4F);
 const Color tkGrey = Color(0xFF292C3C);
 const Color tkGradientBlue = Color(0xFF7867F7);

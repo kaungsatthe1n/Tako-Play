@@ -6,6 +6,8 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:http/http.dart' as http;
 
 import '../utils/constants.dart';
+import '../utils/subtitle_name.dart';
+import 'ending_timing_service.dart';
 
 /// Resolves an episode to a short-lived HLS URL issued by the app owner's API.
 ///
@@ -21,6 +23,8 @@ import '../utils/constants.dart';
 /// {
 ///   "url": "https://cdn.example.com/.../master.m3u8",
 ///   "headers": {},
+///   "endingStartSeconds": 1284.5,
+///   "opening": {"start": 86.4, "end": 111.2},
 ///   "subtitles": [
 ///     {"url": "https://cdn.example.com/.../en.vtt", "name": "English"}
 ///   ]
@@ -34,6 +38,7 @@ class PlaybackService {
 
   static const _configuredResolverUrl =
       String.fromEnvironment('PLAYBACK_RESOLVER_URL');
+  static const _playerCandidateHedgeDelay = Duration(milliseconds: 350);
   final http.Client _client;
   final bool _ownsClient;
   final String _resolverUrl;
@@ -106,7 +111,16 @@ class PlaybackService {
       return PlaybackSource(
         url: streamUrl,
         headers: headers,
-        subtitles: _subtitlesFromResolverResponse(decoded, headers),
+        subtitles: preferEnglishSubtitle(
+          _subtitlesFromResolverResponse(decoded, headers),
+        ),
+        endingStart: parseEndingIntervalStart(decoded['ending']) ??
+            parseEndingStart(decoded['endingStartSeconds']),
+        opening: parseOpeningInterval(decoded['opening']) ??
+            parseOpeningTimes(
+              decoded['openingStartSeconds'],
+              decoded['openingEndSeconds'],
+            ),
       );
     } on TimeoutException {
       throw const PlaybackResolutionException('Playback API timed out.');
@@ -134,22 +148,75 @@ class PlaybackService {
     }
 
     try {
-      PlaybackResolutionException? lastError;
-      for (final playerUrl in playerUrls) {
-        try {
-          return await _resolveEmbeddedPlayer(playerUrl, episodeUri);
-        } on PlaybackResolutionException catch (error) {
-          lastError = error;
-        }
+      final candidates = playerUrls.toList(growable: false);
+      if (candidates.isEmpty) {
+        throw const PlaybackResolutionException(
+          'No playable HLS source was found in the embedded players.',
+        );
       }
-
-      throw lastError ??
-          const PlaybackResolutionException(
-            'No playable HLS source was found in the embedded players.',
-          );
+      return await _resolveFirstPlayableCandidate(candidates, episodeUri);
     } finally {
       if (_ownsClient) _client.close();
     }
+  }
+
+  /// Starts the provider's first candidate immediately, then hedges against
+  /// slow or unavailable servers. This preserves the provider's priority when
+  /// it is healthy without making every fallback wait for a full request
+  /// timeout.
+  Future<PlaybackSource> _resolveFirstPlayableCandidate(
+    List<String> candidates,
+    Uri episodeUri,
+  ) {
+    final result = Completer<PlaybackSource>();
+    var failedCandidates = 0;
+    PlaybackResolutionException? lastError;
+
+    for (var index = 0; index < candidates.length; index++) {
+      final playerUrl = candidates[index];
+      unawaited(() async {
+        if (index > 0) {
+          await Future<void>.delayed(
+            Duration(
+              milliseconds: _playerCandidateHedgeDelay.inMilliseconds * index,
+            ),
+          );
+        }
+        if (result.isCompleted) return;
+
+        try {
+          final source = await _resolveEmbeddedPlayer(playerUrl, episodeUri);
+          if (!result.isCompleted) result.complete(source);
+        } on PlaybackResolutionException catch (error) {
+          lastError = error;
+          _completeAfterCandidateFailure(
+              result, ++failedCandidates, candidates.length, lastError);
+        } catch (_) {
+          lastError = const PlaybackResolutionException(
+            'An embedded player could not be resolved.',
+          );
+          _completeAfterCandidateFailure(
+              result, ++failedCandidates, candidates.length, lastError);
+        }
+      }());
+    }
+
+    return result.future;
+  }
+
+  void _completeAfterCandidateFailure(
+    Completer<PlaybackSource> result,
+    int failedCandidates,
+    int candidateCount,
+    PlaybackResolutionException? lastError,
+  ) {
+    if (failedCandidates != candidateCount || result.isCompleted) return;
+    result.completeError(
+      lastError ??
+          const PlaybackResolutionException(
+            'No playable HLS source was found in the embedded players.',
+          ),
+    );
   }
 
   Future<PlaybackSource> _resolveEmbeddedPlayer(
@@ -216,13 +283,15 @@ class PlaybackService {
           'Referer': resolvedPlayerUri.removeFragment().toString(),
           'User-Agent': userAgent,
         },
-        subtitles: _subtitlesFromPlayerResponse(
-          response,
-          resolvedPlayerUri,
-          headers: {
-            'Referer': resolvedPlayerUri.removeFragment().toString(),
-            'User-Agent': userAgent,
-          },
+        subtitles: preferEnglishSubtitle(
+          _subtitlesFromPlayerResponse(
+            response,
+            resolvedPlayerUri,
+            headers: {
+              'Referer': resolvedPlayerUri.removeFragment().toString(),
+              'User-Agent': userAgent,
+            },
+          ),
         ),
       );
     } on TimeoutException {
@@ -466,9 +535,10 @@ class PlaybackService {
         metadata?['name'] ?? metadata?['label'] ?? metadata?['language'];
     return PlaybackSubtitle(
       url: subtitleUri.toString(),
-      name: rawName is String && rawName.trim().isNotEmpty
-          ? rawName.trim()
-          : 'Subtitles',
+      name: subtitleDisplayName(
+        rawName is String ? rawName : null,
+        subtitleUri.toString(),
+      ),
       headers: subtitleHeaders,
       selectedByDefault: metadata?['default'] == true ||
           metadata?['selectedByDefault'] == true,
@@ -483,11 +553,18 @@ class PlaybackService {
     return subtitles
         .where((subtitle) => urls.add(subtitle.url))
         .map((subtitle) {
-      if (subtitle.name != 'Subtitles') return subtitle;
+      if (!RegExp(r'^Subtitle\s*\d+$', caseSensitive: false)
+          .hasMatch(subtitle.name)) {
+        return subtitle;
+      }
       unnamedTrackNumber += 1;
       return PlaybackSubtitle(
         url: subtitle.url,
-        name: 'Subtitle $unnamedTrackNumber',
+        name: subtitleDisplayName(
+          subtitle.name,
+          subtitle.url,
+          fallbackIndex: unnamedTrackNumber,
+        ),
         headers: subtitle.headers,
         selectedByDefault: subtitle.selectedByDefault,
       );
@@ -542,12 +619,62 @@ class PlaybackSource {
     required this.url,
     required this.headers,
     this.subtitles = const [],
+    this.endingStart,
+    this.opening,
   });
 
   final String url;
   final Map<String, String> headers;
   final List<PlaybackSubtitle> subtitles;
+  final Duration? endingStart;
+  final SkipInterval? opening;
 }
+
+SkipInterval? parseOpeningInterval(dynamic value) {
+  if (value is List && value.length >= 2) {
+    return parseOpeningTimes(value[0], value[1]);
+  }
+  if (value is! Map) return null;
+  return parseOpeningTimes(
+    value['start'] ?? value['startTime'] ?? value[0],
+    value['end'] ?? value['endTime'] ?? value[1],
+  );
+}
+
+SkipInterval? parseOpeningTimes(dynamic start, dynamic end) {
+  if (start is! num || end is! num || !start.isFinite || !end.isFinite) {
+    return null;
+  }
+  if (start < 0 || end <= start || end > 600) return null;
+  return SkipInterval(
+    start: Duration(milliseconds: (start * 1000).round()),
+    end: Duration(milliseconds: (end * 1000).round()),
+  );
+}
+
+Duration? parseEndingIntervalStart(dynamic value) {
+  if (value is List && value.length >= 2) {
+    return _parseEndingInterval(value[0], value[1]);
+  }
+  if (value is! Map) return null;
+  final start = value['start'] ?? value['startTime'] ?? value[0];
+  final end = value['end'] ?? value['endTime'] ?? value[1];
+  return _parseEndingInterval(start, end);
+}
+
+Duration? _parseEndingInterval(dynamic start, dynamic end) {
+  if (start is! num || end is! num || !start.isFinite || !end.isFinite) {
+    return null;
+  }
+  if (start < 0 || end <= start || end >= 86400) return null;
+  return Duration(milliseconds: (start * 1000).round());
+}
+
+/// Optional resolver metadata uses seconds from the start of this exact video.
+Duration? parseEndingStart(dynamic value) =>
+    value is num && value.isFinite && value > 0 && value < 86400
+        ? Duration(milliseconds: (value * 1000).round())
+        : null;
 
 class PlaybackSubtitle {
   const PlaybackSubtitle({
@@ -555,12 +682,37 @@ class PlaybackSubtitle {
     required this.name,
     required this.headers,
     this.selectedByDefault = false,
+    this.content,
   });
 
   final String url;
   final String name;
   final Map<String, String> headers;
   final bool selectedByDefault;
+  final String? content;
+}
+
+/// Marks the first English subtitle as the default when one is available.
+/// If the episode has no English track, provider defaults are preserved.
+List<PlaybackSubtitle> preferEnglishSubtitle(
+  Iterable<PlaybackSubtitle> subtitles,
+) {
+  final tracks = subtitles.toList(growable: false);
+  final englishIndex = tracks.indexWhere(
+    (subtitle) => isEnglishSubtitleName(subtitle.name),
+  );
+  if (englishIndex < 0) return tracks;
+
+  return [
+    for (var index = 0; index < tracks.length; index++)
+      PlaybackSubtitle(
+        url: tracks[index].url,
+        name: tracks[index].name,
+        headers: tracks[index].headers,
+        selectedByDefault: index == englishIndex,
+        content: tracks[index].content,
+      ),
+  ];
 }
 
 class PlaybackResolutionException implements Exception {

@@ -27,12 +27,8 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
           margin: const EdgeInsets.only(right: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF222743), tkDarkBlue],
-            ),
-            border: Border.all(color: Colors.white12),
+            color: const Color(0xFF12121D),
+            border: Border.all(color: const Color(0xFF29263F)),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x45000000),
@@ -46,7 +42,9 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
+                SizedBox(
+                  height: 194,
+                  width: double.infinity,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Stack(
@@ -58,6 +56,7 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                                 key: ValueKey(anime.imageUrl),
                                 cacheManager: CustomCacheManager.instance,
                                 fit: BoxFit.cover,
+                                filterQuality: FilterQuality.medium,
                                 imageUrl: anime.imageUrl,
                                 errorWidget: (_, __, ___) =>
                                     const ColoredBox(color: tkGrey),
@@ -122,7 +121,7 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 Text(
                   anime.currentEp.isNotEmpty
                       ? anime.currentEp.replaceFirst('EP', 'Episode')
@@ -136,12 +135,17 @@ class RecentlyAddedAnimeCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 3),
-                Text(
-                  anime.name.toString(),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w800),
+                SizedBox(
+                  height: 36,
+                  child: Text(
+                    anime.name.toString(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 4),
               ],

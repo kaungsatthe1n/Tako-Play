@@ -18,6 +18,43 @@ void main() {
   });
   tearDown(() async => directory.delete(recursive: true));
 
+  test('v2 history gains detail URLs without losing existing watch history',
+      () async {
+    final path = '${directory.path}/recent-v2.db';
+    final legacy = await factory.openDatabase(path,
+        options: OpenDatabaseOptions(
+          version: 2,
+          onCreate: (db, _) => db.execute('''
+        CREATE TABLE RecentAnime(id TEXT PRIMARY KEY, name TEXT NOT NULL,
+          epUrl TEXT NOT NULL, currentEp TEXT NOT NULL, imageUrl TEXT NOT NULL,
+          watchedAt INTEGER NOT NULL)
+      '''),
+        ));
+    await legacy.insert('RecentAnime', {
+      'id': 'show',
+      'name': 'Show',
+      'epUrl': '/ep1',
+      'currentEp': 'Episode 1',
+      'imageUrl': '',
+      'watchedAt': 123
+    });
+    await legacy.close();
+    final store = RecentWatchAnimeDatabase.withDatabaseFactory(
+        databaseFactory: factory, databasePath: path);
+    final old = (await store.getAllRecentAnime()).single;
+    expect(old.currentEp, 'Episode 1');
+    expect(old.animeUrl, '');
+    await store.insert(RecentAnime(
+        id: 'show',
+        name: 'Show',
+        epUrl: '/ep2',
+        currentEp: 'Episode 2',
+        imageUrl: '',
+        animeUrl: '/show'));
+    expect((await store.getAllRecentAnime()).single.animeUrl, '/show');
+    await store.close();
+  });
+
   test('bookmark database migrates legacy duplicates and upserts safely',
       () async {
     final path = '${directory.path}/bookmarks.db';

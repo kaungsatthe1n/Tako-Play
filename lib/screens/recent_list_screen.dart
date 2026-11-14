@@ -85,6 +85,7 @@ class _RecentListScreenState extends State<RecentListScreen>
                   id: item.id,
                   currentEp: item.currentEp,
                   epUrl: item.epUrl,
+                  animeUrl: item.animeUrl,
                   name: item.name,
                   imageUrl: item.imageUrl,
                 ),

@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import '../screens/about_app_screen.dart';
+import '../screens/catalog_grid_screen.dart';
 import '../screens/genre_screen.dart';
 import '../screens/genre_selection_screen.dart';
 import '../screens/home_screen.dart';
@@ -34,6 +35,11 @@ class TakoRoute {
     GetPage(
       name: Routes.searchScreen,
       page: () => const SearchScreen(),
+    ),
+    GetPage(
+      name: Routes.catalogGridScreen,
+      page: () => const CatalogGridScreen(),
+      transition: Transition.cupertino,
     ),
     GetPage(
       name: Routes.recentListScreen,
