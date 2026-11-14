@@ -17,15 +17,16 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(UpdateAlertDialog), findsOneWidget);
-    expect(find.text('Update available'), findsOneWidget);
-    expect(find.text('NEW RELEASE'), findsOneWidget);
+    expect(find.text('A new version is ready'), findsOneWidget);
+    expect(find.text('STABLE RELEASE'), findsOneWidget);
     expect(
-      find.text('Update now to get the latest improvements and fixes.'),
+      find.text(
+          'Get the latest improvements and fixes with the newest release.'),
       findsOneWidget,
     );
-    expect(find.widgetWithText(FilledButton, 'Update now'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'View release'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Not now'));
+    await tester.tap(find.byTooltip('Close update prompt'));
     await tester.pumpAndSettle();
     expect(find.byType(UpdateAlertDialog), findsNothing);
   });

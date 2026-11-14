@@ -43,6 +43,7 @@ class AboutAppScreen extends StatelessWidget {
               if (updateManager.isUpdateAvailable) {
                 await Get.dialog(UpdateAlertDialog(
                   downloadLink: updateManager.downloadLink!,
+                  isDirectApkDownload: updateManager.usesApkDownload,
                 ));
               } else {
                 await Get.dialog(const AlertDialog(

@@ -5,7 +5,7 @@ class RecentAnime {
     required this.epUrl,
     required this.name,
     required this.imageUrl,
-    // required this.animeUrl,
+    this.animeUrl = '',
   });
 
   final String id;
@@ -13,7 +13,7 @@ class RecentAnime {
   final String epUrl;
   final String currentEp;
   final String imageUrl;
-  // String animeUrl;
+  final String animeUrl;
 
   factory RecentAnime.fromJson(Map<String, dynamic> json) => RecentAnime(
         id: json['id'],
@@ -21,7 +21,7 @@ class RecentAnime {
         epUrl: json['epUrl'],
         currentEp: json['currentEp'],
         imageUrl: json['imageUrl'],
-        // animeUrl: json['animeUrl'],
+        animeUrl: json['animeUrl'] as String? ?? '',
       );
 
   Map<String, dynamic> toJson() => {
@@ -30,6 +30,6 @@ class RecentAnime {
         'epUrl': epUrl,
         'currentEp': currentEp,
         'imageUrl': imageUrl,
-        // 'animeUrl': animeUrl,
+        'animeUrl': animeUrl,
       };
 }

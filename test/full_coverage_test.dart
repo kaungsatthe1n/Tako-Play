@@ -23,6 +23,7 @@ import 'package:tako_play/helpers/webview_manager.dart';
 import 'package:tako_play/main.dart' as app;
 import 'package:tako_play/models/anime.dart';
 import 'package:tako_play/models/bookmark.dart';
+import 'package:tako_play/models/playback_context.dart';
 import 'package:tako_play/models/recent_anime.dart';
 import 'package:tako_play/screens/about_app_screen.dart';
 import 'package:tako_play/screens/bookmarks_screen.dart';
@@ -107,21 +108,23 @@ void main() {
 
   test('every registered route builds its screen widget', () {
     final builders = {for (final page in TakoRoute.pages) page.name: page.page};
-    expect(builders.keys, containsAll(<String>[
-      Routes.mainScreen,
-      Routes.homeScreen,
-      Routes.aboutAppScreen,
-      Routes.searchScreen,
-      Routes.recentListScreen,
-      Routes.videoListScreen,
-      Routes.mediaFetchScreen,
-      Routes.videoPlayerScreen,
-      Routes.webViewScreen,
-      Routes.noInternetScreen,
-      Routes.settingsScreen,
-      Routes.genreScreen,
-      Routes.genreSelectionScreen,
-    ]));
+    expect(
+        builders.keys,
+        containsAll(<String>[
+          Routes.mainScreen,
+          Routes.homeScreen,
+          Routes.aboutAppScreen,
+          Routes.searchScreen,
+          Routes.recentListScreen,
+          Routes.videoListScreen,
+          Routes.mediaFetchScreen,
+          Routes.videoPlayerScreen,
+          Routes.webViewScreen,
+          Routes.noInternetScreen,
+          Routes.settingsScreen,
+          Routes.genreScreen,
+          Routes.genreSelectionScreen,
+        ]));
     expect(builders[Routes.mainScreen]!(), isA<MainScreen>());
     expect(builders[Routes.homeScreen]!(), isA<HomeScreen>());
     expect(builders[Routes.recentListScreen]!(), isA<RecentListScreen>());
@@ -131,8 +134,8 @@ void main() {
     expect(builders[Routes.aboutAppScreen]!(), isA<AboutAppScreen>());
     expect(builders[Routes.noInternetScreen]!(), isA<NoInternetScreen>());
     expect(builders[Routes.settingsScreen]!(), isA<SettingScreen>());
-    expect(builders[Routes.genreSelectionScreen]!(),
-        isA<GenreSelectionScreen>());
+    expect(
+        builders[Routes.genreSelectionScreen]!(), isA<GenreSelectionScreen>());
     expect(builders[Routes.videoPlayerScreen]!(), isA<VideoPlayerScreen>());
     expect(builders[Routes.webViewScreen]!(), isA<WebViewScreen>());
     expect(builders[Routes.searchScreen]!(), isA<SearchScreen>());
@@ -167,8 +170,8 @@ void main() {
       (tester) async {
     Get.put(UpdateManager(
       requestService: RequestService(
-        client: MockClient(
-            (_) async => http.Response('{"tag_name":"v1.8.0","assets":[]}', 200)),
+        client: MockClient((_) async =>
+            http.Response('{"tag_name":"v1.8.0","assets":[]}', 200)),
       ),
     ));
     await tester.pumpWidget(const GetMaterialApp(home: AboutAppScreen()));
@@ -190,8 +193,8 @@ void main() {
       (tester) async {
     Get.put(UpdateManager(
       requestService: RequestService(
-        client: MockClient(
-            (_) async => http.Response('{"tag_name":"v1.8.0","assets":[]}', 200)),
+        client: MockClient((_) async =>
+            http.Response('{"tag_name":"v1.8.0","assets":[]}', 200)),
       ),
     ));
     await tester.pumpWidget(const GetMaterialApp(home: AboutAppScreen()));
@@ -224,8 +227,8 @@ void main() {
     urlLauncher.result = false;
     Get.put(UpdateManager(
       requestService: RequestService(
-        client: MockClient(
-            (_) async => http.Response('{"tag_name":"v1.8.0","assets":[]}', 200)),
+        client: MockClient((_) async =>
+            http.Response('{"tag_name":"v1.8.0","assets":[]}', 200)),
       ),
     ));
     await tester.pumpWidget(const GetMaterialApp(home: AboutAppScreen()));
@@ -432,8 +435,7 @@ void main() {
   });
 
   {
-    testWidgets('media fetch extracts a dynamic player source',
-        (tester) async {
+    testWidgets('media fetch extracts a dynamic player source', (tester) async {
       Get.put(WebViewManager());
       Get.put(RequestService(
         client: MockClient((_) async => http.Response(_embedMarkup, 200)),
@@ -533,6 +535,112 @@ void main() {
     await tester.pump();
   });
 
+  testWidgets('native fullscreen overlay switches source and updates history',
+      (tester) async {
+    await http.runWithClient(() async {
+      final platform = _FakeBetterPlayerPlatform();
+      BetterPlayerPlatform.instance = platform;
+      final history = RecentWatchManager(database: _MemoryRecentStore());
+      Get.put(history);
+      var loads = 0;
+      final queue = PlaybackContext(
+          id: 'test',
+          name: 'Test series',
+          imageUrl: '',
+          animeUrl: '/test',
+          index: 0,
+          episodes: [
+            Episode(number: '1', link: '/test#episode=1'),
+            Episode(number: '2', link: '/test#episode=2'),
+          ]);
+      await tester.pumpWidget(GetMaterialApp(
+          home: Builder(
+              builder: (context) => TextButton(
+                  onPressed: () => Get.to(
+                          () =>
+                              VideoPlayerScreen(nextSourceLoader: (next) async {
+                                loads++;
+                                expect(next.episode.number, '2');
+                                return const PlaybackSource(
+                                    url: 'https://cdn.example/next.m3u8',
+                                    headers: {
+                                      'Referer': 'https://player.example/'
+                                    },
+                                    subtitles: [
+                                      PlaybackSubtitle(
+                                          url: 'https://cdn.example/en.vtt',
+                                          name: 'English',
+                                          headers: {},
+                                          selectedByDefault: true,
+                                          content:
+                                              'WEBVTT\n\n00:00.000 --> 00:01.000\nHello'),
+                                    ]);
+                              }),
+                          arguments: {
+                            'url': 'https://cdn.example/current.m3u8',
+                            'playbackContext': queue,
+                            'endingStart': const Duration(seconds: 1300)
+                          }),
+                  child: const Text('Open queued player')))));
+      await tester.tap(find.text('Open queued player'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final player = tester.widget<BetterPlayer>(find.byType(BetterPlayer));
+      final controller = player.controller;
+      // Mount the actual configured fullscreen builder above a gesture surface.
+      // This verifies the route used by BetterPlayer, not just an isolated card.
+      unawaited(Navigator.of(tester.element(find.byType(BetterPlayer))).push(
+          MaterialPageRoute<void>(
+              builder: (context) =>
+                  controller.betterPlayerConfiguration.routePageBuilder!(
+                      context,
+                      const AlwaysStoppedAnimation(1),
+                      const AlwaysStoppedAnimation(0),
+                      BetterPlayerControllerProvider(
+                          controller: controller,
+                          child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () => fail(
+                                  'Player gestures must not swallow Next taps'),
+                              child: const SizedBox.expand()))))));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+        'progress': const Duration(seconds: 1301),
+        'duration': const Duration(seconds: 1440),
+      }));
+      await tester.pump();
+      expect(find.text('Up next · Episode 2').hitTestable(), findsOneWidget);
+      expect(loads, 1);
+      expect(platform.dataSources, hasLength(1));
+      await tester.tap(find.text('Play next').hitTestable());
+      await tester.pump();
+      for (var i = 0; i < 30 && history.animeList.isEmpty; i++) {
+        // Native initialization and HTTP stream delivery leave the fake timer
+        // zone. Drain that work as well as advancing player retry timers.
+        await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 100)));
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(platform.dataSources.last.uri, 'https://cdn.example/next.m3u8');
+      expect(controller.betterPlayerDataSource!.headers!['Referer'],
+          'https://player.example/');
+      expect(controller.betterPlayerDataSource!.subtitles!.single.content,
+          contains('Hello'));
+      expect(history.animeList, isNotEmpty,
+          reason:
+              'Player state: ${controller.videoPlayerValue}; overlay: ${find.text('Retry next').evaluate().length}');
+      expect(history.animeList.single.currentEp, 'Episode 2');
+      expect(find.text('Play next'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+        () => MockClient((request) async => http.Response(
+            '#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10,\nsegment.ts\n#EXT-X-ENDLIST',
+            200,
+            request: request)));
+  });
+
   testWidgets('poster cards build their image error placeholders',
       (tester) async {
     const anime = Anime(
@@ -544,13 +652,15 @@ void main() {
     await tester.pumpWidget(
       const GetMaterialApp(
         home: Scaffold(
-          body: Column(
-            children: [
-              SizedBox(height: 190, child: PopularAnimeCard(anime: anime)),
-              SizedBox(height: 160, child: MovieCard(anime: anime)),
-              SizedBox(
-                  height: 210, child: RecentlyAddedAnimeCard(anime: anime)),
-            ],
+          body: SingleChildScrollView(
+            child: Column(
+              children: [
+                SizedBox(height: 190, child: PopularAnimeCard(anime: anime)),
+                SizedBox(height: 160, child: MovieCard(anime: anime)),
+                SizedBox(
+                    height: 300, child: RecentlyAddedAnimeCard(anime: anime)),
+              ],
+            ),
           ),
         ),
       ),
@@ -653,6 +763,7 @@ void main() {
 
   testWidgets('recent card continues an episode through media fetch',
       (tester) async {
+    Get.put(RecentWatchManager(database: _MemoryRecentStore()));
     await tester.pumpWidget(
       GetMaterialApp(
         home: const Scaffold(
@@ -679,8 +790,7 @@ void main() {
     expect(find.text('Media fetch'), findsOneWidget);
   });
 
-  testWidgets('update dialog dismisses from its close button',
-      (tester) async {
+  testWidgets('update dialog dismisses from its close button', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: _DialogLauncher()),
     );
@@ -688,7 +798,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(UpdateAlertDialog), findsOneWidget);
 
-    await tester.tap(find.byTooltip('Not now'));
+    await tester.tap(find.byTooltip('Close update prompt'));
     await tester.pumpAndSettle();
 
     expect(find.byType(UpdateAlertDialog), findsNothing);
@@ -701,11 +811,10 @@ void main() {
     await tester.tap(find.text('Show update'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.widgetWithText(FilledButton, 'Update now'));
+    await tester.tap(find.widgetWithText(FilledButton, 'View release'));
     await tester.pump();
 
-    expect(urlLauncher.launched,
-        contains('https://example.com/tako-play.apk'));
+    expect(urlLauncher.launched, contains('https://example.com/tako-play.apk'));
   });
 
   testWidgets('update dialog surfaces a failed download launch',
@@ -719,7 +828,7 @@ void main() {
 
     Object? caught;
     await runZonedGuarded<Future<void>>(() async {
-      await tester.tap(find.widgetWithText(FilledButton, 'Update now'));
+      await tester.tap(find.widgetWithText(FilledButton, 'View release'));
       await tester.pump();
       await tester.pump();
     }, (error, stackTrace) => caught = error);
@@ -735,9 +844,8 @@ void main() {
 
     await expectLater(
       service.requestPopularResponse(),
-      throwsA(isA<RequestException>()
-          .having((error) => error.message, 'message',
-              contains('Could not reach'))),
+      throwsA(isA<RequestException>().having(
+          (error) => error.message, 'message', contains('Could not reach'))),
     );
     service.close();
   });
@@ -747,8 +855,7 @@ void main() {
     final service = RequestService(
       client: MockClient((_) async => http.Response('', 200)),
     );
-    final results =
-        await AnimeService(requestService: service).getAnimes(
+    final results = await AnimeService(requestService: service).getAnimes(
       Future.value(http.Response('''
         <ul class="items"><li>
           <p class="name"><a href="/category/legacy">Legacy</a></p>
@@ -761,8 +868,7 @@ void main() {
     service.close();
   });
 
-  test('anime service uses the listed episode when none is active',
-      () async {
+  test('anime service uses the listed episode when none is active', () async {
     final service = RequestService(
       client: MockClient((_) async => http.Response('''
         <section id="w-episodes"><button data-n="3">EP 3</button></section>
@@ -816,8 +922,7 @@ void main() {
     service.close();
   });
 
-  testWidgets('home screen offers a published update on start',
-      (tester) async {
+  testWidgets('home screen offers a published update on start', (tester) async {
     final requestService = RequestService(
       client: MockClient((request) async {
         if (request.url.host.contains('github')) {
@@ -829,10 +934,13 @@ void main() {
         return http.Response('<main></main>', 200);
       }),
     );
+    Get.put(BookMarkManager(database: _MemoryBookmarkStore()));
     Get.put(requestService);
     Get.put(UpdateManager(requestService: requestService));
 
-    await tester.pumpWidget(const GetMaterialApp(home: HomeScreen()));
+    await tester.pumpWidget(
+      const GetMaterialApp(home: Scaffold(body: HomeScreen())),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.pumpAndSettle();
@@ -885,8 +993,7 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('main screen opens its drawer and search page',
-      (tester) async {
+  testWidgets('main screen opens its drawer and search page', (tester) async {
     _registerMainManagers();
     await tester.pumpWidget(
       GetMaterialApp(
@@ -902,16 +1009,17 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    await tester.tap(find.byIcon(Icons.grid_view_rounded));
-    await tester.pumpAndSettle();
-    expect(find.byType(AnimeDrawer), findsOneWidget);
-
-    await tester.tapAt(const Offset(750, 400));
-    await tester.pumpAndSettle();
-
     await tester.tap(find.byIcon(Icons.search_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Search destination'), findsOneWidget);
+
+    Get.back();
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.play_circle_outline_rounded));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.grid_view_rounded));
+    await tester.pumpAndSettle();
+    expect(find.byType(AnimeDrawer), findsOneWidget);
   });
 
   testWidgets('drawer opens settings and about pages', (tester) async {
@@ -997,8 +1105,7 @@ void main() {
       imageUrl: '',
     ));
     Get.put(manager);
-    await tester.pumpWidget(
-        const GetMaterialApp(home: RecentListScreen()));
+    await tester.pumpWidget(const GetMaterialApp(home: RecentListScreen()));
     await tester.pumpAndSettle();
     expect(find.text('Recent show'), findsOneWidget);
 
@@ -1022,8 +1129,9 @@ void main() {
     await tester.tap(find.text('Open details'));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Save'));
-    await tester.tap(find.text('Save'));
+    final bookmarkButton = find.byIcon(Icons.bookmark_rounded);
+    await tester.ensureVisible(bookmarkButton);
+    await tester.tap(bookmarkButton);
     await tester.pump();
 
     expect(bookmarks.ids, isEmpty);
@@ -1163,9 +1271,7 @@ class _LaunchVideoPlayer extends StatelessWidget {
                     headers: {},
                   ),
                 ],
-                'resolutions': {
-                  '720P': 'https://cdn.example.com/720.m3u8'
-                },
+                'resolutions': {'720P': 'https://cdn.example.com/720.m3u8'},
               },
             ),
             child: const Text('Open player'),
@@ -1410,8 +1516,7 @@ class _FakeWebKitDelegate extends WebKitNavigationDelegate {
   @override
   Future<void> setOnPageStarted(PageEventCallback callback) async {}
   @override
-  Future<void> setOnWebResourceError(
-      WebResourceErrorCallback callback) async {}
+  Future<void> setOnWebResourceError(WebResourceErrorCallback callback) async {}
 }
 
 void _mockWebKitChannels() {
@@ -1510,8 +1615,7 @@ class _FakeNavigationDelegate extends PlatformNavigationDelegate {
   @override
   Future<void> setOnPageStarted(PageEventCallback callback) async {}
   @override
-  Future<void> setOnWebResourceError(
-      WebResourceErrorCallback callback) async {}
+  Future<void> setOnWebResourceError(WebResourceErrorCallback callback) async {}
 }
 
 class _FakeBetterPlayerPlatform extends BetterPlayerPlatform {
@@ -1578,9 +1682,8 @@ class _FakeBetterPlayerPlatform extends BetterPlayerPlatform {
   @override
   Future<DateTime?> getAbsolutePosition(int? textureId) async => null;
   @override
-  Future<void> enablePictureInPicture(
-      int? textureId, double? top, double? left, double? width,
-      double? height) async {}
+  Future<void> enablePictureInPicture(int? textureId, double? top, double? left,
+      double? width, double? height) async {}
   @override
   Future<void> disablePictureInPicture(int? textureId) async {}
   @override
@@ -1659,7 +1762,8 @@ class _ResolverHeaders extends Fake implements HttpHeaders {
   void forEach(void Function(String name, List<String> values) action) {}
 }
 
-class _ResolverResponse extends Stream<List<int>> implements HttpClientResponse {
+class _ResolverResponse extends Stream<List<int>>
+    implements HttpClientResponse {
   _ResolverResponse([List<int>? body]) : _body = body ?? _defaultBody;
 
   static final _defaultBody = utf8.encode(jsonEncode({
@@ -1705,7 +1809,6 @@ class _ResolverResponse extends Stream<List<int>> implements HttpClientResponse 
   @override
   StreamSubscription<List<int>> listen(void Function(List<int> event)? onData,
           {Function? onError, void Function()? onDone, bool? cancelOnError}) =>
-      Stream<List<int>>.value(_body)
-          .listen(onData, onError: onError, onDone: onDone,
-              cancelOnError: cancelOnError);
+      Stream<List<int>>.value(_body).listen(onData,
+          onError: onError, onDone: onDone, cancelOnError: cancelOnError);
 }

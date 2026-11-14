@@ -22,6 +22,23 @@ Future<String> _encryptedEmbed(String embedUrl, String pageKey) async {
 }
 
 void main() {
+  test('resolver returns optional ending metadata with its subtitles',
+      () async {
+    final service = PlaybackService(
+        resolverUrl: 'https://api.example.com/playback',
+        client: MockClient((_) async => http.Response(
+            jsonEncode({
+              'url': 'https://cdn.example.com/master.m3u8',
+              'endingStartSeconds': 1300.25,
+            }),
+            200)));
+    final source =
+        await service.resolveEpisode('https://catalog.example/episode');
+    expect(source.endingStart, const Duration(milliseconds: 1300250));
+    for (final invalid in [null, -1, double.infinity, '1300', 90000]) {
+      expect(parseEndingStart(invalid), isNull);
+    }
+  });
   group('PlaybackService', () {
     test('resolves a secure HLS stream and preserves resolver headers',
         () async {

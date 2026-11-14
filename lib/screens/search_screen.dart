@@ -79,7 +79,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Expanded(
                     child: Text(
                       'Search',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: GoogleFonts.dmSans(
                         fontSize: 25,
                         fontWeight: FontWeight.w700,
                         letterSpacing: -.8,
@@ -165,8 +165,8 @@ class _SearchScreenState extends State<SearchScreen> {
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  maxCrossAxisExtent: 220,
                   childAspectRatio: .57,
                   crossAxisSpacing: 14,
                   mainAxisSpacing: 18,
@@ -184,7 +184,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       child: child,
                     ),
                   ),
-                  child: SearchedResultAnimeCard(anime: list[index]),
+                  child: SearchedResultAnimeCard(
+                    anime: list[index],
+                    fallbackCategoryLabel: 'Series',
+                  ),
                 ),
               ),
             ),

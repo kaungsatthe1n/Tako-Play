@@ -7,7 +7,6 @@ import '../screens/bookmarks_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/recent_list_screen.dart';
 import '../utils/constants.dart';
-import '../utils/routes.dart';
 import '../widgets/anime_drawer.dart';
 
 class MainScreen extends StatefulWidget {
@@ -27,7 +26,6 @@ class _MainScreenState extends State<MainScreen> {
     RecentListScreen(),
     BookMarksScreen(),
   ];
-
   final _titles = const ['Discover', 'Continue watching', 'My library'];
 
   @override
@@ -49,110 +47,107 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       drawer: AnimeDrawer(),
       extendBody: true,
-      appBar: AppBar(
-        toolbarHeight: 74,
-        leadingWidth: 72,
-        leading: Builder(
-          builder: (context) => IconButton(
-            onPressed: () => Scaffold.of(context).openDrawer(),
-            icon: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: tkDarkBlue,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: const Icon(Icons.grid_view_rounded, size: 20),
-            ),
-          ),
-        ),
-        title: Obx(
-          () => AnimatedSwitcher(
-            duration: const Duration(milliseconds: 260),
-            child: Text(
-              _titles[currentIndex.value],
-              key: ValueKey(currentIndex.value),
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 23,
-                fontWeight: FontWeight.w700,
-                letterSpacing: -.7,
-              ),
-            ),
-          ),
-        ),
-        actions: [
-          Obx(
-            () => currentIndex.value == 0
-                ? Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: IconButton(
-                      onPressed: () => Get.toNamed(Routes.searchScreen),
-                      icon: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: tkGradientBlue,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Icon(Icons.search_rounded, size: 20),
-                      ),
+      appBar: currentIndex.value == 0
+          ? null
+          : AppBar(
+              toolbarHeight: 74,
+              leadingWidth: 72,
+              leading: Builder(
+                builder: (context) => IconButton(
+                  onPressed: () => Scaffold.of(context).openDrawer(),
+                  icon: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: tkDarkBlue,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.white10),
                     ),
-                  )
-                : const SizedBox(width: 16),
-          ),
-        ],
-      ),
+                    child: const Icon(Icons.grid_view_rounded, size: 20),
+                  ),
+                ),
+              ),
+              title: Text(
+                _titles[currentIndex.value],
+                style: GoogleFonts.dmSans(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -.7,
+                ),
+              ),
+            ),
       body: PageView(
         controller: _pageController,
         allowImplicitScrolling: true,
-        onPageChanged: (index) => currentIndex.value = index,
+        onPageChanged: (index) => setState(() => currentIndex.value = index),
         children: _pages,
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      bottomNavigationBar: _buildBottomNavigation(),
+    );
+  }
+
+  Widget _buildBottomNavigation() => SafeArea(
+        minimum: const EdgeInsets.fromLTRB(24, 0, 24, 12),
         child: Obx(
-          () => DecoratedBox(
+          () => Container(
+            height: 64,
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x66000000),
-                  blurRadius: 18,
-                  offset: Offset(0, 9),
-                ),
+              color: tkDarkBlue,
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(color: const Color(0xFF302D55)),
+            ),
+            child: Row(
+              children: [
+                _navigationItem(0, Icons.home_rounded, 'Home'),
+                _navigationItem(
+                    1, Icons.play_circle_outline_rounded, 'Watchlist'),
+                _navigationItem(2, Icons.bookmark_border_rounded, 'Saved'),
               ],
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: NavigationBar(
-                height: 68,
-                selectedIndex: currentIndex.value,
-                onDestinationSelected: (index) {
-                  currentIndex.value = index;
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 420),
-                    curve: Curves.easeOutCubic,
-                  );
-                },
-                destinations: const [
-                  NavigationDestination(
-                    icon: Icon(Icons.home_outlined),
-                    selectedIcon: Icon(Icons.home_rounded),
-                    label: 'Home',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.play_circle_outline_rounded),
-                    selectedIcon: Icon(Icons.play_circle_fill_rounded),
-                    label: 'Watchlist',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(Icons.bookmark_outline_rounded),
-                    selectedIcon: Icon(Icons.bookmark_rounded),
-                    label: 'Saved',
-                  ),
-                ],
-              ),
-            ),
+          ),
+        ),
+      );
+
+  Widget _navigationItem(int index, IconData icon, String label) {
+    final selected = currentIndex.value == index;
+    return Expanded(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: () {
+          setState(() => currentIndex.value = index);
+          _pageController.animateToPage(
+            index,
+            duration: const Duration(milliseconds: 380),
+            curve: Curves.easeOutCubic,
+          );
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 190),
+          curve: Curves.easeOut,
+          height: 52,
+          decoration: BoxDecoration(
+            color: selected ? tkGradientBlue : Colors.transparent,
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 22,
+                  color: selected ? tkDarkerBlue : const Color(0xFFD3D1E5)),
+              if (selected) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(label,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.dmSans(
+                        color: tkDarkerBlue,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                      )),
+                ),
+              ],
+            ],
           ),
         ),
       ),

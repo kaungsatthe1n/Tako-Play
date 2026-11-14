@@ -19,6 +19,8 @@ class AnimeService {
       : _requestService = requestService;
 
   static const _episodeRangeConcurrency = 4;
+  static const _maxCachedAnimeDetails = 32;
+  static final _animeDetailsCache = <String, Anime>{};
   static const _legacyCatalogHosts = <String>{
     'gogoanime9.ro',
     'www.gogoanime9.ro',
@@ -83,6 +85,15 @@ class AnimeService {
     );
   }
 
+  /// Returns the latest parsed detail cached during this app session, if any.
+  /// Callers can render this immediately while [fetchAnimeDetails] refreshes it.
+  Anime? cachedAnimeDetails(String url) {
+    final key = _animeDetailsCacheKey(url);
+    final cached = _animeDetailsCache.remove(key);
+    if (cached != null) _animeDetailsCache[key] = cached;
+    return cached;
+  }
+
   Future<List<_SearchEntry>> _loadSearchIndex() async {
     try {
       return await (_searchIndex ??= _fetchSearchIndex());
@@ -108,62 +119,84 @@ class AnimeService {
   Future<Anime> fetchAnimeDetails(String url) async {
     final detailDoc = await _fetchDocument(url);
     final sourceInfo = detailDoc.querySelector('#info');
+    late final Anime anime;
     if (sourceInfo != null) {
-      return _parseGogoAnimesDetails(detailDoc, sourceInfo, url);
-    }
+      anime = _parseGogoAnimesDetails(detailDoc, sourceInfo, url);
+    } else {
+      final info = detailDoc.querySelector('.anime_info_body_bg');
+      if (info == null) {
+        throw StateError(
+            'The anime details were not found in the source page.');
+      }
 
-    final info = detailDoc.querySelector('.anime_info_body_bg');
-    if (info == null) {
-      throw StateError('The anime details were not found in the source page.');
-    }
+      final genres = <Genre>[];
+      var summary = info.querySelector('.description')?.text.trim() ?? '';
+      var released = '';
+      var status = '';
 
-    final genres = <Genre>[];
-    var summary = info.querySelector('.description')?.text.trim() ?? '';
-    var released = '';
-    var status = '';
-
-    for (final type in info.querySelectorAll('p.type')) {
-      final label = type.text.trim();
-      if (label.startsWith('Genres:')) {
-        for (final link in type.querySelectorAll('a[href]')) {
-          final name = link.text.trim();
-          if (name.isNotEmpty) {
-            genres.add(Genre(
-              name: name,
-              link: _absoluteUrl(link.attributes['href']),
-            ));
+      for (final type in info.querySelectorAll('p.type')) {
+        final label = type.text.trim();
+        if (label.startsWith('Genres:')) {
+          for (final link in type.querySelectorAll('a[href]')) {
+            final name = link.text.trim();
+            if (name.isNotEmpty) {
+              genres.add(Genre(
+                name: name,
+                link: _absoluteUrl(link.attributes['href']),
+              ));
+            }
           }
+        } else if (label.startsWith('Released:')) {
+          released = label.replaceFirst('Released:', '').trim();
+        } else if (label.startsWith('Status:')) {
+          status = label.replaceFirst('Status:', '').trim();
         }
-      } else if (label.startsWith('Released:')) {
-        released = label.replaceFirst('Released:', '').trim();
-      } else if (label.startsWith('Status:')) {
-        status = label.replaceFirst('Status:', '').trim();
       }
+
+      // Some pages put synopsis in a labelled paragraph instead of description.
+      if (summary.isEmpty) {
+        final synopsis = info.querySelectorAll('p.type').where(
+              (element) => element.text.trim().startsWith('Synopsis:'),
+            );
+        if (synopsis.isNotEmpty) {
+          summary = synopsis.first.text.replaceFirst('Synopsis:', '').trim();
+        }
+      }
+
+      final seriesId =
+          detailDoc.querySelector('#movie_id')?.attributes['value'];
+      final episodes = seriesId == null
+          ? <Episode>[]
+          : await _loadEpisodes(detailDoc, seriesId);
+
+      anime = Anime(
+        id: seriesId ?? _uuid.v4(),
+        summary: summary,
+        genres: genres,
+        releasedDate: released,
+        status: status,
+        episodes: episodes,
+      );
     }
 
-    // Some pages put synopsis in a labelled paragraph instead of description.
-    if (summary.isEmpty) {
-      final synopsis = info.querySelectorAll('p.type').where(
-            (element) => element.text.trim().startsWith('Synopsis:'),
-          );
-      if (synopsis.isNotEmpty) {
-        summary = synopsis.first.text.replaceFirst('Synopsis:', '').trim();
-      }
+    _rememberAnimeDetails(url, anime);
+    return anime;
+  }
+
+  void _rememberAnimeDetails(String url, Anime anime) {
+    final key = _animeDetailsCacheKey(url);
+    _animeDetailsCache.remove(key);
+    _animeDetailsCache[key] = anime;
+    while (_animeDetailsCache.length > _maxCachedAnimeDetails) {
+      _animeDetailsCache.remove(_animeDetailsCache.keys.first);
     }
+  }
 
-    final seriesId = detailDoc.querySelector('#movie_id')?.attributes['value'];
-    final episodes = seriesId == null
-        ? <Episode>[]
-        : await _loadEpisodes(detailDoc, seriesId);
-
-    return Anime(
-      id: seriesId ?? _uuid.v4(),
-      summary: summary,
-      genres: genres,
-      releasedDate: released,
-      status: status,
-      episodes: episodes,
-    );
+  String _animeDetailsCacheKey(String url) {
+    final uri = Uri.tryParse(url);
+    return uri == null
+        ? url.trim()
+        : uri.normalizePath().replace(fragment: '').toString();
   }
 
   /// Returns every distinct HTTPS player advertised by an episode page.
@@ -266,9 +299,7 @@ class AnimeService {
         id: _uuid.v4(),
         name: name,
         animeUrl: _absoluteUrl(nameLink.attributes['href']),
-        imageUrl: _absoluteUrl(
-          image?.attributes['data-src'] ?? image?.attributes['src'],
-        ),
+        imageUrl: _preferredImageUrl(image),
         currentEp: item.querySelector('.episode')?.text.trim() ?? '',
         releasedDate: item.querySelector('.released')?.text.trim() ??
             item.querySelector('.episode')?.text.trim() ??
@@ -310,7 +341,7 @@ class AnimeService {
         id: _sourceId(url),
         name: name,
         animeUrl: url,
-        imageUrl: _absoluteUrl(image?.attributes['src']),
+        imageUrl: _preferredImageUrl(image),
         currentEp: label,
         releasedDate: isMovie ? 'Movie' : label,
       ));
@@ -439,7 +470,41 @@ class AnimeService {
   String _watchUrl(String slug) => '$sourceBaseUrl/watch/$slug/';
 
   String _posterUrl(String slug) =>
-      'https://img.gogoanimes.org/poster-sm/w_200/h_267/$slug.webp';
+      'https://img.gogoanimes.org/poster/w_360/h_480/$slug.webp';
+
+  String _preferredImageUrl(dom.Element? image) {
+    if (image == null) return '';
+
+    final sourceSet = image.attributes['srcset'];
+    if (sourceSet != null && sourceSet.trim().isNotEmpty) {
+      var preferredUrl = '';
+      var preferredResolution = -1.0;
+      for (final candidate in sourceSet.split(',')) {
+        final parts = candidate.trim().split(RegExp(r'\s+'));
+        if (parts.isEmpty || parts.first.isEmpty) continue;
+
+        final descriptor = parts.length > 1 ? parts[1] : '';
+        final resolution = descriptor.endsWith('w')
+            ? double.tryParse(descriptor.substring(0, descriptor.length - 1)) ??
+                0.0
+            : descriptor.endsWith('x')
+                ? (double.tryParse(
+                          descriptor.substring(0, descriptor.length - 1),
+                        ) ??
+                        0.0) *
+                    1000.0
+                : 0.0;
+        if (resolution > preferredResolution) {
+          preferredUrl = parts.first;
+          preferredResolution = resolution;
+        }
+      }
+      if (preferredUrl.isNotEmpty) return _absoluteUrl(preferredUrl);
+    }
+
+    return _absoluteUrl(
+        image.attributes['data-src'] ?? image.attributes['src']);
+  }
 
   String _sourceId(String url) {
     final segments = Uri.tryParse(url)?.pathSegments ?? const <String>[];

@@ -14,6 +14,22 @@ void main() {
   });
 
   group('parseHlsExtractorMessage', () {
+    test('parses opening and ending markers exposed by the player', () {
+      final message = parseHlsExtractorMessage(
+        jsonEncode({
+          'type': 'hls',
+          'url': 'https://cdn.example.com/video/master.m3u8',
+          'pageUrl': 'https://player.example.com/stream/123/sub',
+          'opening': {'start': 0, 'end': 107},
+          'ending': {'start': 1300, 'end': 1390},
+        }),
+      );
+
+      expect(message?.opening?.start, Duration.zero);
+      expect(message?.opening?.end, const Duration(seconds: 107));
+      expect(message?.endingStart, const Duration(seconds: 1300));
+    });
+
     test('accepts a signed HTTPS HLS resource and its final page URL', () {
       final message = parseHlsExtractorMessage(
         jsonEncode({

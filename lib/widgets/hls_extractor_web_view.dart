@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
+import '../services/ending_timing_service.dart';
 import '../services/playback_service.dart';
 import '../utils/constants.dart';
+import '../utils/subtitle_name.dart';
 
 /// Runs a dynamic embedded player only until it exposes its signed HLS URL.
 ///
@@ -36,6 +38,7 @@ class _HlsExtractorWebViewState extends State<HlsExtractorWebView> {
   late final WebViewController _controller;
   late final Timer _timeout;
   final Set<String> _visitedPages = <String>{};
+  final Set<Timer> _injectionTimers = <Timer>{};
   Uri? _activePageUri;
   var _completed = false;
   var _released = false;
@@ -90,13 +93,27 @@ class _HlsExtractorWebViewState extends State<HlsExtractorWebView> {
   void _onPageStarted(String url) {
     final uri = Uri.tryParse(url);
     if (uri != null && uri.scheme == 'https') _activePageUri = uri;
+    // Some embedded players keep network requests open indefinitely, so
+    // WKWebView may never report onPageFinished even though the DOM is ready.
+    // Start observing resources shortly after navigation begins as well.
+    late final Timer timer;
+    timer = Timer(const Duration(seconds: 2), () {
+      _injectionTimers.remove(timer);
+      _injectExtractionScript();
+    });
+    _injectionTimers.add(timer);
   }
 
   void _onPageFinished(String url) {
     if (_completed) return;
+    _injectExtractionScript();
+  }
+
+  void _injectExtractionScript() {
+    if (_completed) return;
     unawaited(
       _controller.runJavaScript(_extractionScript).catchError((_) {
-        // A navigation can detach the document while injection is starting.
+        // The document can still be committing, or a navigation can detach it.
       }),
     );
   }
@@ -125,19 +142,23 @@ class _HlsExtractorWebViewState extends State<HlsExtractorWebView> {
               'Referer': '${pageUri.origin}/',
               'User-Agent': userAgent,
             },
-            subtitles: update.subtitles
-                .map(
-                  (subtitle) => PlaybackSubtitle(
-                    url: subtitle.url,
-                    name: subtitle.name,
-                    selectedByDefault: subtitle.selectedByDefault,
-                    headers: {
-                      'Referer': '${pageUri.origin}/',
-                      'User-Agent': userAgent,
-                    },
-                  ),
-                )
-                .toList(growable: false),
+            subtitles: preferEnglishSubtitle(
+              update.subtitles
+                  .map(
+                    (subtitle) => PlaybackSubtitle(
+                      url: subtitle.url,
+                      name: subtitle.name,
+                      selectedByDefault: subtitle.selectedByDefault,
+                      headers: {
+                        'Referer': '${pageUri.origin}/',
+                        'User-Agent': userAgent,
+                      },
+                    ),
+                  )
+                  .toList(growable: false),
+            ),
+            opening: update.opening,
+            endingStart: update.endingStart,
           ),
         );
       case HlsExtractorMessageType.embed:
@@ -185,6 +206,10 @@ class _HlsExtractorWebViewState extends State<HlsExtractorWebView> {
   void _release() {
     if (_released) return;
     _released = true;
+    for (final timer in _injectionTimers) {
+      timer.cancel();
+    }
+    _injectionTimers.clear();
     unawaited(
       _controller
           .loadHtmlString('<!doctype html><html></html>')
@@ -206,12 +231,16 @@ class HlsExtractorMessage {
     required this.url,
     this.pageUrl,
     this.subtitles = const [],
+    this.opening,
+    this.endingStart,
   });
 
   final HlsExtractorMessageType type;
   final Uri url;
   final String? pageUrl;
   final List<HlsExtractorSubtitle> subtitles;
+  final SkipInterval? opening;
+  final Duration? endingStart;
 }
 
 class HlsExtractorSubtitle {
@@ -258,9 +287,18 @@ HlsExtractorMessage? parseHlsExtractorMessage(String value) {
           continue;
         }
         final name = rawSubtitle['name']?.toString().trim();
-        final resolvedName = name == null || name.isEmpty
-            ? 'Subtitle ${++unnamedSubtitleNumber}'
-            : name;
+        final hasUsefulName = name != null &&
+            name.isNotEmpty &&
+            !RegExp(
+              r'^(subtitle\s*\d*|subtitles|subs|unknown)$',
+              caseSensitive: false,
+            ).hasMatch(name);
+        if (!hasUsefulName) unnamedSubtitleNumber += 1;
+        final resolvedName = subtitleDisplayName(
+          name,
+          subtitleUri.toString(),
+          fallbackIndex: unnamedSubtitleNumber == 0 ? 1 : unnamedSubtitleNumber,
+        );
         subtitles.add(
           HlsExtractorSubtitle(
             url: subtitleUri.toString(),
@@ -275,6 +313,8 @@ HlsExtractorMessage? parseHlsExtractorMessage(String value) {
       url: url,
       pageUrl: decoded['pageUrl']?.toString(),
       subtitles: subtitles,
+      opening: parseOpeningInterval(decoded['opening']),
+      endingStart: parseEndingIntervalStart(decoded['ending']),
     );
   } on FormatException {
     return null;
@@ -290,6 +330,9 @@ bool _isSupportedSubtitleUri(Uri uri) {
 
 const _extractionScript = r'''
 (() => {
+  if (window.__takoHlsExtractorStarted) return;
+  window.__takoHlsExtractorStarted = true;
+
   const findHls = () => {
     const urls = performance.getEntriesByType('resource').map(entry => entry.name);
     for (const element of document.querySelectorAll('video, source')) {
@@ -342,6 +385,26 @@ const _extractionScript = r'''
     return tracks;
   };
 
+  const findOpening = () => {
+    const interval = window.intro || window.__handleBridgeState?.intro;
+    if (!interval) return null;
+    const start = Number(interval.start ?? interval.startTime ?? interval[0]);
+    const end = Number(interval.end ?? interval.endTime ?? interval[1]);
+    return Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end > start && end <= 600
+      ? {start, end}
+      : null;
+  };
+
+  const findEnding = () => {
+    const interval = window.outro || window.__handleBridgeState?.outro;
+    if (!interval) return null;
+    const start = Number(interval.start ?? interval.startTime ?? interval[0]);
+    const end = Number(interval.end ?? interval.endTime ?? interval[1]);
+    return Number.isFinite(start) && Number.isFinite(end) && start >= 0 && end > start && end < 86400
+      ? {start, end}
+      : null;
+  };
+
   // Some players do not generate their signed manifest until playback starts.
   // Muted autoplay is sufficient; the offstage player is discarded on handoff.
   setTimeout(() => {
@@ -373,7 +436,7 @@ const _extractionScript = r'''
       clearInterval(timer);
       TakoHlsExtractor.postMessage(JSON.stringify({
         type: 'hls', url: manifest, pageUrl: location.href,
-        subtitles: findSubtitles()
+        subtitles: findSubtitles(), opening: findOpening(), ending: findEnding()
       }));
       return;
     }

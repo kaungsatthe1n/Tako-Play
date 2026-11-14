@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../helpers/recent_watch_manager.dart';
 import '../models/anime.dart';
+import '../models/recent_anime.dart';
 import '../utils/constants.dart';
 import '../utils/routes.dart';
 import 'cache_image_with_cachemanager.dart';
@@ -14,6 +16,7 @@ class RecentAnimeCard extends StatelessWidget {
     required this.name,
     required this.imageUrl,
     required this.id,
+    this.animeUrl = '',
   });
 
   final String id;
@@ -21,11 +24,12 @@ class RecentAnimeCard extends StatelessWidget {
   final String currentEp;
   final String imageUrl;
   final String epUrl;
+  final String animeUrl;
 
-  void _continueWatching() {
+  Future<void> _continueWatching() async {
     final path = Uri.tryParse(epUrl)?.path ?? epUrl;
     if (path.startsWith('/category/') || path.startsWith('/anime/')) {
-      Get.toNamed(
+      await Get.toNamed(
         Routes.videoListScreen,
         arguments: {
           'anime': Anime(
@@ -38,7 +42,23 @@ class RecentAnimeCard extends StatelessWidget {
       );
       return;
     }
-    Get.toNamed(Routes.mediaFetchScreen, arguments: {'animeUrl': epUrl});
+    final progressManager = Get.find<RecentWatchManager>();
+    await progressManager.loadEpisodeProgressForAnime(id);
+    final progress = progressManager.progressFor(id, epUrl);
+    final resumePosition = progress == null || progress.percentage >= 100
+        ? null
+        : Duration(milliseconds: progress.positionMillis);
+    await Get.toNamed(Routes.mediaFetchScreen, arguments: {
+      'animeUrl': epUrl,
+      'resumePosition': resumePosition,
+      'recentAnime': RecentAnime(
+          id: id,
+          name: name,
+          imageUrl: imageUrl,
+          currentEp: currentEp,
+          epUrl: epUrl,
+          animeUrl: animeUrl),
+    });
   }
 
   @override

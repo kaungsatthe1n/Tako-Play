@@ -36,11 +36,17 @@ class RequestService extends GetxService {
   Future<http.Response> requestAnimeDetailResponse(String path) =>
       getSource(Uri.parse(baseUrl).resolve(path));
 
-  Future<http.Response> requestPopularResponse() =>
-      getSource(Uri.parse('$sourceBaseUrl/popular/'));
+  Future<http.Response> requestPopularResponse([int page = 1]) => getSource(
+        Uri.parse(page == 1
+            ? '$sourceBaseUrl/popular/'
+            : '$sourceBaseUrl/popular/page/$page/'),
+      );
 
-  Future<http.Response> requestMoviesResponse() =>
-      getSource(Uri.parse('$sourceBaseUrl/movies/'));
+  Future<http.Response> requestMoviesResponse([int page = 1]) => getSource(
+        Uri.parse(page == 1
+            ? '$sourceBaseUrl/movies/'
+            : '$sourceBaseUrl/movies/page/$page/'),
+      );
 
   Future<http.Response> requestAnimeGenre(String url, [int index = 1]) {
     final genre = Uri.parse(url).replace(

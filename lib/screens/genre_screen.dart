@@ -140,8 +140,9 @@ class _GenreScreenState extends State<GenreScreen> {
             child: Container(
               margin: EdgeInsets.symmetric(horizontal: 25, vertical: 10),
               decoration: BoxDecoration(
-                color: tkDarkBlue,
+                color: tkSurface,
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: tkSurfaceBorder),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

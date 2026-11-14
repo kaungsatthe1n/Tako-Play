@@ -5,24 +5,24 @@ import '../utils/constants.dart';
 
 /// Shared visual language for the app's dark, cinematic interface.
 class TakoTheme {
-  static TextStyle _manrope(double size, FontWeight weight) =>
-      GoogleFonts.manrope(
+  static TextStyle _dmSans(double size, FontWeight weight) =>
+      GoogleFonts.dmSans(
         color: Colors.white,
         fontSize: size,
         fontWeight: weight,
       );
 
   static final TextTheme darkTextTheme = TextTheme(
-    bodyLarge: _manrope(15, FontWeight.w500),
-    bodyMedium: _manrope(13, FontWeight.w500),
-    titleMedium: _manrope(15, FontWeight.w800),
-    titleSmall: _manrope(14, FontWeight.w700),
-    displayLarge: _manrope(34, FontWeight.w800),
-    displayMedium: _manrope(20, FontWeight.w800),
-    displaySmall: _manrope(18, FontWeight.w700),
-    headlineMedium: _manrope(24, FontWeight.w800),
-    headlineSmall: _manrope(20, FontWeight.w800),
-    titleLarge: _manrope(18, FontWeight.w800),
+    bodyLarge: _dmSans(15, FontWeight.w500),
+    bodyMedium: _dmSans(13, FontWeight.w500),
+    titleMedium: _dmSans(15, FontWeight.w800),
+    titleSmall: _dmSans(14, FontWeight.w700),
+    displayLarge: _dmSans(34, FontWeight.w800),
+    displayMedium: _dmSans(20, FontWeight.w800),
+    displaySmall: _dmSans(18, FontWeight.w700),
+    headlineMedium: _dmSans(24, FontWeight.w800),
+    headlineSmall: _dmSans(20, FontWeight.w800),
+    titleLarge: _dmSans(18, FontWeight.w800),
   );
 
   static ThemeData dark() {
@@ -40,6 +40,7 @@ class TakoTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: GoogleFonts.dmSans().fontFamily,
       colorScheme: scheme,
       primaryColor: tkGradientBlue,
       scaffoldBackgroundColor: tkDarkerBlue,
@@ -49,7 +50,7 @@ class TakoTheme {
         foregroundColor: Colors.white,
         centerTitle: false,
         elevation: 0,
-        titleTextStyle: GoogleFonts.spaceGrotesk(
+        titleTextStyle: GoogleFonts.dmSans(
           color: Colors.white,
           fontSize: 21,
           fontWeight: FontWeight.w700,
@@ -69,7 +70,7 @@ class TakoTheme {
         backgroundColor: tkDarkBlue,
         indicatorColor: tkGradientBlue.withValues(alpha: .25),
         labelTextStyle: WidgetStatePropertyAll(
-          GoogleFonts.manrope(fontSize: 11, fontWeight: FontWeight.w800),
+          GoogleFonts.dmSans(fontSize: 11, fontWeight: FontWeight.w800),
         ),
         iconTheme: const WidgetStatePropertyAll(IconThemeData(size: 23)),
       ),

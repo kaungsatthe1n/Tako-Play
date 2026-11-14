@@ -28,19 +28,27 @@ below.
 
 ## Screenshots
 
-Current iPhone simulator captures of the redesigned interface.
+Updated screenshots captured from the current iPhone 17 simulator build.
 
-| Discover | Watchlist |
+| Discover | Saved |
 | :---: | :---: |
-| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay Watchlist screen](assets/screenshots/watchlist-current.jpg) |
+| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay Saved screen with Bleach](assets/screenshots/watchlist-current.jpg) |
 
-| Search | Title detail |
+| Search results | Anime detail: Bleach |
 | :---: | :---: |
-| ![TakoPlay search screen](assets/screenshots/search-bleach-current.jpg) | ![TakoPlay title detail screen](assets/screenshots/anime-detail-current.jpg) |
+| ![TakoPlay search results for Bleach](assets/screenshots/search-bleach-current.jpg) | ![Bleach anime detail and episode list](assets/screenshots/anime-detail-current.jpg) |
 
-| Movie detail |
+| Popular titles | New episodes |
+| :---: | :---: |
+| ![Popular titles grid](assets/screenshots/popular-grid-current.jpg) | ![New episodes grid](assets/screenshots/new-episodes-grid-current.jpg) |
+
+| Movies | Action genre |
+| :---: | :---: |
+| ![Movies grid](assets/screenshots/movies-grid-current.jpg) | ![Action genre results](assets/screenshots/genre-action-current.jpg) |
+
+| Movie detail: Bleach: Hell Verse |
 | :---: |
-| ![TakoPlay movie detail screen](assets/screenshots/movie-detail-current.jpg) |
+| ![Bleach the Movie: Hell Verse detail](assets/screenshots/movie-detail-current.jpg) |
 
 ## Features
 
@@ -51,6 +59,36 @@ Current iPhone simulator captures of the redesigned interface.
 - Native HLS playback in BetterPlayer, with source-provided player fallbacks
 - Player-type and preferred-quality settings
 - Release update checks
+
+### Next episode in the native player
+
+Near episode end, BetterPlayer shows **Play next** and **Keep watching**.
+The next source, request headers and up to three standalone subtitle files are
+prepared 60 seconds before the prompt. Selecting Play next reuses the player and
+updates history; nothing advances automatically. The final episode has no
+prompt.
+Signed sources older than two minutes are resolved again when selected.
+
+Ending timing uses `endingStartSeconds` from a configured playback resolver when
+available. Otherwise the app searches
+[AniList](https://docs.anilist.co/guide/graphql/queries/media) for an
+unambiguous exact title/alias match, then requests opening and ending intervals
+from [AniSkip](https://github.com/aniskip/aniskip-api). The request includes the
+title or MAL ID, episode number and video duration; no account is required.
+Unknown titles, specials, season-number mismatches, unavailable metadata and
+duration mismatches fall back to a prompt in the last 30 seconds. This fallback
+does not detect the ending song. Episodes of 30 seconds or less prompt at the
+end.
+
+The player also looks up a recorded opening interval and shows **Skip intro**
+only while that interval is playing. It seeks to the interval's end when tapped;
+missing or mismatched opening data leaves the button hidden.
+
+Prefetch failures leave the current video playing and allow an explicit retry.
+Dynamic sources use the existing muted extraction WebView. Browser-player mode
+does not have this overlay. Newly stored history includes the title's catalog URL
+so the episode queue can be restored; older entries without a recoverable title
+URL gain the feature when opened again from the episode list.
 
 ## Requirements
 

@@ -1,177 +1,225 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../theme/tako_theme.dart';
 import '../utils/constants.dart';
 
-/// A release prompt styled consistently with TakoPlay's dark interface.
+/// A compact prompt for the latest stable TakoPlay release.
 class UpdateAlertDialog extends StatelessWidget {
   const UpdateAlertDialog({
     super.key,
     required this.downloadLink,
+    this.isDirectApkDownload = false,
   });
 
   final String downloadLink;
+  final bool isDirectApkDownload;
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Semantics(
-        namesRoute: true,
-        label: 'Update available',
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: tkDarkBlue,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white10),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x99000000),
-                  blurRadius: 32,
-                  offset: Offset(0, 18),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 420,
+          maxHeight: screenHeight * .82,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: tkDarkBlue,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: tkSurfaceBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: .42),
+                blurRadius: 36,
+                offset: const Offset(0, 18),
+              ),
+              BoxShadow(
+                color: tkGradientBlue.withValues(alpha: .12),
+                blurRadius: 32,
+                spreadRadius: -8,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(25),
+            child: Semantics(
+              namesRoute: true,
+              label: 'Stable TakoPlay update available',
+              child: Stack(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
+                  Positioned(
+                    top: -94,
+                    right: -66,
+                    child: IgnorePointer(
+                      child: Container(
+                        width: 210,
+                        height: 210,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [tkGradientBlue, Color(0xFF9D8FFF)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              tkGradientBlue.withValues(alpha: .2),
+                              tkGradientBlue.withValues(alpha: 0),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(17),
-                        ),
-                        child: const Icon(
-                          Icons.system_update_alt_rounded,
-                          color: Colors.white,
-                          size: 26,
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              'Update available',
-                              style: TakoTheme.darkTextTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: 3),
-                            const Text(
-                              'A newer TakoPlay build is ready.',
-                              style: TextStyle(
-                                color: tkMutedText,
-                                fontSize: 12,
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: tkGradientBlue.withValues(alpha: .16),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: tkGradientBlue.withValues(alpha: .32),
+                                ),
                               ),
+                              child: const Icon(
+                                Icons.system_update_alt_rounded,
+                                color: Color(0xFFB9AEFF),
+                                size: 24,
+                              ),
+                            ),
+                            const Spacer(),
+                            IconButton(
+                              tooltip: 'Close update prompt',
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: IconButton.styleFrom(
+                                backgroundColor: tkSurface,
+                                foregroundColor: tkMutedText,
+                                fixedSize: const Size(40, 40),
+                              ),
+                              icon: const Icon(Icons.close_rounded, size: 19),
                             ),
                           ],
                         ),
-                      ),
-                      IconButton(
-                        tooltip: 'Not now',
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
-                          Icons.close_rounded,
-                          color: tkMutedText,
+                        const SizedBox(height: 22),
+                        Text(
+                          'TAKOPLAY UPDATE',
+                          style: textTheme.labelMedium?.copyWith(
+                            color: Color(0xFFB9AEFF),
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.3,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 22),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: tkDarkerBlue,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: const Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.auto_awesome_rounded,
-                          color: tkCoral,
-                          size: 18,
+                        const SizedBox(height: 8),
+                        Text(
+                          'A new version is ready',
+                          style: textTheme.headlineMedium?.copyWith(
+                            fontSize: 25,
+                            height: 1.12,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
-                        SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 9),
+                        Text(
+                          'Get the latest improvements and fixes with the newest release.',
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: tkMutedText,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 13,
+                          ),
+                          decoration: BoxDecoration(
+                            color: tkSurface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: tkSurfaceBorder),
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                'NEW RELEASE',
-                                style: TextStyle(
-                                  color: tkCoral,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 1.1,
-                                ),
+                              const Icon(
+                                Icons.verified_rounded,
+                                color: tkGradientBlue,
+                                size: 21,
                               ),
-                              SizedBox(height: 5),
-                              Text(
-                                'Update now to get the latest improvements and fixes.',
-                                style: TextStyle(
-                                  color: tkMutedText,
-                                  fontSize: 13,
-                                  height: 1.35,
+                              const SizedBox(width: 11),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'STABLE RELEASE',
+                                      style: textTheme.labelSmall?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: .8,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      isDirectApkDownload
+                                          ? 'Official APK download'
+                                          : 'Official GitHub release page',
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: tkMutedText,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
+                        const SizedBox(height: 22),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 52,
+                          child: FilledButton.icon(
+                            onPressed: () => _launchUrl(downloadLink),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: tkGradientBlue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            icon: Icon(
+                              isDirectApkDownload
+                                  ? Icons.download_rounded
+                                  : Icons.open_in_new_rounded,
+                              size: 19,
+                            ),
+                            label: Text(isDirectApkDownload
+                                ? 'Download APK'
+                                : 'View release'),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: TextButton.styleFrom(
+                              foregroundColor: tkMutedText,
+                              minimumSize: const Size.fromHeight(44),
+                            ),
+                            child: const Text('Maybe later'),
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 22),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: Colors.white24),
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: const Text('Not now'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: () => _launchUrl(downloadLink),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: tkGradientBlue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          icon: const Icon(Icons.download_rounded, size: 18),
-                          label: const Text('Update now'),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),

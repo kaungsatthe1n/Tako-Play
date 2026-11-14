@@ -238,7 +238,7 @@ void main() {
     expect(results.animeList.map((anime) => anime.name),
         ['Bleach', 'Other title']);
     expect(results.animeList.first.imageUrl,
-        'https://img.gogoanimes.org/poster-sm/w_200/h_267/bleach-1.webp');
+        'https://img.gogoanimes.org/poster/w_360/h_480/bleach-1.webp');
     service.close();
   });
 
