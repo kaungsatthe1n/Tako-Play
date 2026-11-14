@@ -166,4 +166,9 @@ expire after 7 days.
 
 ## License
 
-Released under the [MIT License](LICENSE).
+The current source is distributed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+You may use, modify, and share it for noncommercial purposes. Commercial use requires
+separate permission from the copyright holders.
+
+Previously published versions were released under the MIT License. This change does
+not revoke the permissions granted for those versions.
