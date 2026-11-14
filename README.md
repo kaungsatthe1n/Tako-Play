@@ -54,20 +54,23 @@ Current iPhone simulator captures of the redesigned interface.
 
 ### Next episode in the native player
 
-Near the end of an episode, BetterPlayer shows **Play next** and **Keep watching**.
+Near episode end, BetterPlayer shows **Play next** and **Keep watching**.
 The next source, request headers and up to three standalone subtitle files are
 prepared 60 seconds before the prompt. Selecting Play next reuses the player and
-updates history; nothing advances automatically. The final episode has no prompt.
+updates history; nothing advances automatically. The final episode has no
+prompt.
 Signed sources older than two minutes are resolved again when selected.
 
 Ending timing uses `endingStartSeconds` from a configured playback resolver when
-available. Otherwise the app searches [AniList](https://docs.anilist.co/guide/graphql/queries/media)
-for an unambiguous exact title/alias match, then requests opening and ending
-intervals from [AniSkip](https://github.com/aniskip/aniskip-api). These requests send
-the title, or MAL ID, episode number and video duration; no account is required.
+available. Otherwise the app searches
+[AniList](https://docs.anilist.co/guide/graphql/queries/media) for an
+unambiguous exact title/alias match, then requests opening and ending intervals
+from [AniSkip](https://github.com/aniskip/aniskip-api). The request includes the
+title or MAL ID, episode number and video duration; no account is required.
 Unknown titles, specials, season-number mismatches, unavailable metadata and
 duration mismatches fall back to a prompt in the last 30 seconds. This fallback
-does not detect the ending song. Episodes of 30 seconds or less prompt at the end.
+does not detect the ending song. Episodes of 30 seconds or less prompt at the
+end.
 
 The player also looks up a recorded opening interval and shows **Skip intro**
 only while that interval is playing. It seeks to the interval's end when tapped;
