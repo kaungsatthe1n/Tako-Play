@@ -28,19 +28,27 @@ below.
 
 ## Screenshots
 
-Current iPhone simulator captures of the redesigned interface.
+Updated screenshots captured from the current iPhone 17 simulator build.
 
-| Discover | Watchlist |
+| Discover | Saved |
 | :---: | :---: |
-| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay Watchlist screen](assets/screenshots/watchlist-current.jpg) |
+| ![TakoPlay Discover screen](assets/screenshots/discover-current.jpg) | ![TakoPlay Saved screen with Bleach](assets/screenshots/watchlist-current.jpg) |
 
-| Search | Title detail |
+| Search results | Anime detail: Bleach |
 | :---: | :---: |
-| ![TakoPlay search screen](assets/screenshots/search-bleach-current.jpg) | ![TakoPlay title detail screen](assets/screenshots/anime-detail-current.jpg) |
+| ![TakoPlay search results for Bleach](assets/screenshots/search-bleach-current.jpg) | ![Bleach anime detail and episode list](assets/screenshots/anime-detail-current.jpg) |
 
-| Movie detail |
+| Popular titles | New episodes |
+| :---: | :---: |
+| ![Popular titles grid](assets/screenshots/popular-grid-current.jpg) | ![New episodes grid](assets/screenshots/new-episodes-grid-current.jpg) |
+
+| Movies | Action genre |
+| :---: | :---: |
+| ![Movies grid](assets/screenshots/movies-grid-current.jpg) | ![Action genre results](assets/screenshots/genre-action-current.jpg) |
+
+| Movie detail: Bleach: Hell Verse |
 | :---: |
-| ![TakoPlay movie detail screen](assets/screenshots/movie-detail-current.jpg) |
+| ![Bleach the Movie: Hell Verse detail](assets/screenshots/movie-detail-current.jpg) |
 
 ## Features
 
