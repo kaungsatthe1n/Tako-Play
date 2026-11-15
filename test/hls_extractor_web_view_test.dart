@@ -14,6 +14,22 @@ void main() {
   });
 
   group('parseHlsExtractorMessage', () {
+    testWidgets('cancels pending page injections when removed', (tester) async {
+      await tester.pumpWidget(MaterialApp(
+          home: HlsExtractorWebView(
+        playerUrl: 'https://player.example/embed',
+        referrerUrl: 'https://catalog.example/episode',
+        onSourceFound: (_) {},
+        onFailure: () {},
+      )));
+      await tester.pump();
+      final controller = _FakeHlsWebViewController.last!;
+      _FakeHlsNavigationDelegate.last!
+          .pageStarted('https://player.example/embed');
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump(const Duration(seconds: 3));
+      expect(controller.javascriptRuns, 0);
+    });
     test('parses opening and ending markers exposed by the player', () {
       final message = parseHlsExtractorMessage(
         jsonEncode({
@@ -150,6 +166,8 @@ void main() {
       delegate.pageFinished('https://play.gogoanimes.org/watch');
       await tester.pump();
       expect(controller.javascriptRuns, 1);
+      await tester.pump(const Duration(seconds: 2));
+      expect(controller.javascriptRuns, 2);
 
       controller.send(jsonEncode({
         'type': 'embed',

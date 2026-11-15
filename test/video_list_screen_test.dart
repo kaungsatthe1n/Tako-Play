@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
@@ -11,6 +13,7 @@ import 'package:tako_play/models/anime.dart';
 import 'package:tako_play/models/bookmark.dart';
 import 'package:tako_play/models/recent_anime.dart';
 import 'package:tako_play/screens/video_list_screen.dart';
+import 'package:tako_play/services/anime_service.dart';
 import 'package:tako_play/services/request_service.dart';
 import 'package:tako_play/utils/routes.dart';
 
@@ -50,7 +53,7 @@ void main() {
     expect(find.text('Try again'), findsOneWidget);
   });
 
-  testWidgets('keeps its hero data when route arguments clear during a pop',
+  testWidgets('keeps detail data when route arguments clear during a pop',
       (tester) async {
     _registerManagers();
     Get.put(RequestService(
@@ -75,12 +78,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(
-      find.byWidgetPredicate(
-        (widget) => widget is Hero && widget.tag == 'show-1',
-      ),
-      findsOneWidget,
-    );
+    expect(find.byType(VideoListScreen), findsOneWidget);
+    expect(find.byType(Hero), findsNothing);
   });
 
   testWidgets('pages a long episode list, saves, and records playback',
@@ -150,6 +149,71 @@ void main() {
 
     await tester.pump(const Duration(milliseconds: 501));
     expect(tileAnimations, findsNothing);
+  });
+
+  testWidgets('clamps the selected episode range after a shorter refresh',
+      (tester) async {
+    _registerManagers();
+    final refresh = Completer<http.Response>();
+    var calls = 0;
+    final service = RequestService(client: MockClient((_) async {
+      calls++;
+      if (calls == 1) return http.Response(_sourceDetailsMarkup, 200);
+      return await refresh.future;
+    }));
+    Get.put(service);
+    await AnimeService(requestService: service)
+        .fetchAnimeDetails('https://gogoanime9.ro/anime/test-title');
+    await tester.pumpWidget(const GetMaterialApp(home: _OpenDetails()));
+    await tester.tap(find.text('Open details'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('51 - 51'));
+    await tester.pump();
+    refresh.complete(http.Response('''
+      <section id="info"></section>
+      <section id="w-episodes"><button data-n="1">EP 1</button></section>''',
+        200));
+    await tester.pumpAndSettle();
+    expect(find.text('51 - 51'), findsNothing);
+    expect(find.text('1'), findsWidgets);
+  });
+
+  testWidgets('shows saved progress and resumes from the play button',
+      (tester) async {
+    final recents = RecentWatchManager(database: _RecentStore());
+    Get.put(recents);
+    Get.put(BookMarkManager(database: _BookmarkStore()));
+    Get.put(RequestService(
+      client: MockClient((_) async => http.Response(_sourceDetailsMarkup, 200)),
+    ));
+    final episodeUrl = 'https://gogoanimes.org/anime/test-title#episode=1';
+    await recents.saveProgress(
+        animeId: 'test-title',
+        episodeUrl: episodeUrl,
+        episodeNumber: '1',
+        positionMillis: 500,
+        durationMillis: 1000);
+    await recents.saveProgress(
+        animeId: 'test-title',
+        episodeUrl: 'https://gogoanimes.org/anime/test-title#episode=2',
+        episodeNumber: '2',
+        positionMillis: 1000,
+        durationMillis: 1000);
+    await tester
+        .pumpWidget(GetMaterialApp(home: const _OpenDetails(), getPages: [
+      GetPage(
+          name: Routes.mediaFetchScreen,
+          page: () => const Scaffold(body: Text('Media fetch'))),
+    ]));
+    await tester.tap(find.text('Open details'));
+    await tester.pumpAndSettle();
+    expect(find.text('50% watched'), findsOneWidget);
+    expect(find.text('Completed'), findsOneWidget);
+    await tester.ensureVisible(find.text('Play Episode 1'));
+    await tester.tap(find.text('Play Episode 1'));
+    await tester.pumpAndSettle();
+    expect(Get.arguments['resumePosition'], const Duration(milliseconds: 500));
   });
 
   testWidgets('retries a failed detail request', (tester) async {

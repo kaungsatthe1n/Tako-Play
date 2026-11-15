@@ -15,39 +15,28 @@ class PopularAnimeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final metadata =
+        anime.genres.take(2).map((genre) => genre.name).join(' · ');
     return Padding(
-      padding: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.only(right: 14),
       child: SizedBox(
-        width: 156,
-        child: Hero(
-          tag: anime.id.toString(),
-          child: Material(
-            color: Colors.transparent,
-            child: TakoPressableCard(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => Get.toNamed(
-                Routes.videoListScreen,
-                arguments: {'anime': anime},
-              ),
-              child: Ink(
-                decoration: BoxDecoration(
-                  color: tkDarkBlue,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF383E68)),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x52000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 9),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(13),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      anime.imageUrl.isEmpty
+        width: 132,
+        child: Material(
+          color: Colors.transparent,
+          child: TakoPressableCard(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => Get.toNamed(
+              Routes.videoListScreen,
+              arguments: {'anime': anime},
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: SizedBox.expand(
+                      child: anime.imageUrl.isEmpty
                           ? const ColoredBox(color: tkGrey)
                           : CachedNetworkImage(
                               key: ValueKey(anime.imageUrl),
@@ -58,57 +47,32 @@ class PopularAnimeCard extends StatelessWidget {
                               errorWidget: (_, __, ___) =>
                                   const ColoredBox(color: tkGrey),
                             ),
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Colors.transparent, Color(0xE0090A12)],
-                            stops: [.38, 1],
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        top: 10,
-                        left: 10,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: tkCoral,
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: const Text(
-                            'POPULAR',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 12,
-                        bottom: 12,
-                        left: 12,
-                        child: Text(
-                          anime.name.toString(),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            height: 1.15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  anime.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  metadata.isNotEmpty
+                      ? metadata
+                      : (anime.currentEp.isNotEmpty
+                          ? anime.currentEp
+                          : 'Anime'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: tkMutedText, fontSize: 12),
+                ),
+              ],
             ),
           ),
         ),

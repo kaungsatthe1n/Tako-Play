@@ -41,9 +41,7 @@ class UpdateManager extends GetxController {
       final apkLink = release.apkDownloadLink?.trim();
       final link = isAndroid
           ? apkLink ?? release.releasePageUrl ?? release.downloadLink
-          : release.releasePageUrl ??
-              release.downloadLink ??
-              release.apkDownloadLink;
+          : release.releasePageUrl ?? release.downloadLink;
       if (release.isPrerelease ||
           release.isDraft ||
           release.version == null ||

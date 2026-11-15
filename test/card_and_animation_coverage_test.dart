@@ -36,12 +36,25 @@ void main() {
       (tester) async {
     await pumpCards(tester, const PopularAnimeCard(anime: _anime));
 
-    expect(find.text('POPULAR'), findsOneWidget);
+    expect(find.text('Anime'), findsOneWidget);
     expect(find.text('Coverage title'), findsOneWidget);
 
     await tester.tap(find.byType(PopularAnimeCard));
     await tester.pumpAndSettle();
     expect(find.text('Episode details'), findsOneWidget);
+  });
+
+  testWidgets('popular card displays the episode label when genres are absent',
+      (tester) async {
+    await pumpCards(
+        tester,
+        const PopularAnimeCard(
+            anime: Anime(
+          id: 'episode',
+          name: 'Show',
+          currentEp: 'Ep 4',
+        )));
+    expect(find.text('Ep 4'), findsOneWidget);
   });
 
   testWidgets('movie card renders its empty-poster state and opens details',

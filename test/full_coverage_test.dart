@@ -27,6 +27,7 @@ import 'package:tako_play/models/playback_context.dart';
 import 'package:tako_play/models/recent_anime.dart';
 import 'package:tako_play/screens/about_app_screen.dart';
 import 'package:tako_play/screens/bookmarks_screen.dart';
+import 'package:tako_play/screens/catalog_grid_screen.dart';
 import 'package:tako_play/screens/genre_screen.dart';
 import 'package:tako_play/screens/genre_selection_screen.dart';
 import 'package:tako_play/screens/home_screen.dart';
@@ -40,6 +41,7 @@ import 'package:tako_play/screens/video_list_screen.dart';
 import 'package:tako_play/screens/video_player_screen.dart';
 import 'package:tako_play/screens/webview_screen.dart';
 import 'package:tako_play/services/anime_service.dart';
+import 'package:tako_play/services/ending_timing_service.dart';
 import 'package:tako_play/services/playback_service.dart';
 import 'package:tako_play/services/request_service.dart';
 import 'package:tako_play/utils/constants.dart';
@@ -107,6 +109,8 @@ void main() {
   });
 
   test('every registered route builds its screen widget', () {
+    Get.put(RecentWatchManager(database: _MemoryRecentStore()));
+    Get.put(BookMarkManager(database: _MemoryBookmarkStore()));
     final builders = {for (final page in TakoRoute.pages) page.name: page.page};
     expect(
         builders.keys,
@@ -139,6 +143,11 @@ void main() {
     expect(builders[Routes.videoPlayerScreen]!(), isA<VideoPlayerScreen>());
     expect(builders[Routes.webViewScreen]!(), isA<WebViewScreen>());
     expect(builders[Routes.searchScreen]!(), isA<SearchScreen>());
+    expect(builders[Routes.catalogGridScreen]!(), isA<CatalogGridScreen>());
+    expect(CatalogGridScreen(key: UniqueKey()).createState(),
+        isA<State<CatalogGridScreen>>());
+    expect(VideoListScreen(key: UniqueKey()).createState(),
+        isA<State<VideoListScreen>>());
   });
 
   test('manager binding registers every permanent manager', () {
@@ -178,6 +187,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Version'), findsOneWidget);
+    expect(find.text('PolyForm Noncommercial License 1.0.0'), findsOneWidget);
     expect(find.text('Kaung Satt Hein'), findsOneWidget);
 
     await tester.tap(find.text('Source Code'));
@@ -533,6 +543,505 @@ void main() {
     await tester.pump(const Duration(seconds: 3));
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
+  });
+
+  testWidgets('stalled fullscreen player opens the browser after 20 seconds',
+      (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    await tester.pumpWidget(GetMaterialApp(
+      home: const _LaunchVideoPlayer(),
+      getPages: [
+        GetPage(
+          name: Routes.webViewScreen,
+          page: () => const Scaffold(body: Text('Browser destination')),
+        ),
+      ],
+    ));
+    await tester.tap(find.text('Open player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.enterFullScreen();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(seconds: 20));
+    await tester.pumpAndSettle();
+    expect(find.text('Browser destination').hitTestable(), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('playback progress prevents the startup fallback',
+      (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    await tester.pumpWidget(GetMaterialApp(
+      home: const _LaunchVideoPlayer(),
+      getPages: [
+        GetPage(
+          name: Routes.webViewScreen,
+          page: () => const Scaffold(body: Text('Browser destination')),
+        ),
+      ],
+    ));
+    await tester.tap(find.text('Open player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 1),
+      'duration': const Duration(minutes: 20),
+    }));
+    await tester.pump(const Duration(seconds: 21));
+    expect(find.text('Browser destination'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('player errors open the browser without waiting for timeout',
+      (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    await tester.pumpWidget(GetMaterialApp(
+      home: const _LaunchVideoPlayer(),
+      getPages: [
+        GetPage(
+          name: Routes.webViewScreen,
+          page: () => const Scaffold(body: Text('Browser destination')),
+        ),
+      ],
+    ));
+    await tester.tap(find.text('Open player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    tester
+        .widget<BetterPlayer>(find.byType(BetterPlayer).first)
+        .controller
+        .postEvent(PlayerEvent(PlayerEventType.exception));
+    await tester.pumpAndSettle();
+    expect(find.text('Browser destination').hitTestable(), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('player restores and saves episode progress', (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    final history = RecentWatchManager(database: _MemoryRecentStore());
+    Get.put(history);
+    final playback = PlaybackContext(
+      id: 'progress-show',
+      name: 'Show',
+      imageUrl: '',
+      animeUrl: 'https://catalog.example/show',
+      index: 0,
+      episodes: [Episode(number: '1', link: 'https://catalog.example/episode')],
+    );
+    await tester.pumpWidget(GetMaterialApp(
+      home: Scaffold(
+        body: TextButton(
+          onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+            'url': 'https://cdn.example/video.m3u8',
+            'playbackContext': playback,
+            'resumePosition': const Duration(seconds: 5),
+          }),
+          child: const Text('Open progress player'),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('Open progress player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.postEvent(PlayerEvent(PlayerEventType.initialized));
+    await tester.pump();
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 6),
+      'duration': const Duration(seconds: 10),
+    }));
+    await tester.pump();
+    expect(
+        history
+            .progressFor('progress-show', 'https://catalog.example/episode')
+            ?.positionMillis,
+        6000);
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 7),
+      'duration': const Duration(seconds: 10),
+    }));
+    await tester.pump();
+    expect(
+        history
+            .progressFor('progress-show', 'https://catalog.example/episode')
+            ?.positionMillis,
+        6000);
+    controller.postEvent(PlayerEvent(PlayerEventType.seekTo));
+    controller.postEvent(PlayerEvent(PlayerEventType.finished, parameters: {
+      'duration': const Duration(seconds: 10),
+    }));
+    await tester.pump();
+    expect(
+        history
+            .progressFor('progress-show', 'https://catalog.example/episode')
+            ?.positionMillis,
+        10000);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('restores the episode queue from recent history', (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    Get.put(RequestService(client: MockClient((_) async => http.Response('''
+      <div id="info"></div>
+      <div id="w-episodes"><button data-n="1">1</button>
+      <button data-n="2">2</button></div>''', 200))));
+    final recent = RecentAnime(
+      id: 'restore',
+      name: 'Show',
+      imageUrl: '',
+      animeUrl: 'https://catalog.example/show',
+      epUrl: 'https://catalog.example/old-episode',
+      currentEp: 'Episode 1',
+    );
+    await tester.pumpWidget(GetMaterialApp(
+        home: Scaffold(
+            body: TextButton(
+      onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+        'url': 'https://cdn.example/video.m3u8',
+        'recentAnime': recent,
+      }),
+      child: const Text('Restore queue'),
+    ))));
+    await tester.tap(find.text('Restore queue'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 1400),
+      'duration': const Duration(seconds: 1440),
+    }));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('saves progress for a legacy recent episode without a queue',
+      (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    final history = RecentWatchManager(database: _MemoryRecentStore());
+    Get.put(history);
+    final recent = RecentAnime(
+        id: 'legacy',
+        name: 'Show',
+        imageUrl: '',
+        epUrl: 'https://catalog.example/episode',
+        currentEp: 'Episode 1');
+    await tester.pumpWidget(GetMaterialApp(
+        home: Scaffold(
+            body: TextButton(
+      onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+        'url': 'https://cdn.example/video.m3u8',
+        'recentAnime': recent,
+      }),
+      child: const Text('Open legacy player'),
+    ))));
+    await tester.tap(find.text('Open legacy player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.postEvent(PlayerEvent(PlayerEventType.initialized));
+    await tester.pump();
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 6),
+      'duration': const Duration(seconds: 10),
+    }));
+    await tester.pump();
+    expect(history.progressFor('legacy', recent.epUrl)?.episodeNumber, '1');
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('loads a legacy fragment episode from its detail URL',
+      (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    final requests = <Uri>[];
+    Get.put(RequestService(client: MockClient((request) async {
+      requests.add(request.url);
+      return http.Response(
+          '<div id="info"></div><div id="w-episodes"><button data-n="1">1</button></div>',
+          200);
+    })));
+    final recent = RecentAnime(
+        id: 'show',
+        name: 'Show',
+        imageUrl: '',
+        epUrl: 'https://catalog.example/show#episode=1',
+        currentEp: 'Episode 1');
+    await tester.pumpWidget(GetMaterialApp(
+        home: Scaffold(
+            body: TextButton(
+      onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+        'url': 'https://cdn.example/video.m3u8',
+        'recentAnime': recent,
+      }),
+      child: const Text('Open fragment player'),
+    ))));
+    await tester.tap(find.text('Open fragment player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(requests.single.fragment, isEmpty);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('prefetch extracts a dynamic next episode and cancels on seek',
+      (tester) async {
+    await http.runWithClient(() async {
+      BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+      Get.put(RequestService(
+          client: MockClient((_) async => http.Response(_embedMarkup, 200))));
+      final queue = PlaybackContext(
+        id: 'dynamic',
+        name: 'Show',
+        imageUrl: '',
+        animeUrl: 'https://catalog.example/show',
+        index: 0,
+        episodes: [
+          Episode(number: '1', link: 'https://catalog.example/episode1'),
+          Episode(number: '2', link: 'https://catalog.example/episode2'),
+        ],
+      );
+      await tester.pumpWidget(GetMaterialApp(
+          home: Scaffold(
+              body: TextButton(
+        onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+          'url': 'https://cdn.example/current.m3u8',
+          'playbackContext': queue,
+          'endingStart': const Duration(seconds: 1300),
+        }),
+        child: const Text('Open dynamic player'),
+      ))));
+      await tester.tap(find.text('Open dynamic player'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final controller = tester
+          .widget<BetterPlayer>(find.byType(BetterPlayer).first)
+          .controller;
+      controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+        'progress': const Duration(seconds: 1250),
+        'duration': const Duration(seconds: 1440),
+      }));
+      for (var i = 0; i < 10 && _FakeWebViewController.last == null; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(_FakeWebViewController.last, isNotNull);
+      controller.postEvent(PlayerEvent(PlayerEventType.seekTo));
+      await tester.pump();
+      expect(
+          find.byType(HlsExtractorWebView, skipOffstage: false), findsNothing);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+        () => MockClient((request) async =>
+            http.Response('<html>No stream</html>', 200, request: request)));
+  });
+
+  testWidgets('player skip intro seeks past the opening', (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    await tester.pumpWidget(GetMaterialApp(
+        home: Scaffold(
+            body: TextButton(
+      onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+        'url': 'https://cdn.example/current.m3u8',
+        'opening': const SkipInterval(
+            start: Duration(seconds: 1), end: Duration(seconds: 5)),
+      }),
+      child: const Text('Open intro player'),
+    ))));
+    await tester.tap(find.text('Open intro player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 2),
+      'duration': const Duration(seconds: 10),
+    }));
+    await tester.pump();
+    await tester.tap(find.text('Skip intro').first);
+    await tester.pump();
+    expect(find.text('Skip intro'), findsNothing);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('prefetch accepts an extracted next episode', (tester) async {
+    await http.runWithClient(() async {
+      BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+      Get.put(RequestService(
+          client: MockClient((_) async => http.Response(_embedMarkup, 200))));
+      final queue = PlaybackContext(
+        id: 'dynamic',
+        name: 'Show',
+        imageUrl: '',
+        animeUrl: 'https://catalog.example/show',
+        index: 0,
+        episodes: [
+          Episode(number: '1', link: 'https://catalog.example/episode1'),
+          Episode(number: '2', link: 'https://catalog.example/episode2'),
+        ],
+      );
+      await tester.pumpWidget(GetMaterialApp(
+          home: Scaffold(
+              body: TextButton(
+        onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+          'url': 'https://cdn.example/current.m3u8',
+          'playbackContext': queue,
+          'endingStart': const Duration(seconds: 1300),
+        }),
+        child: const Text('Open extraction player'),
+      ))));
+      await tester.tap(find.text('Open extraction player'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final controller = tester
+          .widget<BetterPlayer>(find.byType(BetterPlayer).first)
+          .controller;
+      controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+        'progress': const Duration(seconds: 1250),
+        'duration': const Duration(seconds: 1440),
+      }));
+      for (var i = 0; i < 10 && _FakeWebViewController.last == null; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(_FakeWebViewController.last, isNotNull);
+      _FakeWebViewController.last!.send(jsonEncode({
+        'type': 'hls',
+        'url': 'https://cdn.example/next.m3u8',
+        'pageUrl': 'https://player.example/embed',
+      }));
+      await tester.pump();
+      await tester.pump();
+      expect(
+          find.byType(HlsExtractorWebView, skipOffstage: false), findsNothing);
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+        () => MockClient((request) async =>
+            http.Response('<html>No stream</html>', 200, request: request)));
+  });
+
+  testWidgets('prefetch uses the configured owned resolver', (tester) async {
+    BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+    var resolverCalls = 0;
+    final queue = PlaybackContext(
+      id: 'api',
+      name: 'Show',
+      imageUrl: '',
+      animeUrl: 'https://catalog.example/show',
+      index: 0,
+      episodes: [
+        Episode(number: '1', link: 'https://catalog.example/1'),
+        Episode(number: '2', link: 'https://catalog.example/2')
+      ],
+    );
+    await tester.pumpWidget(GetMaterialApp(
+        home: Scaffold(
+            body: TextButton(
+      onPressed: () => Get.to(
+          () => VideoPlayerScreen(
+              resolverFactory: () => PlaybackService(
+                    resolverUrl: 'https://api.example/playback',
+                    client: MockClient((request) async {
+                      resolverCalls++;
+                      return http.Response(
+                          '{"url":"https://cdn.example/next.m3u8"}', 200);
+                    }),
+                  )),
+          arguments: {
+            'url': 'https://cdn.example/current.m3u8',
+            'playbackContext': queue,
+            'endingStart': const Duration(seconds: 1300),
+          }),
+      child: const Text('Open resolver player'),
+    ))));
+    await tester.tap(find.text('Open resolver player'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    final controller =
+        tester.widget<BetterPlayer>(find.byType(BetterPlayer).first).controller;
+    controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+      'progress': const Duration(seconds: 1250),
+      'duration': const Duration(seconds: 1440),
+    }));
+    await tester.pump();
+    await tester.pump();
+    expect(resolverCalls, 1);
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpWidget(const SizedBox());
+    await tester.pump();
+  });
+
+  testWidgets('prefetch reports an extractor timeout for the next episode',
+      (tester) async {
+    await http.runWithClient(() async {
+      BetterPlayerPlatform.instance = _FakeBetterPlayerPlatform();
+      Get.put(RequestService(
+          client: MockClient((_) async => http.Response(_embedMarkup, 200))));
+      final queue = PlaybackContext(
+        id: 'dynamic',
+        name: 'Show',
+        imageUrl: '',
+        animeUrl: 'https://catalog.example/show',
+        index: 0,
+        episodes: [
+          Episode(number: '1', link: 'https://catalog.example/episode1'),
+          Episode(number: '2', link: 'https://catalog.example/episode2'),
+        ],
+      );
+      await tester.pumpWidget(GetMaterialApp(
+          home: Scaffold(
+              body: TextButton(
+        onPressed: () => Get.to(() => const VideoPlayerScreen(), arguments: {
+          'url': 'https://cdn.example/current.m3u8',
+          'playbackContext': queue,
+          'endingStart': const Duration(seconds: 1300),
+        }),
+        child: const Text('Open timeout player'),
+      ))));
+      await tester.tap(find.text('Open timeout player'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      final controller = tester
+          .widget<BetterPlayer>(find.byType(BetterPlayer).first)
+          .controller;
+      controller.postEvent(PlayerEvent(PlayerEventType.progress, parameters: {
+        'progress': const Duration(seconds: 1301),
+        'duration': const Duration(seconds: 1440),
+      }));
+      for (var i = 0; i < 10 && _FakeWebViewController.last == null; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(_FakeWebViewController.last, isNotNull);
+      await tester.pump(const Duration(seconds: 31));
+      await tester.pump();
+      expect(find.text('Retry next'), findsWidgets);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+    },
+        () => MockClient((request) async =>
+            http.Response('<html>No stream</html>', 200, request: request)));
   });
 
   testWidgets('native fullscreen overlay switches source and updates history',
@@ -1272,6 +1781,8 @@ class _LaunchVideoPlayer extends StatelessWidget {
                   ),
                 ],
                 'resolutions': {'720P': 'https://cdn.example.com/720.m3u8'},
+                'mediaUrls': ['https://player.example/embed'],
+                'episodeUrl': 'https://catalog.example/episode',
               },
             ),
             child: const Text('Open player'),

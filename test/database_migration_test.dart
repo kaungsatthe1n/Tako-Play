@@ -5,6 +5,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:tako_play/database/bookmark_database.dart';
 import 'package:tako_play/database/recent_watch_anime_database.dart';
 import 'package:tako_play/models/bookmark.dart';
+import 'package:tako_play/models/episode_watch_progress.dart';
 import 'package:tako_play/models/recent_anime.dart';
 
 void main() {
@@ -17,6 +18,33 @@ void main() {
     directory = await Directory.systemTemp.createTemp('tako_play_test_');
   });
   tearDown(() async => directory.delete(recursive: true));
+
+  test('episode progress persists, updates, and is scoped to an anime',
+      () async {
+    final store = RecentWatchAnimeDatabase.withDatabaseFactory(
+      databaseFactory: factory,
+      databasePath: '${directory.path}/progress.db',
+    );
+    EpisodeWatchProgress progress(String animeId, int position, int updated) =>
+        EpisodeWatchProgress(
+          animeId: animeId,
+          episodeUrl: '/episode',
+          episodeNumber: '1',
+          positionMillis: position,
+          durationMillis: 100,
+          updatedAtMillis: updated,
+        );
+    await store.saveEpisodeProgress(progress('one', 20, 1));
+    await store.saveEpisodeProgress(progress('two', 30, 2));
+    await store.saveEpisodeProgress(progress('one', 80, 3));
+    final rows = await store.getEpisodeProgressForAnime('one');
+    expect(rows, hasLength(1));
+    expect(rows.single.positionMillis, 80);
+    expect(
+        (await store.getEpisodeProgressForAnime('two')).single.positionMillis,
+        30);
+    await store.close();
+  });
 
   test('v2 history gains detail URLs without losing existing watch history',
       () async {
