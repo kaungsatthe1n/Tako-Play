@@ -4,6 +4,8 @@ TakoPlay is an educational Flutter app for browsing an anime catalog, finding
 titles, saving favourites, tracking recently opened episodes, and handing an
 episode to an external web player. It does not host or provide video content.
 
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy_Me_a_Coffee-FFDD00?logo=buymeacoffee&logoColor=black)](https://buymeacoffee.com/kaungsatthe1n)
+
 ## Download
 
 [![Download Android APK](https://img.shields.io/badge/Android-Download_APK-3DDC84?logo=android&logoColor=white)](https://github.com/kaungsatthe1n/Tako-Play/releases/latest/download/TakoPlay-release.apk)
@@ -59,36 +61,6 @@ Updated screenshots captured from the current iPhone 17 simulator build.
 - Native HLS playback in BetterPlayer, with source-provided player fallbacks
 - Player-type and preferred-quality settings
 - Release update checks
-
-### Next episode in the native player
-
-Near episode end, BetterPlayer shows **Play next** and **Keep watching**.
-The next source, request headers and up to three standalone subtitle files are
-prepared 60 seconds before the prompt. Selecting Play next reuses the player and
-updates history; nothing advances automatically. The final episode has no
-prompt.
-Signed sources older than two minutes are resolved again when selected.
-
-Ending timing uses `endingStartSeconds` from a configured playback resolver when
-available. Otherwise the app searches
-[AniList](https://docs.anilist.co/guide/graphql/queries/media) for an
-unambiguous exact title/alias match, then requests opening and ending intervals
-from [AniSkip](https://github.com/aniskip/aniskip-api). The request includes the
-title or MAL ID, episode number and video duration; no account is required.
-Unknown titles, specials, season-number mismatches, unavailable metadata and
-duration mismatches fall back to a prompt in the last 30 seconds. This fallback
-does not detect the ending song. Episodes of 30 seconds or less prompt at the
-end.
-
-The player also looks up a recorded opening interval and shows **Skip intro**
-only while that interval is playing. It seeks to the interval's end when tapped;
-missing or mismatched opening data leaves the button hidden.
-
-Prefetch failures leave the current video playing and allow an explicit retry.
-Dynamic sources use the existing muted extraction WebView. Browser-player mode
-does not have this overlay. Newly stored history includes the title's catalog URL
-so the episode queue can be restored; older entries without a recoverable title
-URL gain the feature when opened again from the episode list.
 
 ## Requirements
 
