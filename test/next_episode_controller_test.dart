@@ -44,6 +44,68 @@ const duration = Duration(seconds: 1440);
 Future<void> flush() => Future<void>.delayed(Duration.zero);
 
 void main() {
+  testWidgets('opening and next prompts can appear together in both layouts',
+      (tester) async {
+    final controller = NextEpisodeController(
+      context: contextAt(0),
+      opening: const SkipInterval(
+          start: Duration(seconds: 1360), end: Duration(seconds: 1430)),
+      endingStart: const Duration(seconds: 1380),
+      findEnding: (_, __) async => null,
+      loadSource: (_) async => source,
+      playSource: (_, __) async {},
+    );
+    addTearDown(controller.dispose);
+    controller.updateProgress(const Duration(seconds: 1400), duration);
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SizedBox(
+      width: 800,
+      height: 400,
+      child: NextEpisodeOverlay(controller: controller),
+    ))));
+    await tester.pump();
+    expect(find.byType(Divider), findsOneWidget);
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: SizedBox(
+      width: 350,
+      height: 700,
+      child: NextEpisodeOverlay(controller: controller),
+    ))));
+    await tester.pump();
+    expect(find.byType(Divider), findsOneWidget);
+  });
+  test('skip intro seeks to its end and handles a failed seek', () async {
+    var fail = true;
+    Duration? seekTarget;
+    final controller = NextEpisodeController(
+      context: contextAt(0),
+      opening: const SkipInterval(
+          start: Duration(seconds: 10), end: Duration(seconds: 20)),
+      findEnding: (_, __) async => null,
+      loadSource: (_) async => source,
+      playSource: (_, __) async {},
+      skipOpening: (end) async {
+        seekTarget = end;
+        if (fail) throw StateError('seek failed');
+      },
+    );
+    addTearDown(controller.dispose);
+    controller.updateProgress(const Duration(seconds: 12), duration);
+    await controller.skipOpeningNow();
+    expect(controller.isOpeningVisible, isTrue);
+    fail = false;
+    await controller.skipOpeningNow();
+    expect(seekTarget, const Duration(seconds: 20));
+    expect(controller.isOpeningVisible, isFalse);
+  });
   test('prefetches once before ED and switches only on user action', () async {
     var loads = 0;
     final played = <String>[];

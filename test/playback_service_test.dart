@@ -22,6 +22,21 @@ Future<String> _encryptedEmbed(String embedUrl, String pageKey) async {
 }
 
 void main() {
+  test('parses list-form opening and ending timing', () {
+    expect(parseOpeningInterval([10, 20])?.end, const Duration(seconds: 20));
+    expect(parseEndingIntervalStart([90, 100]), const Duration(seconds: 90));
+  });
+
+  test('reports unexpected embedded-player failures', () async {
+    final service = PlaybackService(client: MockClient((_) async {
+      throw StateError('unexpected');
+    }));
+    await expectLater(
+      service.resolveEmbeddedPlayers(['https://player.example/embed'],
+          episodeUrl: 'https://catalog.example/episode'),
+      throwsA(isA<PlaybackResolutionException>()),
+    );
+  });
   test('resolver returns optional ending metadata with its subtitles',
       () async {
     final service = PlaybackService(

@@ -5,6 +5,28 @@ import 'package:tako_play/services/playback_service.dart';
 import 'package:tako_play/services/subtitle_prefetch_service.dart';
 
 void main() {
+  test('prefetches only the first three tracks', () async {
+    var calls = 0;
+    final service = SubtitlePrefetchService(client: MockClient((_) async {
+      calls++;
+      return http.Response('WEBVTT', 200);
+    }));
+    addTearDown(service.close);
+    final tracks = List.generate(
+        4,
+        (i) => PlaybackSubtitle(
+              url: 'https://example.com/$i.vtt',
+              name: '$i',
+              headers: const {},
+            ));
+    final prepared = await service.prepare(PlaybackSource(
+      url: 'https://example.com/master.m3u8',
+      headers: const {},
+      subtitles: tracks,
+    ));
+    expect(calls, 3);
+    expect(prepared.subtitles.last.content, isNull);
+  });
   test('prefetch keeps headers/defaults/timing and leaves failed tracks usable',
       () async {
     final service = SubtitlePrefetchService(client: MockClient((request) async {

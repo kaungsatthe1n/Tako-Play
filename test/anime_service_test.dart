@@ -55,6 +55,39 @@ void main() {
     expect(results.animeList, isEmpty);
   });
 
+  test('chooses the highest-resolution srcset image', () async {
+    final results = await animeService.getAnimes(Future.value(http.Response('''
+      <ul class="items"><li>
+        <div class="img"><img src="/fallback.jpg"
+          srcset="/small.jpg 100w, /large.jpg 600w"></div>
+        <p class="name"><a href="/category/show">Show</a></p>
+      </li><li>
+        <div class="img"><img srcset="/one.jpg 1x, /two.jpg 2x"></div>
+        <p class="name"><a href="/category/other">Other</a></p>
+      </li></ul>''', 200)));
+    expect(results.animeList.map((anime) => anime.imageUrl), [
+      'https://gogoanimes.org/large.jpg',
+      'https://gogoanimes.org/two.jpg',
+    ]);
+  });
+
+  test('detail cache evicts old entries after its capacity is reached',
+      () async {
+    final service = RequestService(
+        client: MockClient((_) async =>
+            http.Response('<div class="anime_info_body_bg"></div>', 200)));
+    final catalog = AnimeService(requestService: service);
+    for (var i = 0; i < 34; i++) {
+      await catalog.fetchAnimeDetails('https://gogoanimes.org/anime/cache-$i');
+    }
+    expect(catalog.cachedAnimeDetails('https://gogoanimes.org/anime/cache-0'),
+        isNull);
+    expect(catalog.cachedAnimeDetails('https://gogoanimes.org/anime/cache-33'),
+        isNotNull);
+    expect(catalog.cachedAnimeDetails('http://[invalid'), isNull);
+    service.close();
+  });
+
   test('loads, deduplicates, and numerically orders episode ranges', () async {
     const detailMarkup = '''
       <div class="anime_info_body_bg">

@@ -98,6 +98,8 @@ class _MediaFetchScreenState extends State<MediaFetchScreen> {
       'resumePosition': Get.arguments['resumePosition'],
       'playbackContext': _playbackContext,
       'recentAnime': _recentAnime,
+      'mediaUrls': _embeddedMediaUrls,
+      'episodeUrl': animeUrl.toString(),
     });
   }
 

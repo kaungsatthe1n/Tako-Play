@@ -15,15 +15,20 @@ import '../services/playback_service.dart';
 import '../services/request_service.dart';
 import '../services/subtitle_prefetch_service.dart';
 import '../utils/constants.dart';
+import '../utils/routes.dart';
 import '../widgets/hls_extractor_web_view.dart';
 import '../widgets/next_episode_overlay.dart';
 import '../widgets/tako_loading_indicator.dart';
 
 class VideoPlayerScreen extends StatefulWidget {
-  const VideoPlayerScreen({super.key, this.nextSourceLoader});
+  const VideoPlayerScreen(
+      {super.key, this.nextSourceLoader, this.resolverFactory});
 
   /// Allows deterministic playback integration tests without external sources.
   final Future<PlaybackSource> Function(PlaybackContext)? nextSourceLoader;
+
+  /// Allows an owned resolver to be supplied for playback integration tests.
+  final PlaybackService Function()? resolverFactory;
 
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
@@ -39,6 +44,11 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   final List<PlayerEvent> _playerEventsBeforeReady = <PlayerEvent>[];
   bool _controllerReady = false;
   bool _closing = false;
+  bool _fallbackStarted = false;
+  bool _playbackStarted = false;
+  Timer? _startupTimer;
+  List<String> _fallbackUrls = const [];
+  String? _fallbackEpisodeUrl;
   bool _isSkippingOpening = false;
   bool _isApplyingResumeSeek = false;
   bool _resumeRestoreStarted = false;
@@ -60,6 +70,13 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       DeviceOrientation.landscapeRight,
     ]));
     final args = Map<String, dynamic>.from(Get.arguments as Map);
+    _fallbackUrls = (args['mediaUrls'] as List? ?? const [])
+        .whereType<String>()
+        .where((url) {
+      final uri = Uri.tryParse(url);
+      return uri != null && uri.scheme == 'https' && uri.host.isNotEmpty;
+    }).toList(growable: false);
+    _fallbackEpisodeUrl = args['episodeUrl'] as String?;
     _recentAnime = args['recentAnime'] as RecentAnime?;
     final resumePosition = args['resumePosition'];
     if (resumePosition is Duration && resumePosition > Duration.zero) {
@@ -133,9 +150,37 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         _handlePlayerEvent(event);
       }
     }
+    if (_fallbackUrls.isNotEmpty && !_fallbackStarted && !_playbackStarted) {
+      _startupTimer = Timer(const Duration(seconds: 20), () {
+        unawaited(_openBrowserFallback());
+      });
+    }
     if (_nextEpisode.context == null && args['recentAnime'] is RecentAnime) {
       unawaited(_restoreEpisodeContext(args['recentAnime'] as RecentAnime));
     }
+  }
+
+  Future<void> _openBrowserFallback() async {
+    if (_closing || _fallbackStarted || !mounted || _fallbackUrls.isEmpty) {
+      return;
+    }
+    _fallbackStarted = true;
+    _startupTimer?.cancel();
+    try {
+      await _controller.pause();
+    } catch (_) {
+      // Navigation must still work if the native player failed to initialize.
+    }
+    if (_closing || !mounted) return;
+    if (_controller.isFullScreen) {
+      _controller.exitFullScreen();
+      await Future<void>.delayed(const Duration(milliseconds: 350));
+      if (_closing || !mounted) return;
+    }
+    await Get.offNamed(Routes.webViewScreen, arguments: {
+      'mediaUrls': _fallbackUrls,
+      'episodeUrl': _fallbackEpisodeUrl,
+    });
   }
 
   Future<void> _restoreEpisodeContext(RecentAnime recent) async {
@@ -211,7 +256,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       );
 
   void _onPlayerEvent(PlayerEvent event) {
-    if (_closing) return;
+    if (_closing || _fallbackStarted) return;
     if (!_controllerReady) {
       _playerEventsBeforeReady.add(event);
       return;
@@ -220,7 +265,12 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   void _handlePlayerEvent(PlayerEvent event) {
-    if (_closing) return;
+    if (_closing || _fallbackStarted) return;
+    if (event.betterPlayerEventType == PlayerEventType.exception &&
+        !_playbackStarted) {
+      unawaited(_openBrowserFallback());
+      return;
+    }
     if (event.betterPlayerEventType == PlayerEventType.initialized) {
       unawaited(_restoreInitialPosition());
       return;
@@ -255,6 +305,10 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
               ? playerValue?.duration
               : null);
       final duration = event.parameters?['duration'] ?? playerValue?.duration;
+      if (position is Duration && position > Duration.zero) {
+        _playbackStarted = true;
+        _startupTimer?.cancel();
+      }
       if (position is Duration && duration is Duration) {
         _nextEpisode.updateProgress(position, duration);
         if (_resumeRestoreFinished) {
@@ -345,7 +399,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
   }
 
   Future<PlaybackSource> _prefetchNext(PlaybackContext context) async {
-    final resolver = PlaybackService();
+    final resolver = widget.resolverFactory?.call() ?? PlaybackService();
     PlaybackSource source;
     if (resolver.isConfigured) {
       source = await resolver.resolveEpisode(context.episode.link);
@@ -451,6 +505,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 
   @override
   void dispose() {
+    _startupTimer?.cancel();
     final currentValue = _controller.videoPlayerValue;
     final currentDuration = currentValue?.duration;
     if (currentValue != null &&

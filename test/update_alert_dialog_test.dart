@@ -29,6 +29,11 @@ void main() {
     await tester.tap(find.byTooltip('Close update prompt'));
     await tester.pumpAndSettle();
     expect(find.byType(UpdateAlertDialog), findsNothing);
+    await tester.tap(find.text('Show update'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Maybe later'));
+    await tester.pumpAndSettle();
+    expect(find.byType(UpdateAlertDialog), findsNothing);
   });
 }
 

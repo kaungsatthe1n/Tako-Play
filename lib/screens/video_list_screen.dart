@@ -120,35 +120,29 @@ class _VideoListScreenState extends State<VideoListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Hero(
-      // Get.arguments belongs to whichever route is currently transitioning.
-      // Keep the detail route's title locally so an iOS back-swipe cannot
-      // replace it with null while this Hero rebuilds.
-      tag: _routeAnime.id,
-      child: TakoScaffoldWithBackButton(
-        appBarTitle: 'Player',
-        extendBodyBehindAppBar: true,
-        body: FutureBuilder<Anime>(
-            future: _animeDetails,
-            initialData: _cachedAnimeDetails,
-            builder: (context, snapshot) {
-              final anime = snapshot.data;
-              if (anime != null) {
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    buildBackgroundImage(imageUrl),
-                    buildBackdropFilter(),
-                    buildAnimeDetailsListView(anime, name, imageUrl),
-                  ],
-                );
-              } else {
-                return snapshot.hasError
-                    ? buildErrorWidget()
-                    : buildLoadingWidget();
-              }
-            }),
-      ),
+    return TakoScaffoldWithBackButton(
+      appBarTitle: 'Player',
+      extendBodyBehindAppBar: true,
+      body: FutureBuilder<Anime>(
+          future: _animeDetails,
+          initialData: _cachedAnimeDetails,
+          builder: (context, snapshot) {
+            final anime = snapshot.data;
+            if (anime != null) {
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  buildBackgroundImage(imageUrl),
+                  buildBackdropFilter(),
+                  buildAnimeDetailsListView(anime, name, imageUrl),
+                ],
+              );
+            } else {
+              return snapshot.hasError
+                  ? buildErrorWidget()
+                  : buildLoadingWidget();
+            }
+          }),
     );
   }
 
@@ -256,17 +250,17 @@ class _VideoListScreenState extends State<VideoListScreen> {
                   style: FilledButton.styleFrom(
                     backgroundColor: tkGradientBlue,
                     foregroundColor: tkDarkerBlue,
-                    minimumSize: const Size(0, 56),
+                    minimumSize: const Size(0, 48),
                     shape: const StadiumBorder(),
                   ),
-                  icon: const Icon(Icons.play_arrow_rounded, size: 23),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 21),
                   label: Text(
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TakoTheme.darkTextTheme.titleLarge?.copyWith(
                       color: tkDarkerBlue,
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

@@ -23,7 +23,10 @@ import '../widgets/tako_loading_indicator.dart';
 import '../widgets/update_alert_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.featuredResults});
+
+  /// Optional catalog source for deterministic rendering tests.
+  final Future<AnimeResults>? featuredResults;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -57,9 +60,8 @@ class _HomeScreenState extends State<HomeScreen>
   void _loadCatalog() {
     final requestService = Get.find<RequestService>();
     final animeService = AnimeService(requestService: requestService);
-    _popularFuture = _keepCatalogSection(
-      animeService.getAnimes(requestService.requestPopularResponse()),
-    );
+    _popularFuture = _keepCatalogSection(widget.featuredResults ??
+        animeService.getAnimes(requestService.requestPopularResponse()));
     _popularWithoutFeaturedFuture = _popularFuture.then((results) {
       _featuredAnimeIds =
           results.animeList.take(5).map((anime) => anime.id).toSet();
@@ -158,14 +160,10 @@ class _HomeScreenState extends State<HomeScreen>
               child: InkWell(
                 customBorder: const CircleBorder(),
                 onTap: () => Get.toNamed(Routes.searchScreen),
-                child: Container(
+                child: const SizedBox(
                   width: 52,
                   height: 52,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF302D55)),
-                  ),
-                  child: const Icon(Icons.search_rounded, size: 24),
+                  child: Icon(Icons.search_rounded, size: 24),
                 ),
               ),
             ),
@@ -200,17 +198,13 @@ class _HomeScreenState extends State<HomeScreen>
               duration: const Duration(milliseconds: 180),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               decoration: BoxDecoration(
-                color: tkSurface,
+                color: selected ? const Color(0xFF8E80F9) : tkDarkBlue,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: selected ? tkGradientBlue : tkSurfaceBorder,
-                  width: selected ? 1.4 : 1,
-                ),
               ),
               alignment: Alignment.center,
               child: Text(label,
                   style: GoogleFonts.dmSans(
-                    color: selected ? Colors.white : const Color(0xFFD1D0E5),
+                    color: selected ? tkDarkerBlue : const Color(0xFFD1D0E5),
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   )),
@@ -231,13 +225,13 @@ class _HomeScreenState extends State<HomeScreen>
           return Column(
             children: [
               SizedBox(
-                height: 290,
+                height: 300,
                 child: PageView.builder(
                   itemCount: featured.length,
                   onPageChanged: (index) =>
                       setState(() => _featuredIndex = index),
                   itemBuilder: (context, index) =>
-                      _buildFeaturedCard(featured[index], index + 1),
+                      _buildFeaturedCard(featured[index]),
                 ),
               ),
               const SizedBox(height: 12),
@@ -263,225 +257,135 @@ class _HomeScreenState extends State<HomeScreen>
         },
       );
 
-  Widget _buildFeaturedCard(Anime anime, int rank) => Align(
-        alignment: Alignment.center,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  anime.imageUrl.isEmpty
-                      ? const DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF63B779), Color(0xFF12202B)],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                        )
-                      : CachedNetworkImage(
-                          imageUrl: anime.imageUrl,
-                          cacheManager: CustomCacheManager.instance,
-                          fit: BoxFit.cover,
-                          filterQuality: FilterQuality.medium,
-                          errorWidget: (_, __, ___) => const DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF63B779), Color(0xFF12202B)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                            ),
-                          ),
-                        ),
-                  const Positioned.fill(
-                    child: ColoredBox(color: Color(0x1A7867F7)),
+  Widget _buildFeaturedCard(Anime anime) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              if (anime.imageUrl.isNotEmpty)
+                CachedNetworkImage(
+                  imageUrl: anime.imageUrl,
+                  cacheManager: CustomCacheManager.instance,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  errorWidget: (_, __, ___) =>
+                      const ColoredBox(color: tkDarkBlue),
+                )
+              else
+                const ColoredBox(color: tkDarkBlue),
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x360A0915),
+                      Color(0x600A0915),
+                      Color(0xF50A0915),
+                    ],
+                    stops: [0, .38, 1],
                   ),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0x2C4A3B8B),
-                          Color(0x0C101220),
-                          Color(0x55090A12),
-                        ],
-                        stops: [0, .4, 1],
-                      ),
-                    ),
+                ),
+              ),
+              Positioned(
+                top: 16,
+                left: 16,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xC8261421),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  Positioned(
-                    top: 16,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xE8FF8B7B),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.white24),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x55200821),
-                            blurRadius: 14,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.trending_up_rounded,
-                              color: Color(0xFF541D20), size: 15),
-                          const SizedBox(width: 5),
-                          Text('TRENDING',
-                              style: GoogleFonts.dmSans(
-                                color: const Color(0xFF541D20),
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: .5,
-                                fontSize: 10,
-                              )),
-                        ],
-                      ),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.trending_up_rounded,
+                          color: Color(0xFFFFA89C), size: 16),
+                      const SizedBox(width: 6),
+                      Text('TRENDING',
+                          style: GoogleFonts.dmSans(
+                            color: const Color(0xFFFFA89C),
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: .6,
+                            fontSize: 11,
+                          )),
+                    ],
                   ),
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 11, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xB8171725),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white30),
-                      ),
-                      child: Text(
-                        '$rank / 5',
+                ),
+              ),
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(anime.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.dmSans(
                           color: Colors.white,
+                          fontSize: 25,
+                          height: 1.05,
+                          letterSpacing: -.6,
                           fontWeight: FontWeight.w800,
-                          fontSize: 11,
-                          letterSpacing: .4,
-                        ),
+                        )),
+                    const SizedBox(height: 8),
+                    Text(
+                      anime.genres.isNotEmpty
+                          ? anime.genres
+                              .take(2)
+                              .map((genre) => genre.name)
+                              .join(' · ')
+                          : (anime.currentEp.isNotEmpty
+                              ? anime.currentEp
+                              : 'Anime'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.dmSans(
+                        color: const Color(0xFFD3D1E5),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: 12,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(15, 14, 15, 13),
-                      decoration: BoxDecoration(
-                        color: const Color(0x8A0C0D17),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: .16)),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x48000000),
-                            blurRadius: 18,
-                            offset: Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(anime.name,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.dmSans(
-                                fontSize: 24,
-                                height: 1.05,
-                                letterSpacing: -.7,
-                                fontWeight: FontWeight.w800,
-                              )),
-                          const SizedBox(height: 7),
-                          Text(
-                            anime.genres
-                                    .take(2)
-                                    .map((genre) => genre.name)
-                                    .join(' · ')
-                                    .isEmpty
-                                ? 'Anime · Discover something new'
-                                : anime.genres
-                                    .take(2)
-                                    .map((genre) => genre.name)
-                                    .join(' · '),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.dmSans(
-                              color: const Color(0xFFD3D1E5),
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 48,
+                            child: FilledButton.icon(
+                              onPressed: () => Get.toNamed(
+                                Routes.videoListScreen,
+                                arguments: {'anime': anime},
+                              ),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFF3F2FA),
+                                foregroundColor: tkDarkerBlue,
+                                shape: const StadiumBorder(),
+                              ),
+                              icon: const Icon(Icons.play_arrow_rounded,
+                                  size: 21),
+                              label: Text('Watch now',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.dmSans(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14)),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              final buttonWidth =
-                                  (constraints.maxWidth - 57).clamp(0.0, 230.0);
-                              return Row(
-                                children: [
-                                  SizedBox(
-                                    width: buttonWidth,
-                                    height: 44,
-                                    child: FilledButton.icon(
-                                      onPressed: () => Get.toNamed(
-                                        Routes.videoListScreen,
-                                        arguments: {'anime': anime},
-                                      ),
-                                      style: FilledButton.styleFrom(
-                                        backgroundColor:
-                                            const Color(0xFFF3F2FA),
-                                        foregroundColor: tkDarkerBlue,
-                                        minimumSize: const Size(0, 44),
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 12),
-                                        shape: const StadiumBorder(),
-                                      ),
-                                      icon: const Icon(Icons.play_arrow_rounded,
-                                          size: 21),
-                                      label: Text('Watch now',
-                                          maxLines: 1,
-                                          softWrap: false,
-                                          style: GoogleFonts.dmSans(
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 14)),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 9),
-                                  _buildFeaturedBookmark(anime),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(
-                              color: Colors.white.withValues(alpha: .16)),
                         ),
-                      ),
+                        const SizedBox(width: 10),
+                        _buildFeaturedBookmark(anime),
+                      ],
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       );
@@ -531,12 +435,9 @@ class _HomeScreenState extends State<HomeScreen>
         subtitle: 'Fresh releases to watch',
         cardBuilder: (anime, index) => AnimatedBuilder(
           animation: animationController,
-          child: Hero(
-            tag: _catalogCardHeroTag(anime),
-            child: Material(
-              color: Colors.transparent,
-              child: RecentlyAddedAnimeCard(anime: anime),
-            ),
+          child: Material(
+            color: Colors.transparent,
+            child: RecentlyAddedAnimeCard(anime: anime),
           ),
           builder: (context, child) => Transform(
             transform: Matrix4.translationValues(
@@ -579,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen>
               _buildHorizontalListView(
                 animeList,
                 (index) => cardBuilder(animeList[index], index),
-                height: 280,
+                height: title == 'Popular now' ? 235 : 280,
               ),
             ],
           );
@@ -633,8 +534,6 @@ class _HomeScreenState extends State<HomeScreen>
     });
   }
 
-  String _catalogCardHeroTag(Anime anime) => 'catalog-New episodes-${anime.id}';
-
   Widget _buildSectionTitle(
     String title,
     String subtitle, {
@@ -669,23 +568,19 @@ class _HomeScreenState extends State<HomeScreen>
                     style: const TextStyle(color: tkMutedText, fontSize: 12)),
               ],
             ),
-          Material(
-            color: tkDarkBlue,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onSeeAll,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF29263F)),
-                ),
-                child: const Icon(Icons.arrow_outward_rounded, size: 17),
+          if (onSeeAll != null)
+            TextButton.icon(
+              onPressed: onSeeAll,
+              iconAlignment: IconAlignment.end,
+              icon: const Icon(Icons.chevron_right_rounded, size: 20),
+              label: const Text('See all'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFA69AFF),
+                padding: EdgeInsets.zero,
+                alignment: Alignment.centerRight,
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
-          ),
         ],
       ),
     );
